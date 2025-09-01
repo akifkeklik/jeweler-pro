@@ -80,7 +80,6 @@
         <v-card-text>
           <v-form ref="duzenleForm" v-model="duzenleFormValid">
             <v-text-field v-model="seciliUrun.name" label="Ürün Adı" outlined dense class="rounded-input" />
-
             <v-select
                 v-model="seciliUrun.categoryId"
                 :items="categories"
@@ -90,7 +89,6 @@
                 outlined dense
                 class="rounded-input"
             />
-
             <v-select
                 v-model="seciliUrun.materialId"
                 :items="materials"
@@ -100,7 +98,6 @@
                 outlined dense
                 class="rounded-input"
             />
-
             <v-text-field v-model="seciliUrun.weight" type="number" label="Gram" outlined dense class="rounded-input" />
             <v-text-field v-model="seciliUrun.price" type="number" label="Fiyat (₺)" outlined dense class="rounded-input" />
             <v-text-field v-model="seciliUrun.barcode" label="Barkod" outlined dense class="rounded-input" />
@@ -175,7 +172,7 @@ export default {
     async fetchProducts() {
       try {
         const res = await axios.get("http://localhost:5000/api/products");
-        this.urunler = res.data;
+        this.urunler = res.data; // direkt backend field'ları alıyoruz
       } catch (err) {
         console.error("Ürünler alınamadı:", err);
       }
@@ -191,21 +188,7 @@ export default {
     async urunKaydet(yeni) {
       try {
         const res = await axios.post("http://localhost:5000/api/products", yeni);
-
-        // Mapping yap
-        const mapped = {
-          _id: res.data._id,
-          ad: res.data.name,
-          gram: res.data.weight,
-          fiyat: res.data.price,
-          barkod: res.data.barcode,
-          aciklama: res.data.description,
-          kategori: res.data.categoryId?.name || "",
-          hammadde: res.data.materialId?.name || "",
-          stok: res.data.stock
-        };
-
-        this.urunler.push(mapped);
+        this.urunler.push(res.data);
         this.yeniUrunDialog = false;
       } catch (err) {
         console.error("Ürün eklenemedi:", err.response?.data || err);
@@ -226,17 +209,7 @@ export default {
       }
     },
     duzenlemeBaslat(urun) {
-      this.seciliUrun = {
-        _id: urun._id,
-        name: urun.name || urun.ad,
-        categoryId: urun.categoryId || "",
-        materialId: urun.materialId || "",
-        weight: urun.weight || urun.gram,
-        price: urun.price || urun.fiyat,
-        barcode: urun.barcode || urun.barkod,
-        description: urun.description || urun.aciklama || "",
-        stock: urun.stock || 0
-      };
+      this.seciliUrun = { ...urun }; // mapping yok → direkt backend alanları
       this.duzenleDialog = true;
     },
     async duzenlemeKaydet() {
@@ -247,22 +220,9 @@ export default {
               this.seciliUrun
           );
 
-          // Mapping yap
-          const mapped = {
-            _id: updated.data._id,
-            ad: updated.data.name,
-            gram: updated.data.weight,
-            fiyat: updated.data.price,
-            barkod: updated.data.barcode,
-            aciklama: updated.data.description,
-            kategori: updated.data.categoryId?.name || "",
-            hammadde: updated.data.materialId?.name || "",
-            stok: updated.data.stock
-          };
-
           const index = this.urunler.findIndex((u) => u._id === this.seciliUrun._id);
           if (index !== -1) {
-            this.$set(this.urunler, index, mapped);
+            this.$set(this.urunler, index, updated.data);
           }
           this.duzenleDialog = false;
         } catch (err) {

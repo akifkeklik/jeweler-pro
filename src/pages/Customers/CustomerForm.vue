@@ -1,7 +1,7 @@
 <template>
   <v-form ref="form" v-model="valid">
     <v-text-field
-        v-model="musteri.ad"
+        v-model="musteri.name"
         label="Ad"
         outlined
         dense
@@ -9,15 +9,7 @@
     ></v-text-field>
 
     <v-text-field
-        v-model="musteri.soyad"
-        label="Soyad"
-        outlined
-        dense
-        :rules="[v => !!v || 'Soyad gerekli']"
-    ></v-text-field>
-
-    <v-text-field
-        v-model="musteri.telefon"
+        v-model="musteri.phone"
         label="Telefon"
         outlined
         dense
@@ -31,17 +23,21 @@
         outlined
         dense
         prepend-icon="mdi-email"
-        :rules="[
-        v => !!v || 'E-posta gerekli',
-        v => /.+@.+\..+/.test(v) || 'Geçerli bir e-posta girin'
-      ]"
+        :rules="[v => !!v || 'E-posta gerekli']"
+    ></v-text-field>
+
+    <v-text-field
+        v-model="musteri.address"
+        label="Adres"
+        outlined
+        dense
     ></v-text-field>
 
     <v-select
         :menu-props="{offsetY:true}"
-        v-model="musteri.etiket"
-        label="Etiket"
-        :items="['VIP','Aktif','Yeni']"
+        v-model="musteri.customerType"
+        label="Tür"
+        :items="['bireysel','kurumsal']"
         outlined
         dense
     ></v-select>
@@ -56,6 +52,8 @@
 </template>
 
 <script>
+import axios from "axios";
+
 export default {
   name: "CustomerForm",
   props: {
@@ -67,38 +65,47 @@ export default {
       musteri: this.musteriProp
           ? { ...this.musteriProp }
           : {
-            id: null,
-            ad: "",
-            soyad: "",
-            telefon: "",
+            name: "",
+            phone: "",
             email: "",
-            etiket: "Yeni",
-            notlar: "",
-            satislar: []
+            address: "",
+            customerType: "bireysel"
           }
     };
   },
   methods: {
-    kaydet() {
+    async kaydet() {
       if (this.$refs.form.validate()) {
-        if (!this.musteri.id) {
-          this.musteri.id = Date.now(); // yeni müşteri için ID oluştur
+        try {
+          let res;
+          if (this.musteri._id) {
+            // Düzenleme
+            res = await axios.put(
+                `http://localhost:5000/api/customers/${this.musteri._id}`,
+                this.musteri
+            );
+          } else {
+            // Yeni ekleme
+            res = await axios.post(
+                "http://localhost:5000/api/customers",
+                this.musteri
+            );
+          }
+          this.$emit("ekle", res.data); // parent'a haber ver
+          this.$emit("close");
+          this.resetForm();
+        } catch (err) {
+          console.error("Müşteri kaydedilemedi:", err.response?.data || err);
         }
-        this.$emit("ekle", { ...this.musteri });
-        this.$emit("close");
-        this.resetForm();
       }
     },
     resetForm() {
       this.musteri = {
-        id: null,
-        ad: "",
-        soyad: "",
-        telefon: "",
+        name: "",
+        phone: "",
         email: "",
-        etiket: "Yeni",
-        notlar: "",
-        satislar: []
+        address: "",
+        customerType: "bireysel"
       };
       this.$refs.form.resetValidation();
     }
@@ -106,16 +113,15 @@ export default {
   watch: {
     musteriProp: {
       handler(val) {
-        this.musteri = val ? { ...val } : {
-          id: null,
-          ad: "",
-          soyad: "",
-          telefon: "",
-          email: "",
-          etiket: "Yeni",
-          notlar: "",
-          satislar: []
-        };
+        this.musteri = val
+            ? { ...val }
+            : {
+              name: "",
+              phone: "",
+              email: "",
+              address: "",
+              customerType: "bireysel"
+            };
       },
       deep: true,
       immediate: true

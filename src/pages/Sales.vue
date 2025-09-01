@@ -1,330 +1,341 @@
 <template>
   <v-container fluid>
-    <!-- Özet Kartlar -->
+    <h2 class="mb-6 text-h4 font-weight-bold">📊 Satışlar</h2>
+
+    <!-- Üst İstatistik Kartları -->
     <v-row>
-      <v-col cols="12" sm="6" md="3" v-for="(kpi, index) in kpis" :key="index">
-        <v-card class="pa-4 text-center elevation-2" outlined>
-          <v-icon size="32" class="mb-2" color="#1E3A8A">{{ kpi.icon }}</v-icon> <!-- Lacivert Renk -->
-          <div class="text-h6">{{ kpi.label }}</div>
-          <div class="font-weight-bold text-h5">{{ kpi.value }}</div>
+      <v-col cols="12" md="3" v-for="stat in stats" :key="stat.title">
+        <v-card class="pa-5 text-center rounded-xl elevation-4 stat-card" :style="{ background: stat.color }">
+          <v-icon size="40" color="white">{{ stat.icon }}</v-icon>
+          <div class="text-subtitle-1 font-weight-medium mt-2 text-white">{{ stat.title }}</div>
+          <div class="text-h5 font-weight-bold mt-1 text-white">{{ stat.value }}</div>
         </v-card>
       </v-col>
     </v-row>
 
-    <!-- Filtreleme -->
-    <v-card class="mt-6 pa-4">
-      <v-row>
-        <v-col cols="12" md="3">
+    <!-- Filtreleme + Tablo Alanı -->
+    <v-card class="mt-8 pa-6 rounded-xl elevation-2 white-card">
+      <!-- Filtreleme Alanı -->
+      <v-row class="mb-4">
+        <v-col cols="12" md="4">
           <v-text-field
-              dense
-              v-model="searchQuery"
+              v-model="search"
               label="Satış Ara"
-              prepend-icon="mdi-magnify"
-              outlined
+              prepend-inner-icon="mdi-magnify"
+              variant="solo-filled"
+              rounded
+              dense
+              hide-details
           />
         </v-col>
-
-        <v-col cols="12" md="3">
-          <v-menu v-model="dateRangeMenu" :close-on-content-click="false" transition="scale-transition">
+        <v-col cols="12" md="4">
+          <v-menu
+              ref="dateMenu"
+              v-model="dateMenu"
+              :close-on-content-click="false"
+              transition="scale-transition"
+              offset-y
+              min-width="auto"
+          >
             <template v-slot:activator="{ on, attrs }">
               <v-text-field
-                  dense
+                  v-model="dateRangeText"
+                  label="Tarih Aralığı"
+                  prepend-inner-icon="mdi-calendar"
+                  readonly
                   v-bind="attrs"
                   v-on="on"
-                  label="Tarih Aralığı"
-                  prepend-icon="mdi-calendar"
-                  readonly
-                  outlined
-                  :value="formattedDateRange"
+                  variant="solo-filled"
+                  rounded
+                  dense
               />
             </template>
-            <v-date-picker v-model="dateRange" range @input="updateDateRange" />
+            <v-date-picker
+                v-model="dateRange"
+                range
+                scrollable
+                @change="dateMenu = false"
+            />
           </v-menu>
         </v-col>
-
-        <v-col cols="12" md="3">
+        <v-col cols="12" md="4">
           <v-select
-              dense
-              :menu-props="{offsetY:true}"
               v-model="selectedCustomer"
-              :items="uniqueCustomers"
+              :items="customers"
+              item-text="name"
+              item-value="_id"
               label="Müşteri Seç"
-              outlined
-              clearable
+              variant="solo-filled"
+              rounded
+              dense
           />
         </v-col>
-
-        <v-col cols="12" md="3" class="d-flex align-center">
-          <v-btn color="primary" class="mr-2" @click="openAddSaleModal">
-            <v-icon left>mdi-plus</v-icon> Yeni Satış
-          </v-btn>
-          <v-btn color="error" @click="resetFilters">Temizle</v-btn>
-        </v-col>
       </v-row>
-    </v-card>
 
-    <!-- Satışlar Tablosu -->
-    <v-card class="mt-6">
+      <!-- Tablo -->
       <v-data-table
           :headers="headers"
           :items="filteredSales"
-          item-key="id"
-          :search="searchQuery"
           :items-per-page="5"
-          class="elevation-1"
+          class="rounded-xl"
+          density="comfortable"
+          hover
       >
-        <template v-slot:item.date="{ item }">
-          {{ formatDate(item.date) }}
+        <template v-slot:[`item.totalPrice`]="{ item }">
+          <v-chip color="green lighten-4" text-color="green darken-3" class="font-weight-medium">
+            <v-icon left small>mdi-currency-try</v-icon>{{ item.totalPrice }}
+          </v-chip>
         </template>
-        <template v-slot:item.total="{ item }">
-          {{ formatCurrency(item.total) }}
-        </template>
-        <template v-slot:item.actions="{ item }">
-          <v-btn icon small @click="editSale(item)">
-            <v-icon color="blue">mdi-pencil</v-icon>
+
+        <template v-slot:[`item.islemler`]="{ item }">
+          <!-- Görüntüle -->
+          <v-btn icon color="teal" variant="text" @click="viewSale(item)">
+            <v-icon>mdi-eye</v-icon>
           </v-btn>
-          <v-btn icon small color="red" @click="onDeleteSale(item)">
-            <v-icon color="red">mdi-delete</v-icon>
+          <!-- Düzenle -->
+          <v-btn icon color="blue" variant="text" @click="openEditDialog(item)">
+            <v-icon>mdi-pencil</v-icon>
+          </v-btn>
+          <!-- Sil -->
+          <v-btn icon color="red" variant="text" @click="deleteSale(item)">
+            <v-icon>mdi-delete</v-icon>
           </v-btn>
         </template>
       </v-data-table>
     </v-card>
 
-    <!-- Grafikler -->
-    <v-row class="mt-6">
-      <v-col cols="12" md="6">
-        <v-card class="pa-4">
-          <v-card-title>Aylık Satışlar</v-card-title>
-          <div style="height:300px;">
-            <BarChart :data="salesChartData" :options="chartOptions" />
-          </div>
-        </v-card>
-      </v-col>
-      <v-col cols="12" md="6">
-        <v-card class="pa-4">
-          <v-card-title>Ürün Bazlı Dağılım</v-card-title>
-          <div style="height:300px;">
-            <PieChart :data="productChartData" :options="chartOptions" />
-          </div>
-        </v-card>
-      </v-col>
-    </v-row>
-
-    <!-- Yeni Satış Modal -->
-    <v-dialog v-model="addSaleDialog" max-width="500">
-      <v-card>
-        <v-card-title>Yeni Satış Ekle</v-card-title>
-        <v-card-text>
-          <v-text-field v-model="newSale.customer" label="Müşteri" outlined />
-          <v-text-field v-model="newSale.product" label="Ürün" outlined />
-          <v-text-field v-model="newSale.quantity" type="number" label="Miktar" outlined />
-          <v-text-field v-model="newSale.total" type="number" label="Toplam Tutar" outlined />
-        </v-card-text>
-        <v-card-actions class="d-flex justify-end">
-          <!-- İptal butonunu kırmızı yapıyoruz -->
-          <v-btn color="error" @click="addSaleDialog=false">Vazgeç</v-btn>
-          <!-- Kaydet butonunu mavi yapıyoruz -->
-          <v-btn color="primary" @click="saveSale">Kaydet</v-btn>
-        </v-card-actions>
-      </v-card>
-    </v-dialog>
-
-    <!-- Satış Düzenleme Dialog -->
-    <v-dialog v-model="editSaleDialog" max-width="500">
-      <v-card>
-        <v-card-title>Satışı Düzenle</v-card-title>
-        <v-card-text>
-          <v-text-field v-model="editedSale.customer" label="Müşteri" outlined />
-          <v-text-field v-model="editedSale.product" label="Ürün" outlined />
-          <v-text-field v-model="editedSale.quantity" type="number" label="Miktar" outlined />
-          <v-text-field v-model="editedSale.total" type="number" label="Toplam Tutar" outlined />
-        </v-card-text>
-        <v-card-actions class="d-flex justify-end">
-          <v-btn color="error" @click="editSaleDialog=false">Vazgeç</v-btn>
-          <v-btn color="primary" @click="saveEditedSale">Kaydet</v-btn>
-        </v-card-actions>
-      </v-card>
-    </v-dialog>
-
-    <!-- Satış Silme Onay Dialogu (Çöp) -->
-    <v-dialog v-model="deleteSaleDialog" max-width="500">
-      <v-card>
-        <v-card-title class="headline delete-title">
-          <span class="delete-text">Silmek istediğinize emin misiniz?</span>
+    <!-- Görüntüleme Dialog -->
+    <v-dialog v-model="viewDialog" max-width="500px">
+      <v-card class="rounded-xl pa-4">
+        <v-card-title class="text-h6 font-weight-bold">
+          <v-icon left color="teal">mdi-eye</v-icon> Satış Detayı
         </v-card-title>
+        <v-card-text>
+          <p><strong>Satış ID:</strong> {{ selectedSale?._id }}</p>
+          <p><strong>Müşteri:</strong> {{ selectedSale?.customerName }}</p>
+          <p><strong>Ürün:</strong> {{ selectedSale?.productName }}</p>
+          <p><strong>Miktar:</strong> {{ selectedSale?.quantity }}</p>
+          <p><strong>Tutar:</strong> {{ selectedSale?.totalPrice }} ₺</p>
+          <p><strong>Ödeme:</strong> {{ selectedSale?.paymentMethod }}</p>
+          <p><strong>Tarih:</strong> {{ selectedSale?.date }}</p>
+        </v-card-text>
         <v-card-actions>
           <v-spacer></v-spacer>
-          <!-- İptal Butonu (Sarı) -->
-          <v-btn color="warning" text @click="deleteSaleDialog=false">İptal</v-btn>
-          <!-- Sil Butonu (Kırmızı) -->
-          <v-btn color="red" text @click="confirmDeleteSale">Sil</v-btn>
+          <v-btn color="teal" variant="flat" rounded @click="viewDialog = false">Kapat</v-btn>
         </v-card-actions>
       </v-card>
     </v-dialog>
+
+    <!-- Düzenleme Dialog -->
+    <v-dialog v-model="editDialog" max-width="600px">
+      <v-card class="rounded-xl pa-4">
+        <v-card-title class="text-h6 font-weight-bold">
+          <v-icon left color="blue">mdi-pencil</v-icon> Satışı Düzenle
+        </v-card-title>
+        <v-card-text>
+          <v-text-field v-model="editForm.customerName" label="Müşteri" />
+          <v-text-field v-model="editForm.productName" label="Ürün" />
+          <v-text-field v-model="editForm.quantity" label="Miktar" type="number" />
+          <v-text-field v-model="editForm.totalPrice" label="Toplam Tutar" type="number" />
+          <v-select
+              v-model="editForm.paymentMethod"
+              :items="['nakit','kredi kartı','havale']"
+              label="Ödeme Yöntemi"
+          />
+          <v-text-field v-model="editForm.date" label="Tarih" type="date" />
+        </v-card-text>
+        <v-card-actions>
+          <v-spacer></v-spacer>
+          <v-btn color="grey" variant="outlined" rounded @click="editDialog = false">İptal</v-btn>
+          <v-btn color="blue" variant="flat" rounded @click="saveEdit">Kaydet</v-btn>
+        </v-card-actions>
+      </v-card>
+    </v-dialog>
+
+    <!-- Silme Onayı -->
+    <v-dialog v-model="deleteDialog" max-width="400px" transition="dialog-bottom-transition">
+      <v-card class="rounded-xl">
+        <v-card-title class="text-h6 font-weight-bold">
+          <v-icon color="red" left>mdi-alert-circle</v-icon> Satışı Sil
+        </v-card-title>
+        <v-card-text>Bu satışı silmek istediğinize emin misiniz?</v-card-text>
+        <v-card-actions>
+          <v-spacer></v-spacer>
+          <v-btn rounded variant="outlined" color="grey" @click="deleteDialog = false">İptal</v-btn>
+          <v-btn rounded variant="flat" color="red" @click="confirmDelete">Sil</v-btn>
+        </v-card-actions>
+      </v-card>
+    </v-dialog>
+
+    <!-- Snackbar -->
+    <v-snackbar v-model="snackbar" color="success" timeout="3000" rounded="pill" location="bottom right">
+      {{ snackbarText }}
+      <template v-slot:actions>
+        <v-btn variant="text" color="white" @click="snackbar = false">Kapat</v-btn>
+      </template>
+    </v-snackbar>
   </v-container>
 </template>
 
 <script>
-import { Bar, Pie } from "vue-chartjs";
-import {
-  Chart as ChartJS,
-  Title,
-  Tooltip,
-  Legend,
-  BarElement,
-  ArcElement,
-  CategoryScale,
-  LinearScale,
-} from "chart.js";
-
-ChartJS.register(Title, Tooltip, Legend, BarElement, ArcElement, CategoryScale, LinearScale);
+import axios from "axios";
 
 export default {
-  components: {
-    BarChart: Bar,
-    PieChart: Pie,
-  },
   data() {
     return {
-      searchQuery: "",
-      dateRangeMenu: false,
-      dateRange: [null, null],
-      formattedDateRange: "",
+      salesData: [],
+      customers: [],
+      search: "",
+      dateMenu: false,
+      dateRange: [],
       selectedCustomer: null,
-      addSaleDialog: false,
-      editSaleDialog: false,
-      newSale: { customer: "", product: "", quantity: 1, total: 0 },
-      editedSale: { customer: "", product: "", quantity: 1, total: 0 },
-      deleteSaleDialog: false,
-      deleteSaleTarget: null,
+
+      // dialogs
+      viewDialog: false,
+      editDialog: false,
+      deleteDialog: false,
+
+      // dialog data
+      selectedSale: null,
+      editForm: {},
+      deleteTarget: null,
+
+      // snackbar
+      snackbar: false,
+      snackbarText: "",
 
       headers: [
-        { text: "Satış ID", value: "id" },
-        { text: "Müşteri", value: "customer" },
-        { text: "Ürün", value: "product" },
+        { text: "Satış ID", value: "_id" },
+        { text: "Müşteri", value: "customerName" },
+        { text: "Ürün", value: "productName" },
         { text: "Miktar", value: "quantity" },
-        { text: "Toplam Tutar", value: "total" },
+        { text: "Toplam Tutar", value: "totalPrice" },
+        { text: "Ödeme", value: "paymentMethod" },
         { text: "Tarih", value: "date" },
-        { text: "İşlemler", value: "actions", sortable: false },
+        { text: "İşlemler", value: "islemler", sortable: false, align: "center" },
       ],
-
-      salesData: [
-        { id: 1, customer: "Ahmet Yılmaz", product: "Altın Yüzük", quantity: 2, total: 1200, date: "2025-08-20" },
-        { id: 2, customer: "Fatma Akın", product: "Gümüş Kolye", quantity: 1, total: 300, date: "2025-08-19" },
-        { id: 3, customer: "Mehmet Kaya", product: "Altın Bilezik", quantity: 3, total: 4500, date: "2025-08-18" },
-        { id: 4, customer: "Ayşe Demir", product: "Gümüş Yüzük", quantity: 1, total: 200, date: "2025-08-17" },
-      ],
-
-      kpis: [
-        { label: "Toplam Satış", value: "4", icon: "mdi-cart" },
-        { label: "Toplam Ciro", value: "₺6.200", icon: "mdi-cash" },
-        { label: "En Çok Satılan", value: "Altın Bilezik", icon: "mdi-star" },
-        { label: "Müşteri Sayısı", value: "4", icon: "mdi-account-group" },
-      ],
-
-      salesChartData: {
-        labels: ["Ocak", "Şubat", "Mart", "Nisan", "Mayıs"],
-        datasets: [
-          { label: "Aylık Satışlar", backgroundColor: "#1E3A8A", data: [2000, 2500, 3000, 3500, 4000] }, // Lacivert renk
-        ],
-      },
-      productChartData: {
-        labels: ["Altın Yüzük", "Gümüş Kolye", "Altın Bilezik", "Gümüş Yüzük"],
-        datasets: [
-          {
-            label: "Ürünler",
-            backgroundColor: ["#1E3A8A", "#A9A9A9", "#1E3A8A", "#A9A9A9"], // Lacivert ve Gümüş Gri renkler
-            data: [2, 1, 3, 1],
-          },
-        ],
-      },
-
-      chartOptions: {
-        responsive: true,
-        maintainAspectRatio: false,
-        plugins: {
-          legend: { labels: { color: "#333", font: { size: 14 } } },
-        },
-        scales: {
-          x: { ticks: { color: "#333" }, grid: { color: "#eee" } },
-          y: { ticks: { color: "#333" }, grid: { color: "#eee" } },
-        },
-      },
     };
   },
   computed: {
-    uniqueCustomers() {
-      return [...new Set(this.salesData.map((s) => s.customer))];
+    stats() {
+      return [
+        { title: "Toplam Satış", value: this.salesData.length, icon: "mdi-cash", color: "linear-gradient(135deg, #4facfe, #00f2fe)" },
+        { title: "Toplam Ciro", value: this.toplamCiro + ' ₺', icon: "mdi-finance", color: "linear-gradient(135deg, #43e97b, #38f9d7)" },
+        { title: "En Çok Satılan", value: this.enCokSatilan, icon: "mdi-star", color: "linear-gradient(135deg, #fa709a, #fee140)" },
+        { title: "Müşteri Sayısı", value: this.musteriSayisi, icon: "mdi-account-group", color: "linear-gradient(135deg, #667eea, #764ba2)" },
+      ];
     },
     filteredSales() {
-      let data = this.salesData;
-      if (this.selectedCustomer) {
-        data = data.filter((s) => s.customer === this.selectedCustomer);
-      }
-      if (this.dateRange[0] && this.dateRange[1]) {
-        const [start, end] = this.dateRange.map((d) => new Date(d));
-        data = data.filter((s) => {
+      return this.salesData.filter((s) => {
+        const matchesSearch =
+            (s.customerName + " " + s.productName)
+                .toLowerCase()
+                .includes(this.search.toLowerCase());
+
+        const matchesCustomer =
+            !this.selectedCustomer || s.customerId === this.selectedCustomer;
+
+        let matchesDate = true;
+        if (this.dateRange.length === 2) {
+          const start = new Date(this.dateRange[0]);
+          const end = new Date(this.dateRange[1]);
           const saleDate = new Date(s.date);
-          return saleDate >= start && saleDate <= end;
-        });
-      }
-      return data;
+          matchesDate = saleDate >= start && saleDate <= end;
+        }
+
+        return matchesSearch && matchesCustomer && matchesDate;
+      });
+    },
+    toplamCiro() {
+      return this.salesData.reduce((sum, s) => sum + (s.totalPrice || 0), 0);
+    },
+    musteriSayisi() {
+      const ids = this.salesData.map((s) => s.customerId);
+      return new Set(ids).size;
+    },
+    enCokSatilan() {
+      const counts = {};
+      this.salesData.forEach((s) => {
+        if (s.productName) {
+          counts[s.productName] = (counts[s.productName] || 0) + s.quantity;
+        }
+      });
+      const max = Object.entries(counts).sort((a, b) => b[1] - a[1])[0];
+      return max ? max[0] : "-";
+    },
+    dateRangeText() {
+      return this.dateRange.length === 2
+          ? `${this.dateRange[0]} - ${this.dateRange[1]}`
+          : "";
     },
   },
+  mounted() {
+    this.fetchSales();
+    this.fetchCustomers();
+  },
   methods: {
-    formatDate(date) {
-      return new Date(date).toLocaleDateString("tr-TR");
+    async fetchSales() {
+      try {
+        const res = await axios.get("http://localhost:5000/api/sales");
+        this.salesData = res.data;
+      } catch (err) {
+        console.error("Satışlar alınamadı:", err);
+      }
     },
-    formatCurrency(val) {
-      return new Intl.NumberFormat("tr-TR", { style: "currency", currency: "TRY" }).format(val);
+    async fetchCustomers() {
+      try {
+        const res = await axios.get("http://localhost:5000/api/customers");
+        this.customers = res.data;
+      } catch (err) {
+        console.error("Müşteriler alınamadı:", err);
+      }
     },
-    resetFilters() {
-      this.selectedCustomer = null;
-      this.dateRange = [null, null];
-      this.searchQuery = "";
-      this.formattedDateRange = "";
+    viewSale(item) {
+      this.selectedSale = item;
+      this.viewDialog = true;
     },
-    updateDateRange(val) {
-      this.formattedDateRange = `${new Date(val[0]).toLocaleDateString("tr-TR")} - ${new Date(val[1]).toLocaleDateString("tr-TR")}`;
-      this.dateRangeMenu = false;
+    openEditDialog(item) {
+      this.editForm = { ...item };
+      this.editDialog = true;
     },
-    openAddSaleModal() {
-      this.addSaleDialog = true;
-    },
-    saveSale() {
-      const newId = this.salesData.length + 1;
-      this.salesData.push({ ...this.newSale, id: newId, date: new Date().toISOString().split("T")[0] });
-      this.addSaleDialog = false;
-      this.newSale = { customer: "", product: "", quantity: 1, total: 0 };
-    },
-    editSale(item) {
-      this.editedSale = { ...item };
-      this.editSaleDialog = true;
-    },
-    saveEditedSale() {
-      const index = this.salesData.findIndex((sale) => sale.id === this.editedSale.id);
-      if (index !== -1) {
-        this.salesData[index] = this.editedSale;
-        this.editSaleDialog = false;
+    async saveEdit() {
+      try {
+        const res = await axios.put(`http://localhost:5000/api/sales/${this.editForm._id}`, this.editForm);
+        const index = this.salesData.findIndex(s => s._id === this.editForm._id);
+        if (index !== -1) this.salesData[index] = res.data;
+        this.showSnackbar("Satış başarıyla güncellendi");
+        this.editDialog = false;
+      } catch (err) {
+        console.error("Güncelleme hatası:", err);
       }
     },
     deleteSale(item) {
-      this.salesData = this.salesData.filter((s) => s.id !== item.id);
+      this.deleteDialog = true;
+      this.deleteTarget = item;
     },
-    onDeleteSale(item) {
-      this.deleteSaleTarget = item;
-      this.deleteSaleDialog = true;
+    async confirmDelete() {
+      try {
+        await axios.delete(`http://localhost:5000/api/sales/${this.deleteTarget._id}`);
+        this.salesData = this.salesData.filter((s) => s._id !== this.deleteTarget._id);
+        this.showSnackbar("Satış başarıyla silindi");
+      } catch (err) {
+        console.error("Silme hatası:", err);
+      }
+      this.deleteDialog = false;
     },
-    confirmDeleteSale() {
-      this.salesData = this.salesData.filter((s) => s.id !== this.deleteSaleTarget.id);
-      this.deleteSaleDialog = false;
+    showSnackbar(text) {
+      this.snackbarText = text;
+      this.snackbar = true;
     },
   },
 };
 </script>
 
 <style scoped>
-.v-card {
-  background-color: #f5f6fa !important;
+.stat-card {
+  border: none !important;
+}
+.white-card {
+  background-color: #ffffff !important;
 }
 </style>

@@ -53,9 +53,9 @@ export default {
       headers: [
         { text: "ID", value: "_id" },
         { text: "Ürün Adı", value: "ad" },       // ad || name
-        { text: "Gram", value: "gram" },         // sadece bazı kayıtlarda var
-        { text: "Fiyat", value: "fiyat" },       // fiyat || price
-        { text: "Barkod", value: "barkod" },     // sadece bazı kayıtlarda var
+        { text: "Gram", value: "weight" },         // sadece bazı kayıtlarda var
+        { text: "Fiyat", value: "price" },       // fiyat || price
+        { text: "Barkod", value: "barcode" },     // sadece bazı kayıtlarda var
         { text: "Açıklama", value: "description" }, // çoğunda description var
         { text: "İşlemler", value: "actions", sortable: false }
       ]

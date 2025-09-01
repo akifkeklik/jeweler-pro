@@ -190,7 +190,7 @@ app.get("/api/sales", async (req, res) => {
             quantity: s.quantity,
             totalPrice: s.totalPrice,
             paymentMethod: s.paymentMethod,
-            date: s.date,
+            date: new Date(s.date).toLocaleString("tr-TR"),
             createdAt: s.createdAt,
             updatedAt: s.updatedAt,
         }));
@@ -200,15 +200,24 @@ app.get("/api/sales", async (req, res) => {
         res.status(500).json({ error: err.message });
     }
 });
+// Satış Ekle
 app.post("/api/sales", async (req, res) => {
     try {
-        const newSale = new Sale(req.body);
+        let body = { ...req.body };
+
+        // Eğer date string geldiyse → Date objesine çevir
+        if (body.date) {
+            body.date = new Date(body.date);
+        }
+
+        const newSale = new Sale(body);
         await newSale.save();
         res.json(newSale);
     } catch (err) {
         res.status(500).json({ error: err.message });
     }
 });
+
 app.put("/api/sales/:id", async (req, res) => {
     try {
         const updated = await Sale.findByIdAndUpdate(req.params.id, req.body, { new: true });
@@ -307,15 +316,21 @@ app.delete("/api/settings/:id", async (req, res) => {
 });
 
 // ---------------- REPORT ENDPOINTS ----------------
-// Günlük Rapor
+// ---------------- REPORT ENDPOINTS ----------------
+
+// Günlük Rapor (UTC fix)
 app.get("/api/reports/daily", async (req, res) => {
     try {
-        const start = new Date();
-        start.setHours(0, 0, 0, 0);
-        const end = new Date();
-        end.setHours(23, 59, 59, 999);
+        const now = new Date();
 
-        const sales = await Sale.find({ date: { $gte: start, $lte: end } })
+        // Türkiye saati için UTC+3 offset
+        const offset = 3 * 60 * 60 * 1000;
+        const localNow = new Date(now.getTime() + offset);
+
+        const startUtc = new Date(Date.UTC(localNow.getFullYear(), localNow.getMonth(), localNow.getDate(), 0, 0, 0));
+        const endUtc = new Date(Date.UTC(localNow.getFullYear(), localNow.getMonth(), localNow.getDate(), 23, 59, 59));
+
+        const sales = await Sale.find({ date: { $gte: startUtc, $lte: endUtc } })
             .populate("productId", "name price")
             .populate("customerId", "name");
 
@@ -326,22 +341,31 @@ app.get("/api/reports/daily", async (req, res) => {
             quantity: s.quantity,
             totalPrice: s.totalPrice,
             kar: Math.round(s.totalPrice * 0.2),
-            date: s.date,
+            date: new Date(s.date).toLocaleString("tr-TR"),
         }));
 
         res.json(mapped);
     } catch (err) {
+        console.error("Daily hata:", err);
         res.status(500).json({ error: err.message });
     }
 });
 
-// Haftalık Rapor
+
+// Haftalık Rapor (UTC fix)
 app.get("/api/reports/weekly", async (req, res) => {
     try {
-        const oneWeekAgo = new Date();
-        oneWeekAgo.setDate(oneWeekAgo.getDate() - 7);
+        const now = new Date();
+        const offset = 3 * 60 * 60 * 1000;
+        const localNow = new Date(now.getTime() + offset);
 
-        const sales = await Sale.find({ date: { $gte: oneWeekAgo } })
+        const oneWeekAgoLocal = new Date(localNow);
+        oneWeekAgoLocal.setDate(localNow.getDate() - 7);
+
+        const oneWeekAgoUtc = new Date(oneWeekAgoLocal.getTime() - offset);
+        const nowUtc = new Date(localNow.getTime() - offset);
+
+        const sales = await Sale.find({ date: { $gte: oneWeekAgoUtc, $lte: nowUtc } })
             .populate("productId", "name price")
             .populate("customerId", "name");
 
@@ -352,22 +376,30 @@ app.get("/api/reports/weekly", async (req, res) => {
             quantity: s.quantity,
             totalPrice: s.totalPrice,
             kar: Math.round(s.totalPrice * 0.2),
-            date: s.date,
+            date: new Date(s.date).toLocaleDateString("tr-TR"),
         }));
 
         res.json(mapped);
     } catch (err) {
+        console.error("Weekly hata:", err);
         res.status(500).json({ error: err.message });
     }
 });
 
-// Aylık Rapor
+
+// Aylık Rapor (UTC fix)
 app.get("/api/reports/monthly", async (req, res) => {
     try {
         const now = new Date();
-        const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1);
+        const offset = 3 * 60 * 60 * 1000;
+        const localNow = new Date(now.getTime() + offset);
 
-        const sales = await Sale.find({ date: { $gte: startOfMonth } })
+        const startOfMonthLocal = new Date(localNow.getFullYear(), localNow.getMonth(), 1);
+        const startOfMonthUtc = new Date(startOfMonthLocal.getTime() - offset);
+
+        const nowUtc = new Date(localNow.getTime() - offset);
+
+        const sales = await Sale.find({ date: { $gte: startOfMonthUtc, $lte: nowUtc } })
             .populate("productId", "name price")
             .populate("customerId", "name");
 
@@ -378,34 +410,12 @@ app.get("/api/reports/monthly", async (req, res) => {
             quantity: s.quantity,
             totalPrice: s.totalPrice,
             kar: Math.round(s.totalPrice * 0.2),
-            date: s.date,
+            date: new Date(s.date).toLocaleDateString("tr-TR"),
         }));
 
         res.json(mapped);
     } catch (err) {
-        res.status(500).json({ error: err.message });
-    }
-});
-
-// En Çok Satılanlar
-app.get("/api/reports/top-sellers", async (req, res) => {
-    try {
-        const sales = await Sale.find().populate("productId", "name price");
-
-        const grouped = {};
-        sales.forEach((s) => {
-            if (!s.productId) return;
-            const key = s.productId._id;
-            if (!grouped[key]) {
-                grouped[key] = { urun: s.productId.name, adet: 0, ciro: 0, kar: 0 };
-            }
-            grouped[key].adet += s.quantity;
-            grouped[key].ciro += s.totalPrice;
-            grouped[key].kar += Math.round(s.totalPrice * 0.2);
-        });
-
-        res.json(Object.values(grouped));
-    } catch (err) {
+        console.error("Monthly hata:", err);
         res.status(500).json({ error: err.message });
     }
 });

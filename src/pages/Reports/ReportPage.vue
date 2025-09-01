@@ -110,6 +110,7 @@
 
 <script>
 import VueApexCharts from "vue-apexcharts";
+import axios from "axios";
 
 export default {
   name: "RaporlarPage",
@@ -199,13 +200,23 @@ export default {
     },
     async loadReports() {
       try {
-        this.dayOrders = await fetch("http://localhost:5000/api/reports/daily").then(r=>r.json());
-        this.weekOrders = await fetch("http://localhost:5000/api/reports/weekly").then(r=>r.json());
-        this.monthOrders = await fetch("http://localhost:5000/api/reports/monthly").then(r=>r.json());
-        this.prevMonthOrders = await fetch("http://localhost:5000/api/reports/monthly?prev=1").then(r=>r.json());
-        this.topSellersMonth = await fetch("http://localhost:5000/api/reports/top-sellers").then(r=>r.json());
-        this.lowStock = await fetch("http://localhost:5000/api/reports/low-stock").then(r=>r.json());
-        this.customers = await fetch("http://localhost:5000/api/customers").then(r=>r.json());
+        const [day, week, month, prevMonth, top, low, customers] = await Promise.all([
+          axios.get("http://localhost:5000/api/reports/daily"),
+          axios.get("http://localhost:5000/api/reports/weekly"),
+          axios.get("http://localhost:5000/api/reports/monthly"),
+          axios.get("http://localhost:5000/api/reports/monthly?prev=1"),
+          axios.get("http://localhost:5000/api/reports/top-sellers"),
+          axios.get("http://localhost:5000/api/reports/low-stock"),
+          axios.get("http://localhost:5000/api/customers"),
+        ]);
+
+        this.dayOrders = day.data;
+        this.weekOrders = week.data;
+        this.monthOrders = month.data;
+        this.prevMonthOrders = prevMonth.data;
+        this.topSellersMonth = top.data;
+        this.lowStock = low.data;
+        this.customers = customers.data;
 
         this.dailyOptions.xaxis.categories = this.dayOrders.map(d =>
             new Date(d.date).toLocaleTimeString("tr-TR", { hour: "2-digit", minute: "2-digit" })

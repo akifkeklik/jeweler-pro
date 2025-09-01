@@ -1,10 +1,10 @@
 const mongoose = require("mongoose");
 
-const priceSchema = new mongoose.Schema({
-    tur: { type: String, required: true },   // Örn: Altın/ONS, USD/TL, Çeyrek
-    alis: { type: Number, required: true },
-    satis: { type: Number, required: true },
-}, { timestamps: true });
+const PriceSchema = new mongoose.Schema({
+    type: { type: String, required: true },   // örn: "Altın", "USD"
+    buy: { type: Number, required: true },    // alış fiyatı
+    sell: { type: Number, required: true },   // satış fiyatı
+    createdAt: { type: Date, default: Date.now },
+});
 
-module.exports = mongoose.model("Price", priceSchema);
-z
+module.exports = mongoose.model("Price", PriceSchema);

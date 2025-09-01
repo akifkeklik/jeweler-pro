@@ -1,9 +1,9 @@
 const axios = require("axios");
+const xml2js = require("xml2js");
 const express = require("express");
 const mongoose = require("mongoose");
 const cors = require("cors");
 const bodyParser = require("body-parser");
-
 const app = express();
 const PORT = 5000;
 
@@ -27,6 +27,7 @@ const Product = require("./models/Product");
 const Customer = require("./models/Customer");
 const Sale = require("./models/Sale");
 const Setting = require("./models/Setting");
+const Price = require("./models/prices");
 
 // -------------------- ENDPOINTLER --------------------
 
@@ -226,41 +227,223 @@ app.delete("/api/sales/:id", async (req, res) => {
         res.status(500).json({ error: err.message });
     }
 });
-// ===== PRICES =====
 
+// ===== PRICES (DB + TCMB) =====
 app.get("/api/prices", async (req, res) => {
     try {
-        // TCMB’den XML verisini al
-        const tcmbRes = await axios.get("https://www.tcmb.gov.tr/kurlar/today.xml");
-        const tcmbData = await xml2js.parseStringPromise(tcmbRes.data);
-
-        // Fonksiyon: İstenen döviz kurunu bul
-        const getRate = (code) => {
-            const curr = tcmbData.Tarih_Date.Currency.find(c => c.$.Kod === code);
-            if (!curr) return null;
-            return {
-                tur: `${code}/TL`,
-                alis: parseFloat(curr.ForexBuying[0]).toFixed(4),
-                satis: parseFloat(curr.ForexSelling[0]).toFixed(4),
-            };
-        };
-
-        // Dövizler
-        const dovizFiyatlari = [
-            getRate("USD"),
-            getRate("EUR"),
-            getRate("GBP"),
-            getRate("AUD"),
-        ].filter(item => item !== null);
-
-        // JSON çıktısı
-        res.json({ dovizFiyatlari });
-
+        const dovizFiyatlari = await getTcmbCurrencies();
+        const prices = await Price.find();
+        res.json({ dovizFiyatlari, fiyatlar: prices });
     } catch (err) {
-        console.error("Prices API hata:", err.message);
+        console.error("Prices API hata:", err);
         res.status(500).json({ error: "Fiyatlar alınamadı" });
     }
 });
+
+app.post("/api/prices", async (req, res) => {
+    try {
+        const newPrice = new Price(req.body);
+        await newPrice.save();
+        res.json(newPrice);
+    } catch (err) {
+        res.status(500).json({ error: err.message });
+    }
+});
+
+app.put("/api/prices/:id", async (req, res) => {
+    try {
+        const updated = await Price.findByIdAndUpdate(req.params.id, req.body, { new: true });
+        if (!updated) return res.status(404).json({ error: "Fiyat bulunamadı" });
+        res.json(updated);
+    } catch (err) {
+        res.status(500).json({ error: err.message });
+    }
+});
+
+app.delete("/api/prices/:id", async (req, res) => {
+    try {
+        const deleted = await Price.findByIdAndDelete(req.params.id);
+        if (!deleted) return res.status(404).json({ error: "Fiyat bulunamadı" });
+        res.json({ message: "Fiyat silindi" });
+    } catch (err) {
+        res.status(500).json({ error: err.message });
+    }
+});
+
+// ===== SETTINGS =====
+app.get("/api/settings", async (req, res) => {
+    try {
+        res.json(await Setting.find());
+    } catch (err) {
+        res.status(500).json({ error: err.message });
+    }
+});
+app.post("/api/settings", async (req, res) => {
+    try {
+        const newSetting = new Setting(req.body);
+        await newSetting.save();
+        res.json(newSetting);
+    } catch (err) {
+        res.status(500).json({ error: err.message });
+    }
+});
+app.put("/api/settings/:id", async (req, res) => {
+    try {
+        const updated = await Setting.findByIdAndUpdate(req.params.id, req.body, { new: true });
+        if (!updated) return res.status(404).json({ error: "Ayar bulunamadı" });
+        res.json(updated);
+    } catch (err) {
+        res.status(500).json({ error: err.message });
+    }
+});
+app.delete("/api/settings/:id", async (req, res) => {
+    try {
+        const deleted = await Setting.findByIdAndDelete(req.params.id);
+        if (!deleted) return res.status(404).json({ error: "Ayar bulunamadı" });
+        res.json({ message: "Ayar silindi" });
+    } catch (err) {
+        res.status(500).json({ error: err.message });
+    }
+});
+
+// ---------------- REPORT ENDPOINTS ----------------
+// Günlük Rapor
+app.get("/api/reports/daily", async (req, res) => {
+    try {
+        const start = new Date();
+        start.setHours(0, 0, 0, 0);
+        const end = new Date();
+        end.setHours(23, 59, 59, 999);
+
+        const sales = await Sale.find({ date: { $gte: start, $lte: end } })
+            .populate("productId", "name price")
+            .populate("customerId", "name");
+
+        const mapped = sales.map((s) => ({
+            _id: s._id,
+            productName: s.productId ? s.productId.name : null,
+            customerName: s.customerId ? s.customerId.name : null,
+            quantity: s.quantity,
+            totalPrice: s.totalPrice,
+            kar: Math.round(s.totalPrice * 0.2),
+            date: s.date,
+        }));
+
+        res.json(mapped);
+    } catch (err) {
+        res.status(500).json({ error: err.message });
+    }
+});
+
+// Haftalık Rapor
+app.get("/api/reports/weekly", async (req, res) => {
+    try {
+        const oneWeekAgo = new Date();
+        oneWeekAgo.setDate(oneWeekAgo.getDate() - 7);
+
+        const sales = await Sale.find({ date: { $gte: oneWeekAgo } })
+            .populate("productId", "name price")
+            .populate("customerId", "name");
+
+        const mapped = sales.map((s) => ({
+            _id: s._id,
+            productName: s.productId ? s.productId.name : null,
+            customerName: s.customerId ? s.customerId.name : null,
+            quantity: s.quantity,
+            totalPrice: s.totalPrice,
+            kar: Math.round(s.totalPrice * 0.2),
+            date: s.date,
+        }));
+
+        res.json(mapped);
+    } catch (err) {
+        res.status(500).json({ error: err.message });
+    }
+});
+
+// Aylık Rapor
+app.get("/api/reports/monthly", async (req, res) => {
+    try {
+        const now = new Date();
+        const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1);
+
+        const sales = await Sale.find({ date: { $gte: startOfMonth } })
+            .populate("productId", "name price")
+            .populate("customerId", "name");
+
+        const mapped = sales.map((s) => ({
+            _id: s._id,
+            productName: s.productId ? s.productId.name : null,
+            customerName: s.customerId ? s.customerId.name : null,
+            quantity: s.quantity,
+            totalPrice: s.totalPrice,
+            kar: Math.round(s.totalPrice * 0.2),
+            date: s.date,
+        }));
+
+        res.json(mapped);
+    } catch (err) {
+        res.status(500).json({ error: err.message });
+    }
+});
+
+// En Çok Satılanlar
+app.get("/api/reports/top-sellers", async (req, res) => {
+    try {
+        const sales = await Sale.find().populate("productId", "name price");
+
+        const grouped = {};
+        sales.forEach((s) => {
+            if (!s.productId) return;
+            const key = s.productId._id;
+            if (!grouped[key]) {
+                grouped[key] = { urun: s.productId.name, adet: 0, ciro: 0, kar: 0 };
+            }
+            grouped[key].adet += s.quantity;
+            grouped[key].ciro += s.totalPrice;
+            grouped[key].kar += Math.round(s.totalPrice * 0.2);
+        });
+
+        res.json(Object.values(grouped));
+    } catch (err) {
+        res.status(500).json({ error: err.message });
+    }
+});
+
+// Az Kalan Stok
+app.get("/api/reports/low-stock", async (req, res) => {
+    try {
+        const products = await Product.find({ stock: { $lte: 5 } });
+        const mapped = products.map((p) => ({ isim: p.name, stok: p.stock }));
+        res.json(mapped);
+    } catch (err) {
+        res.status(500).json({ error: err.message });
+    }
+});
+
+// ---------------- HELPER FUNCTIONS ----------------
+async function getTcmbCurrencies() {
+    try {
+        const res = await axios.get("https://www.tcmb.gov.tr/kurlar/today.xml");
+        const data = await xml2js.parseStringPromise(res.data);
+
+        const codes = ["USD", "EUR", "GBP", "AUD"];
+        return codes
+            .map((code) => {
+                const curr = data.Tarih_Date.Currency.find((c) => c.$.Kod === code);
+                if (!curr) return null;
+                return {
+                    tur: `${code}/TL`,
+                    alis: parseFloat(curr.ForexBuying[0]).toFixed(4),
+                    satis: parseFloat(curr.ForexSelling[0]).toFixed(4),
+                };
+            })
+            .filter((c) => c !== null);
+    } catch (err) {
+        console.error("TCMB verisi alınamadı:", err);
+        return [];
+    }
+}
 
 // -------------------- TEST --------------------
 app.get("/", (req, res) => {

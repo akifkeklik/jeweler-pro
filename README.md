@@ -18,10 +18,10 @@ Modern kuyumcu yönetim sistemi. Müşteri, ürün, satış ve raporlama işleml
 
 
 
-🛠 Kullanılan Teknolojiler
+###🛠 Kullanılan Teknolojiler
 
 
-🎨 Frontend
+##🎨 Frontend
 
 Vue.js 3 – UI framework
 
@@ -36,7 +36,7 @@ Chart.js (veya Vue-Chartjs) – Grafikler ve raporlamalar için
 Axios / Fetch API – Backend ile veri alışverişi
 
 
-⚙️ Backend
+##⚙️ Backend
 
 
 Node.js – Çalışma ortamı
@@ -49,14 +49,14 @@ CORS & Body-parser – Middleware’ler
 
 
 
-🗄️ Veritabanı
+##🗄️ Veritabanı
 
 
 MongoDB – Verilerin saklandığı NoSQL veritabanı
 
 
 
-🔧 Diğer Araçlar
+##🔧 Diğer Araçlar
 
 
 npm – Paket yönetimi

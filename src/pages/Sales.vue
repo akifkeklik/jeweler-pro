@@ -2,16 +2,7 @@
   <v-container fluid>
     <h2 class="mb-6 text-h4 font-weight-bold">📊 Satışlar</h2>
 
-    <!-- Üst İstatistik Kartları -->
-    <v-row>
-      <v-col cols="12" md="3" v-for="stat in stats" :key="stat.title">
-        <v-card class="pa-5 text-center rounded-xl elevation-4 stat-card" :style="{ background: stat.color }">
-          <v-icon size="40" color="white">{{ stat.icon }}</v-icon>
-          <div class="text-subtitle-1 font-weight-medium mt-2 text-white">{{ stat.title }}</div>
-          <div class="text-h5 font-weight-bold mt-1 text-white">{{ stat.value }}</div>
-        </v-card>
-      </v-col>
-    </v-row>
+
 
     <!-- Filtreleme + Tablo Alanı -->
     <v-card class="mt-8 pa-6 rounded-xl elevation-2 white-card">

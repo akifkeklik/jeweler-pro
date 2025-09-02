@@ -1,9 +1,10 @@
-const axios = require("axios");
-const xml2js = require("xml2js");
 const express = require("express");
 const mongoose = require("mongoose");
 const cors = require("cors");
 const bodyParser = require("body-parser");
+const axios = require("axios");
+const xml2js = require("xml2js");
+
 const app = express();
 const PORT = 5000;
 
@@ -29,7 +30,50 @@ const Sale = require("./models/Sale");
 const Setting = require("./models/Setting");
 const Price = require("./models/prices");
 
-// -------------------- ENDPOINTLER --------------------
+// ==================================================
+// ================ CRUD ENDPOINTLERI ===============
+// ==================================================
+
+// ==== Dashboard Özet Kartları ====
+app.get("/api/summary", async (req, res) => {
+    try {
+        const sales = await Sale.find()
+            .populate("customerId", "name")
+            .populate("productId", "name");
+
+        const totalRevenue = sales.reduce((sum, s) => sum + (s.totalPrice || 0), 0);
+        const totalProfit = sales.reduce((sum, s) => sum + Math.round((s.totalPrice || 0) * 0.2), 0);
+        const totalQuantity = sales.reduce((sum, s) => sum + (s.quantity || 0), 0);
+
+        const uniqueCustomers = new Set(sales.map(s => s.customerId?._id?.toString()));
+        const totalCustomers = uniqueCustomers.size;
+
+        res.json({
+            totalRevenue,
+            totalProfit,
+            totalQuantity,
+            totalCustomers
+        });
+    } catch (err) {
+        res.status(500).json({ error: err.message });
+    }
+});
+
+// ==================================================
+// ================== TEST SERVER ===================
+// ==================================================
+app.get("/", (req, res) => {
+    res.send("Backend kuyumcu_pro_official veritabanı ile çalışıyor 🚀");
+});
+
+// -------------------- SUNUCU --------------------
+app.listen(PORT, () => {
+    console.log(`✅ Backend http://localhost:${PORT} adresinde çalışıyor`);
+});
+
+
+
+
 
 // ===== MATERIALS =====
 app.get("/api/materials", async (req, res) => {
@@ -200,14 +244,14 @@ app.get("/api/sales", async (req, res) => {
         res.status(500).json({ error: err.message });
     }
 });
-// Satış Ekle
 app.post("/api/sales", async (req, res) => {
     try {
         let body = { ...req.body };
 
-        // Eğer date string geldiyse → Date objesine çevir
-        if (body.date) {
-            body.date = new Date(body.date);
+        if (body.date && typeof body.date === "string") {
+            const [day, month, yearAndTime] = body.date.split(".");
+            const [year, time] = yearAndTime.split(" ");
+            body.date = new Date(`${year}-${month}-${day}T${time}:00`);
         }
 
         const newSale = new Sale(body);
@@ -217,7 +261,6 @@ app.post("/api/sales", async (req, res) => {
         res.status(500).json({ error: err.message });
     }
 });
-
 app.put("/api/sales/:id", async (req, res) => {
     try {
         const updated = await Sale.findByIdAndUpdate(req.params.id, req.body, { new: true });
@@ -244,11 +287,9 @@ app.get("/api/prices", async (req, res) => {
         const prices = await Price.find();
         res.json({ dovizFiyatlari, fiyatlar: prices });
     } catch (err) {
-        console.error("Prices API hata:", err);
         res.status(500).json({ error: "Fiyatlar alınamadı" });
     }
 });
-
 app.post("/api/prices", async (req, res) => {
     try {
         const newPrice = new Price(req.body);
@@ -258,7 +299,6 @@ app.post("/api/prices", async (req, res) => {
         res.status(500).json({ error: err.message });
     }
 });
-
 app.put("/api/prices/:id", async (req, res) => {
     try {
         const updated = await Price.findByIdAndUpdate(req.params.id, req.body, { new: true });
@@ -268,7 +308,6 @@ app.put("/api/prices/:id", async (req, res) => {
         res.status(500).json({ error: err.message });
     }
 });
-
 app.delete("/api/prices/:id", async (req, res) => {
     try {
         const deleted = await Price.findByIdAndDelete(req.params.id);
@@ -316,106 +355,125 @@ app.delete("/api/settings/:id", async (req, res) => {
 });
 
 // ---------------- REPORT ENDPOINTS ----------------
-// ---------------- REPORT ENDPOINTS ----------------
+const moment = require("moment");
 
-// Günlük Rapor (UTC fix)
+// === Günlük Rapor ===
+// === Günlük Rapor ===
 app.get("/api/reports/daily", async (req, res) => {
     try {
-        const now = new Date();
-
-        // Türkiye saati için UTC+3 offset
-        const offset = 3 * 60 * 60 * 1000;
-        const localNow = new Date(now.getTime() + offset);
-
-        const startUtc = new Date(Date.UTC(localNow.getFullYear(), localNow.getMonth(), localNow.getDate(), 0, 0, 0));
-        const endUtc = new Date(Date.UTC(localNow.getFullYear(), localNow.getMonth(), localNow.getDate(), 23, 59, 59));
-
-        const sales = await Sale.find({ date: { $gte: startUtc, $lte: endUtc } })
-            .populate("productId", "name price")
+        const sales = await Sale.find()
+            .populate("productId", "name")
             .populate("customerId", "name");
 
-        const mapped = sales.map((s) => ({
+        const today = moment().format("DD.MM.YYYY");
+
+        const dailySales = sales.filter(s => {
+            const saleDate = moment(s.date).format("DD.MM.YYYY");
+            return saleDate === today;
+        });
+
+        res.json(dailySales.map(s => ({
             _id: s._id,
             productName: s.productId ? s.productId.name : null,
             customerName: s.customerId ? s.customerId.name : null,
             quantity: s.quantity,
             totalPrice: s.totalPrice,
             kar: Math.round(s.totalPrice * 0.2),
-            date: new Date(s.date).toLocaleString("tr-TR"),
-        }));
-
-        res.json(mapped);
+            date: moment(s.date).format("DD.MM.YYYY")
+        })));
     } catch (err) {
-        console.error("Daily hata:", err);
         res.status(500).json({ error: err.message });
     }
 });
 
-
-// Haftalık Rapor (UTC fix)
+// === Haftalık Rapor ===
 app.get("/api/reports/weekly", async (req, res) => {
     try {
-        const now = new Date();
-        const offset = 3 * 60 * 60 * 1000;
-        const localNow = new Date(now.getTime() + offset);
-
-        const oneWeekAgoLocal = new Date(localNow);
-        oneWeekAgoLocal.setDate(localNow.getDate() - 7);
-
-        const oneWeekAgoUtc = new Date(oneWeekAgoLocal.getTime() - offset);
-        const nowUtc = new Date(localNow.getTime() - offset);
-
-        const sales = await Sale.find({ date: { $gte: oneWeekAgoUtc, $lte: nowUtc } })
-            .populate("productId", "name price")
+        const sales = await Sale.find()
+            .populate("productId", "name")
             .populate("customerId", "name");
 
-        const mapped = sales.map((s) => ({
+        const startOfWeek = moment().startOf("week");
+        const endOfWeek = moment().endOf("week");
+
+        const weeklySales = sales.filter(s => {
+            const saleDate = moment(s.date);
+            return saleDate.isBetween(startOfWeek, endOfWeek, null, "[]");
+        });
+
+        res.json(weeklySales.map(s => ({
             _id: s._id,
             productName: s.productId ? s.productId.name : null,
             customerName: s.customerId ? s.customerId.name : null,
             quantity: s.quantity,
             totalPrice: s.totalPrice,
             kar: Math.round(s.totalPrice * 0.2),
-            date: new Date(s.date).toLocaleDateString("tr-TR"),
-        }));
-
-        res.json(mapped);
+            date: moment(s.date).format("DD.MM.YYYY")
+        })));
     } catch (err) {
-        console.error("Weekly hata:", err);
+        res.status(500).json({ error: err.message });
+    }
+});
+
+// === Aylık Rapor ===
+app.get("/api/reports/monthly", async (req, res) => {
+    try {
+        const sales = await Sale.find()
+            .populate("productId", "name")
+            .populate("customerId", "name");
+
+        const startOfMonth = moment().startOf("month");
+        const endOfMonth = moment().endOf("month");
+
+        const monthlySales = sales.filter(s => {
+            const saleDate = moment(s.date);
+            return saleDate.isBetween(startOfMonth, endOfMonth, null, "[]");
+        });
+
+        res.json(monthlySales.map(s => ({
+            _id: s._id,
+            productName: s.productId ? s.productId.name : null,
+            customerName: s.customerId ? s.customerId.name : null,
+            quantity: s.quantity,
+            totalPrice: s.totalPrice,
+            kar: Math.round(s.totalPrice * 0.2),
+            date: moment(s.date).format("DD.MM.YYYY")
+        })));
+    } catch (err) {
         res.status(500).json({ error: err.message });
     }
 });
 
 
-// Aylık Rapor (UTC fix)
-app.get("/api/reports/monthly", async (req, res) => {
+// En Çok Satılanlar (Bu Ay)
+app.get("/api/reports/top-sellers", async (req, res) => {
     try {
         const now = new Date();
-        const offset = 3 * 60 * 60 * 1000;
-        const localNow = new Date(now.getTime() + offset);
+        const start = new Date(now.getFullYear(), now.getMonth(), 1);
 
-        const startOfMonthLocal = new Date(localNow.getFullYear(), localNow.getMonth(), 1);
-        const startOfMonthUtc = new Date(startOfMonthLocal.getTime() - offset);
+        const sales = await Sale.aggregate([
+            { $match: { date: { $gte: start, $lte: now } } },
+            {
+                $group: {
+                    _id: "$productName",
+                    adet: { $sum: "$quantity" },
+                    ciro: { $sum: "$totalPrice" },
+                    kar: { $sum: { $multiply: ["$totalPrice", 0.2] } }
+                }
+            },
+            { $sort: { adet: -1 } },
+            { $limit: 10 }
+        ]);
 
-        const nowUtc = new Date(localNow.getTime() - offset);
-
-        const sales = await Sale.find({ date: { $gte: startOfMonthUtc, $lte: nowUtc } })
-            .populate("productId", "name price")
-            .populate("customerId", "name");
-
-        const mapped = sales.map((s) => ({
-            _id: s._id,
-            productName: s.productId ? s.productId.name : null,
-            customerName: s.customerId ? s.customerId.name : null,
-            quantity: s.quantity,
-            totalPrice: s.totalPrice,
-            kar: Math.round(s.totalPrice * 0.2),
-            date: new Date(s.date).toLocaleDateString("tr-TR"),
+        const mapped = sales.map(s => ({
+            urun: s._id,
+            adet: s.adet,
+            ciro: s.ciro,
+            kar: s.kar
         }));
 
         res.json(mapped);
     } catch (err) {
-        console.error("Monthly hata:", err);
         res.status(500).json({ error: err.message });
     }
 });
@@ -424,14 +482,21 @@ app.get("/api/reports/monthly", async (req, res) => {
 app.get("/api/reports/low-stock", async (req, res) => {
     try {
         const products = await Product.find({ stock: { $lte: 5 } });
-        const mapped = products.map((p) => ({ isim: p.name, stok: p.stock }));
+
+        const mapped = products.map(p => ({
+            isim: p.name,
+            stok: p.stock
+        }));
+
         res.json(mapped);
     } catch (err) {
         res.status(500).json({ error: err.message });
     }
 });
 
-// ---------------- HELPER FUNCTIONS ----------------
+// ==================================================
+// ================= HELPER FONK. ===================
+// ==================================================
 async function getTcmbCurrencies() {
     try {
         const res = await axios.get("https://www.tcmb.gov.tr/kurlar/today.xml");
@@ -455,7 +520,9 @@ async function getTcmbCurrencies() {
     }
 }
 
-// -------------------- TEST --------------------
+// ==================================================
+// ================== TEST SERVER ===================
+// ==================================================
 app.get("/", (req, res) => {
     res.send("Backend kuyumcu_pro_official veritabanı ile çalışıyor 🚀");
 });

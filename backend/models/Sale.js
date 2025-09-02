@@ -4,18 +4,21 @@ const saleSchema = new mongoose.Schema(
     {
         _id: { type: Number, required: true }, // 8 haneli ID
 
-        // Müşteri ve Ürün Number olacak!
+        // Müşteri ve Ürün ilişkileri (Number ID üzerinden)
         customerId: { type: Number, ref: "Customer", required: true },
         productId: { type: Number, ref: "Product", required: true },
 
         quantity: { type: Number, default: 1 },
         totalPrice: { type: Number, required: true },
+
         paymentMethod: {
             type: String,
             enum: ["nakit", "kredi kartı", "havale"],
             default: "nakit",
         },
-        date: { type: Date, default: Date.now },
+
+        // ✅ Tarih artık Date tipinde
+        date: { type: Date, required: true, default: Date.now },
     },
     { timestamps: true, _id: false }
 );

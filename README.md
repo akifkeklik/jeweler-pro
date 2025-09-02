@@ -17,7 +17,9 @@ Modern kuyumcu yönetim sistemi. Müşteri, ürün, satış ve raporlama işleml
 -Veriler  MongoDB veritabanından gelir ve API aracılığıyla frontend’e iletilir.
 
 
+
 🛠 Kullanılan Teknolojiler
+
 
 🎨 Frontend
 
@@ -33,7 +35,9 @@ Chart.js (veya Vue-Chartjs) – Grafikler ve raporlamalar için
 
 Axios / Fetch API – Backend ile veri alışverişi
 
+
 ⚙️ Backend
+
 
 Node.js – Çalışma ortamı
 
@@ -43,11 +47,17 @@ Mongoose – MongoDB ODM (Object Data Modeling)
 
 CORS & Body-parser – Middleware’ler
 
+
+
 🗄️ Veritabanı
+
 
 MongoDB – Verilerin saklandığı NoSQL veritabanı
 
+
+
 🔧 Diğer Araçlar
+
 
 npm – Paket yönetimi
 

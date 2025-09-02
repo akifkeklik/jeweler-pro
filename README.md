@@ -1,69 +1,132 @@
-### Jeweler Pro 💍
+💍 Jeweler Pro
 
 Modern kuyumcu yönetim sistemi. Müşteri, ürün, satış ve raporlama işlemlerini kolayca yönetmek için geliştirilmiştir.
 
-### Özellikler :
+🚀 Özellikler
 
--Müşteri yönetimi (ekleme, düzenleme, listeleme)
+👥 Müşteri Yönetimi (ekleme, düzenleme, listeleme)
 
--Ürün yönetimi (fiyat hesaplama, stok takibi)
+📦 Ürün Yönetimi (fiyat hesaplama, stok takibi)
 
--Satış işlemleri
+💰 Satış İşlemleri
 
--Dashboard ile hızlı özetler
+📊 Dashboard ile hızlı özetler
 
--Raporlama ekranları
+📑 Raporlama ekranları
 
--Veriler  MongoDB veritabanından gelir ve API aracılığıyla frontend’e iletilir.
+⚙️ Ayarlar sayfası
+
+🔗 Veriler MongoDB veritabanından API aracılığıyla alınır
+
+🛠 Kullanılan Teknolojiler
+🎨 Frontend
+
+Vue.js 3
+ – UI framework
+
+Vue Router
+ – Sayfa yönlendirme
+
+Vuex
+ – State management
+
+Vuetify
+ – UI component kütüphanesi
+
+Chart.js
+ – Grafikler ve raporlamalar için
+
+Axios
+ – API istekleri
+
+⚙️ Backend
+
+Node.js
+ – Çalışma ortamı
+
+Express.js
+ – RESTful API geliştirme
+
+Mongoose
+ – MongoDB ODM
+
+Middleware: CORS, body-parser
+
+🗄️ Veritabanı
+
+MongoDB
+ – Verilerin saklandığı NoSQL veritabanı
+ 
+🔧 Diğer Araçlar
+
+npm
+ – Paket yönetimi
+
+dotenv
+ – Ortam değişkenleri
+
+ESLint
+ – Kod standartları
+
+ ⚙️ Kurulum
+1. Depoyu Klonla
+git clone https://github.com/akifkeklik/jeweler-pro.git
+cd jeweler-pro
+
+2. Backend Kurulumu
+cd backend
+npm install
+npm start
 
 
+📌 Backend varsayılan olarak http://localhost:5000 adresinde çalışır.
 
-### Kullanılan Teknolojiler
-
-
-### Frontend
-
-Vue.js 3 – UI framework
-
-Vue Router – Sayfa yönlendirme
-
-Vuex – State management
-
-Vuetify – UI component kütüphanesi
-
-Chart.js (veya Vue-Chartjs) – Grafikler ve raporlamalar için
-
-Axios / Fetch API – Backend ile veri alışverişi
+3. Frontend Kurulumu
+cd ../
+npm install
+npm run serve
 
 
-### Backend
+📌 Frontend varsayılan olarak http://localhost:8080 adresinde çalışır.
 
+🔑 Ortam Değişkenleri
 
-Node.js – Çalışma ortamı
+Backend için backend/.env dosyası oluşturun:
 
-Express.js – RESTful API geliştirme
+PORT=5000
+MONGO_URI=mongodb://localhost:27017/jewelerpro
+JWT_SECRET=supersecretkey
 
-Mongoose – MongoDB ODM (Object Data Modeling)
+🗄️ Veritabanı Kullanımı
 
-CORS & Body-parser – Middleware’ler
+Tüm müşteri, ürün, satış ve rapor verileri MongoDB’de tutulur.
 
+Backend, mongoose ile veritabanına bağlanır.
 
+Frontend tarafı verileri REST API üzerinden çeker.
 
-### Veritabanı
+📌 Örnek Veri Akışı:
 
+Kullanıcı frontend’den ürün ekler
 
-MongoDB – Verilerin saklandığı NoSQL veritabanı
+İstek backend API’sine gönderilir (/api/products)
 
+Backend, veriyi MongoDB’ye kaydeder
 
+Listeleme yapıldığında veriler doğrudan veritabanından okunur
 
-### Diğer Araçlar
+🤝 Katkıda Bulunma
 
+Bu projeyi forklayın
 
-npm – Paket yönetimi
+Yeni bir branch açın (git checkout -b feature/yenilik)
 
-ESLint – Kod standartları
+Commit atın (git commit -m 'Yeni özellik eklendi')
 
-Git & GitHub – Versiyon kontrolü
+Push edin (git push origin feature/yenilik)
 
-dotenv – Ortam değişkenleri yönetimi
+Pull Request açın
 
+📜 Lisans
+
+Tüm Hakları saklıdır..

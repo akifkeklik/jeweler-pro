@@ -2,8 +2,6 @@
   <v-container fluid>
     <h2 class="mb-6 text-h4 font-weight-bold">Satışlar</h2>
 
-
-
     <!-- Filtreleme + Tablo Alanı -->
     <v-card class="mt-8 pa-6 rounded-xl elevation-2 white-card">
       <!-- Filtreleme Alanı -->
@@ -54,7 +52,7 @@
               v-model="selectedCustomer"
               :items="customers"
               item-text="name"
-              item-value="_id"
+              item-value="name"
               label="Müşteri Seç"
               variant="solo-filled"
               rounded
@@ -224,7 +222,9 @@ export default {
                 .includes(this.search.toLowerCase());
 
         const matchesCustomer =
-            !this.selectedCustomer || s.customerId === this.selectedCustomer;
+            !this.selectedCustomer ||
+            (s.customerName &&
+                s.customerName.toLowerCase().trim() === this.selectedCustomer.toLowerCase().trim());
 
         let matchesDate = true;
         if (this.dateRange.length === 2) {
@@ -241,7 +241,7 @@ export default {
       return this.salesData.reduce((sum, s) => sum + (s.totalPrice || 0), 0);
     },
     musteriSayisi() {
-      const ids = this.salesData.map((s) => s.customerId);
+      const ids = this.salesData.map((s) => s.customerName);
       return new Set(ids).size;
     },
     enCokSatilan() {

@@ -1,6 +1,6 @@
 <template>
   <v-container fluid>
-    <h2 class="mb-6 text-h4 font-weight-bold">📊 Satışlar</h2>
+    <h2 class="mb-6 text-h4 font-weight-bold">Satışlar</h2>
 
 
 

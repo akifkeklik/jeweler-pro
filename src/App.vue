@@ -72,8 +72,8 @@ export default {
         { title: "Ürünler", icon: "mdi-cube", path: "/products" },
         { title: "Müşteriler", icon: "mdi-account-group", path: "/customers" },
         { title: "Raporlar", icon: "mdi-chart-line", path: "/reports" },
-        { title: "Hesap Makinesi", icon: "mdi-calculator", path: "/calculator" },
-        { title: "Ayarlar", icon: "mdi-cog", path: "/settings" }
+        { title: "Hesap Makinesi", icon: "mdi-calculator", path: "/calculator" }
+
       ]
     };
   },

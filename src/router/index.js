@@ -6,7 +6,6 @@ import SalesPage from "@/pages/Sales.vue";
 import ProductPage from "@/pages/Products/ProductPage.vue";
 import CustomerPage from "@/pages/Customers/CustomerPage.vue";
 import ReportPage from "@/pages/Reports/ReportPage.vue";
-import SettingsPage from "@/pages/Settings.vue";
 import PricesPage from "@/pages/PricesPage.vue";
 import DashboardPage from "@/pages/DashboardPage.vue";
 import CalculatorPage from "@/components/Calculator.vue";
@@ -31,11 +30,9 @@ export default new Router({
         { path: "/products", name: "Products", component: ProductPage },
         { path: "/customers", name: "Customers", component: CustomerPage },
         { path: "/reports", name: "Reports", component: ReportPage },
-        { path: "/settings", name: "Settings", component: SettingsPage },
         { path: "/prices", name: "PricesPage", component: PricesPage },
         { path: "/dashboard", name: "Dashboard", component: DashboardPage },
         { path: "/calculator", name: "Calculator", component: CalculatorPage },
-
         // Varsayılan yönlendirme
         { path: "*", redirect: "/dashboard" }
     ]

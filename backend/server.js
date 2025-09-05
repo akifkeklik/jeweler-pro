@@ -3,8 +3,6 @@ const mongoose = require("mongoose");
 const cors = require("cors");
 const bodyParser = require("body-parser");
 const axios = require("axios");
-const xml2js = require("xml2js");
-
 const app = express();
 const PORT = 5000;
 
@@ -27,7 +25,6 @@ const Category = require("./models/Category");
 const Product = require("./models/Product");
 const Customer = require("./models/Customer");
 const Sale = require("./models/Sale");
-const Setting = require("./models/Setting");
 const Price = require("./models/prices");
 
 // ==================================================
@@ -70,9 +67,6 @@ app.get("/", (req, res) => {
 app.listen(PORT, () => {
     console.log(`✅ Backend http://localhost:${PORT} adresinde çalışıyor`);
 });
-
-
-
 
 
 // ===== MATERIALS =====
@@ -318,41 +312,6 @@ app.delete("/api/prices/:id", async (req, res) => {
     }
 });
 
-// ===== SETTINGS =====
-app.get("/api/settings", async (req, res) => {
-    try {
-        res.json(await Setting.find());
-    } catch (err) {
-        res.status(500).json({ error: err.message });
-    }
-});
-app.post("/api/settings", async (req, res) => {
-    try {
-        const newSetting = new Setting(req.body);
-        await newSetting.save();
-        res.json(newSetting);
-    } catch (err) {
-        res.status(500).json({ error: err.message });
-    }
-});
-app.put("/api/settings/:id", async (req, res) => {
-    try {
-        const updated = await Setting.findByIdAndUpdate(req.params.id, req.body, { new: true });
-        if (!updated) return res.status(404).json({ error: "Ayar bulunamadı" });
-        res.json(updated);
-    } catch (err) {
-        res.status(500).json({ error: err.message });
-    }
-});
-app.delete("/api/settings/:id", async (req, res) => {
-    try {
-        const deleted = await Setting.findByIdAndDelete(req.params.id);
-        if (!deleted) return res.status(404).json({ error: "Ayar bulunamadı" });
-        res.json({ message: "Ayar silindi" });
-    } catch (err) {
-        res.status(500).json({ error: err.message });
-    }
-});
 
 // ---------------- REPORT ENDPOINTS ----------------
 const moment = require("moment");

@@ -32,7 +32,7 @@
                 <v-select
                     v-model="selectedUnit"
                     :items="units"
-                    :menu-props="{offsetY:true}"
+                    :menu-props="{ offsetY: true }"
                     item-text="text"
                     item-value="value"
                     label="Birim Seç"
@@ -47,9 +47,11 @@
 
           <!-- Hesaplama Sonucu -->
           <v-card outlined class="pa-5 mt-4 result-card text-center">
-            <div class="text-h6 font-weight-medium result-text">Sonuç</div>
-            <div class="text-h5 font-weight-bold mt-2 result-text">
-              {{ formattedResult }}
+            <div class="result-box">
+              <div class="text-h6 font-weight-medium result-text">Sonuç</div>
+              <div class="text-h5 font-weight-bold mt-2 result-text">
+                {{ formattedResult }}
+              </div>
             </div>
           </v-card>
 
@@ -104,25 +106,20 @@ export default {
       const unit = this.units.find((u) => u.value === this.selectedUnit);
       const totalGrams = this.amount * unit.gram;
       const totalPrice = totalGrams * this.pricePerGram;
-      return `${this.amount} ${unit.text} ≈ ${totalGrams.toFixed(2)} gr | ${totalPrice.toLocaleString()} ₺`;
+      return `${this.amount} ${unit.text} ≈ ${totalGrams.toFixed(
+          2
+      )} gr | ${totalPrice.toLocaleString()} ₺`;
     },
   },
   watch: {
     amount(val) {
       if (val < 0) this.amount = 0;
-    }
-  }
+    },
+  },
 };
 </script>
 
 <style scoped>
-/* Ana kart */
-.calc-card {
-  border-radius: 20px;
-  background: linear-gradient(135deg, #1e293b, #2a3c5f);
-  color: #fff;
-  box-shadow: 0 8px 20px rgba(0,0,0,0.2);
-}
 
 /* Başlık */
 .calc-header {
@@ -130,35 +127,10 @@ export default {
   font-weight: bold;
   color: black;
 }
-
-/* Input kartları */
-.input-card {
-  background: rgba(255, 255, 255, 0.05);
-  border-radius: 14px;
-  transition: 0.3s;
-}
-.input-card:hover {
-  background: rgba(255, 255, 255, 0.12);
-  box-shadow: 0 6px 16px rgba(0,0,0,0.25);
-}
-
-/* Sonuç kartı */
-.result-card {
-  border-radius: 16px;
-  background: rgba(255, 215, 0, 0.08);
-}
 .result-text {
-  color: black !important; /* Lacivert metin rengi */
+  color: black !important;
 }
 
-/* Tablo */
-.table-card {
-  border-radius: 16px;
-  background: #f9f9f9;
-}
-.v-simple-table thead {
-  background: #f1f1f1;
-}
 .v-simple-table th {
   font-weight: 600;
   color: #444;

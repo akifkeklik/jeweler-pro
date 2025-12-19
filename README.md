@@ -1,119 +1,107 @@
 # 💍 Jeweler Pro
 
-Modern kuyumcu yönetim sistemi. Müşteri, ürün, satış ve raporlama işlemlerini kolayca yönetmek için geliştirilmiştir.
+Modern kuyumcu yönetim sistemi: müşteri, ürün, satış ve raporlama süreçlerini tek bir arayüzden yönetmenizi sağlar.
 
-🚀 Özellikler
-
-👥 Müşteri Yönetimi (ekleme, düzenleme, listeleme)  
-
-📦 Ürün Yönetimi (fiyat hesaplama, stok takibi)  
-
-💰 Satış İşlemleri  
-
-📊 Dashboard ile hızlı özetler  
-
-📑 Raporlama ekranları  
-
-⚙️ Ayarlar sayfası  
-
-🔗 Veriler MongoDB veritabanından API aracılığıyla alınır  
+**Öne Çıkanlar**
+- **Müşteri Yönetimi:** ekleme, düzenleme, listeleme
+- **Ürün Yönetimi:** fiyat hesaplama, stok takibi
+- **Satış İşlemleri:** satış kayıtları ve özetler
+- **Dashboard:** anlık istatistik ve grafikler
+- **Raporlar:** günlük, haftalık, aylık raporlar
 
 ---
 
-🛠 Kullanılan Teknolojiler  
+## Teknolojiler
+- **Frontend:** Vue 2, Vue Router 3, Vuex 3, TypeScript (class-based), Vuetify 2, Chart.js, Axios
+- **Backend:** Node.js, Express 5, Mongoose 8, CORS, body-parser
+- **Veritabanı:** MongoDB
 
-🎨 Frontend  
-
-- Vue.js 3 – UI framework  
-- Vue Router – Sayfa yönlendirme  
-- Vuex – State management  
-- Vuetify – UI component kütüphanesi  
-- Chart.js – Grafikler ve raporlamalar için  
-- Axios – API istekleri  
-
-⚙️ Backend  
-
-- Node.js – Çalışma ortamı  
-- Express.js – RESTful API geliştirme  
-- Mongoose – MongoDB ODM  
-- Middleware: CORS, body-parser  
-
-🗄️ Veritabanı  
-
-- MongoDB – Verilerin saklandığı NoSQL veritabanı  
-
-🔧 Diğer Araçlar  
-
-- npm – Paket yönetimi  
-- dotenv – Ortam değişkenleri  
-- ESLint – Kod standartları  
+Not: Proje Vue 2 tabanlıdır (paketlerde `vue@^2.6.14` kullanılıyor).
 
 ---
 
-⚙️ Kurulum  
+## Dizin Yapısı
+- [src/](src) — Uygulama kaynak kodu (Vue bileşenleri, sayfalar, store, router)
+- [backend/](backend) — Express API ve Mongoose modelleri
+- [public/](public) — Statik dosyalar (ör. Prices.json)
+- [package.json](package.json) — Frontend bağımlılık ve scriptleri
+- [backend/server.js](backend/server.js) — API sunucusu başlangıç dosyası
 
-1. Depoyu Klonla  
+---
+
+## Kurulum
+1) Depoyu klonlayın
 ```bash
 git clone https://github.com/akifkeklik/jeweler-pro.git
 cd jeweler-pro
 ```
 
-2. Backend Kurulumu  
+2) Backend bağımlılıkları
 ```bash
 cd backend
 npm install
-node server.js
 ```
 
-📌 Backend varsayılan olarak **http://localhost:5000** adresinde çalışır.  
-
-3. Frontend Kurulumu  
+3) Frontend bağımlılıkları
 ```bash
-cd ../
-npm install
+cd ..
+
+```
+
+---
+
+## Geliştirme ve Çalıştırma
+İki ayrı terminal kullanın:
+
+- Backend (varsayılan: http://localhost:5000)
+```bash
+node backend/server.js
+```
+
+- Frontend (varsayılan: http://localhost:8080)
+```bash
 npm run serve
 ```
 
-📌 Frontend varsayılan olarak **http://localhost:8080** adresinde çalışır.  
+Frontend, API istekleri için backend taban URL’sine bağlanır.
 
 ---
 
-🔑 Ortam Değişkenleri  
+## Konfigürasyon
+- **MongoDB bağlantısı:** `backend/server.js` içinde varsayılan olarak `mongodb://127.0.0.1:27017/kuyumcu_pro_official` kullanılır.
+- **Port:** Backend `5000` portunda çalışır; frontend Vue CLI varsayılanı `8080`.
 
-Backend için `backend/.env` dosyası oluşturun:  
-
-```env
-PORT=5000
-MONGO_URI=mongodb://localhost:27017/jewelerpro
-JWT_SECRET=supersecretkey
-```
+İhtiyaç halinde bu değerleri `backend/server.js` içerisinden güncelleyebilirsiniz.
 
 ---
 
-🗄️ Veritabanı Kullanımı  
+## API Kısa Liste
+- `GET /api/summary` — Dashboard özet kartları
+- `CRUD /api/materials` — Hammadde
+- `CRUD /api/categories` — Kategori
+- `CRUD /api/products` — Ürün
+- `CRUD /api/customers` — Müşteri
+- `CRUD /api/sales` — Satış
+- `GET /api/prices` — Döviz ve fiyatlar (TCMB + DB)
+- `GET /api/reports/daily|weekly|monthly` — Raporlar
 
-- Tüm müşteri, ürün, satış ve rapor verileri MongoDB’de tutulur.  
-- Backend, mongoose ile veritabanına bağlanır.  
-- Frontend tarafı verileri REST API üzerinden çeker.  
-
-📌 Örnek Veri Akışı:  
-- Kullanıcı frontend’den ürün ekler  
-- İstek backend API’sine gönderilir (`/api/products`)  
-- Backend, veriyi MongoDB’ye kaydeder  
-- Listeleme yapıldığında veriler doğrudan veritabanından okunur  
+Detaylar için [backend/server.js](backend/server.js) dosyasına göz atabilirsiniz.
 
 ---
 
+## Veri ve Dosyalar
+- [public/Prices.json](public/Prices.json) — Fiyatlarla ilgili statik JSON dosyası
+- Dashboard bileşenleri: [src/components/dashboard/](src/components/dashboard) — Kur, altın ve fiyat grafikleri
+
+---
+
+## Katkıda Bulunma
+- Fork oluşturun ve yeni bir branch açın (`feature/xyz`)
+- Değişiklikleri commit edin ve push’layın
+- Pull Request açarak açıklayın
+
+---
+
+## Lisans
+Tüm Hakları Saklıdır.
 🤝 Katkıda Bulunma  
-
-- Bu projeyi forklayın  
-- Yeni bir branch açın (`git checkout -b feature/yenilik`)  
-- Commit atın (`git commit -m 'Yeni özellik eklendi'`)  
-- Push edin (`git push origin feature/yenilik`)  
-- Pull Request açın  
-
----
-
-📜 Lisans  
-
-Tüm Hakları saklıdır.  

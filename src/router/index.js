@@ -2,13 +2,14 @@ import Vue from 'vue';
 import Router from 'vue-router';
 
 // Sayfaları import et
-import SalesPage from "@/pages/Sales.vue";
-import ProductPage from "@/pages/Products/ProductPage.vue";
-import CustomerPage from "@/pages/Customers/CustomerPage.vue";
-import ReportPage from "@/pages/Reports/ReportPage.vue";
-import PricesPage from "@/pages/PricesPage.vue";
-import DashboardPage from "@/pages/DashboardPage.vue";
-import CalculatorPage from "@/components/Calculator.vue";
+// Lazy-loaded sayfalar
+const SalesPage = () => import(/* webpackChunkName: "sales" */ "@/pages/Sales.vue");
+const ProductPage = () => import(/* webpackChunkName: "products" */ "@/pages/Products/ProductPage.vue");
+const CustomerPage = () => import(/* webpackChunkName: "customers" */ "@/pages/Customers/CustomerPage.vue");
+const ReportPage = () => import(/* webpackChunkName: "reports" */ "@/pages/Reports/ReportPage.vue");
+const PricesPage = () => import(/* webpackChunkName: "prices" */ "@/pages/PricesPage.vue");
+const DashboardPage = () => import(/* webpackChunkName: "dashboard" */ "@/pages/DashboardPage.vue");
+const CalculatorPage = () => import(/* webpackChunkName: "calculator" */ "@/components/Calculator.vue");
 
 Vue.use(Router);
 

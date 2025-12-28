@@ -55,16 +55,49 @@
     >
       DEĞERLER
     </v-btn>
+
+    <!-- Notification System -->
+    <div class="notification-container">
+      <v-slide-y-transition group>
+        <div
+            v-for="notification in notifications"
+            :key="notification.id"
+            class="notification-item"
+            :class="`notification-${notification.type}`"
+        >
+          <v-icon small class="mr-2">
+            {{ getNotificationIcon(notification.type) }}
+          </v-icon>
+          <span>{{ notification.message }}</span>
+          <v-btn
+              icon
+              small
+              @click="$store.dispatch('notifications/removeNotification', notification.id)"
+              class="ml-2"
+          >
+            <v-icon small>mdi-close</v-icon>
+          </v-btn>
+        </div>
+      </v-slide-y-transition>
+    </div>
   </v-app>
 </template>
 
 <script>
+import { mapGetters } from 'vuex';
+
 export default {
   name: "App",
+  computed: {
+    ...mapGetters('notifications', ['allNotifications']),
+    notifications() {
+      return this.$store.state.notifications.notifications
+    }
+  },
   data() {
     return {
-      drawer: false, // Sidebar başlangıçta kapalı
-      darkMode: true, // Gece modu default
+      drawer: false,
+      darkMode: true,
       items: [
         { title: "Ana Sayfa", icon: "mdi-home", path: "/dashboard" },
         { title: "Değerler", icon: "mdi-cash", path: "/prices" },
@@ -73,7 +106,6 @@ export default {
         { title: "Müşteriler", icon: "mdi-account-group", path: "/customers" },
         { title: "Raporlar", icon: "mdi-chart-line", path: "/reports" },
         { title: "Hesap Makinesi", icon: "mdi-calculator", path: "/calculator" }
-
       ]
     };
   },
@@ -84,6 +116,15 @@ export default {
     goToPrices() {
       this.drawer = false;
       this.$router.push('/prices');
+    },
+    getNotificationIcon(type) {
+      const icons = {
+        success: 'mdi-check-circle',
+        error: 'mdi-alert-circle',
+        warning: 'mdi-alert',
+        info: 'mdi-information'
+      }
+      return icons[type] || 'mdi-information'
     }
   }
 };
@@ -147,6 +188,61 @@ export default {
 .dark-bg {
   background: linear-gradient(135deg, #141e30, #0f2027) !important;
   color: #f5f5f5 !important;
+}
+
+/* === NOTIFICATION SYSTEM === */
+.notification-container {
+  position: fixed;
+  top: 80px;
+  right: 20px;
+  z-index: 1000;
+  max-width: 400px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.notification-item {
+  display: flex;
+  align-items: center;
+  padding: 14px 16px;
+  border-radius: 8px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+  animation: slideIn 0.3s ease-out;
+  min-height: 48px;
+  font-size: 14px;
+  font-weight: 500;
+}
+
+@keyframes slideIn {
+  from {
+    transform: translateX(400px);
+    opacity: 0;
+  }
+  to {
+    transform: translateX(0);
+    opacity: 1;
+  }
+}
+
+.notification-success {
+  background-color: #4caf50;
+  color: white;
+}
+
+.notification-error {
+  background-color: #f44336;
+  color: white;
+}
+
+.notification-warning {
+  background-color: #ff9800;
+  color: white;
+}
+
+.notification-info {
+  background-color: #2196f3;
+  color: white;
 }
 
 /* === GLOBAL KART STİLİ === */

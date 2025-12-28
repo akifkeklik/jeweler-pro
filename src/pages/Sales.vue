@@ -86,7 +86,7 @@
             <v-icon>mdi-pencil</v-icon>
           </v-btn>
           <!-- Sil -->
-          <v-btn icon color="red" variant="text" @click="deleteSale(item)">
+          <v-btn icon color="red" variant="text" @click="openDeleteDialog(item)">
             <v-icon>mdi-delete</v-icon>
           </v-btn>
         </template>
@@ -155,25 +155,15 @@
         </v-card-actions>
       </v-card>
     </v-dialog>
-
-    <!-- Snackbar -->
-    <v-snackbar v-model="snackbar" color="success" timeout="3000" rounded="pill" location="bottom right">
-      {{ snackbarText }}
-      <template v-slot:actions>
-        <v-btn variant="text" color="white" @click="snackbar = false">Kapat</v-btn>
-      </template>
-    </v-snackbar>
   </v-container>
 </template>
 
 <script>
-import axios from "axios";
+import { mapActions, mapState } from 'vuex';
 
 export default {
   data() {
     return {
-      salesData: [],
-      customers: [],
       search: "",
       dateMenu: false,
       dateRange: [],
@@ -189,10 +179,6 @@ export default {
       editForm: {},
       deleteTarget: null,
 
-      // snackbar
-      snackbar: false,
-      snackbarText: "",
-
       headers: [
         { text: "Satış ID", value: "_id" },
         { text: "Müşteri", value: "customerName" },
@@ -206,6 +192,11 @@ export default {
     };
   },
   computed: {
+    ...mapState('sales', ['sales', 'loading', 'error']),
+    ...mapState('customers', { customers: 'customers' }),
+    salesData() {
+      return this.sales
+    },
     stats() {
       return [
         { title: "Toplam Satış", value: this.salesData.length, icon: "mdi-cash", color: "linear-gradient(135deg, #4facfe, #00f2fe)" },
@@ -260,27 +251,17 @@ export default {
           : "";
     },
   },
-  mounted() {
-    this.fetchSales();
-    this.fetchCustomers();
+  async mounted() {
+    try {
+      await this.fetchSales()
+      await this.fetchCustomers()
+    } catch (error) {
+      this.$store.dispatch('notifications/showError', 'Veri yüklenirken hata oluştu: ' + error.message)
+    }
   },
   methods: {
-    async fetchSales() {
-      try {
-        const res = await axios.get("http://localhost:5000/api/sales");
-        this.salesData = res.data;
-      } catch (err) {
-        console.error("Satışlar alınamadı:", err);
-      }
-    },
-    async fetchCustomers() {
-      try {
-        const res = await axios.get("http://localhost:5000/api/customers");
-        this.customers = res.data;
-      } catch (err) {
-        console.error("Müşteriler alınamadı:", err);
-      }
-    },
+    ...mapActions('sales', ['fetchSales', 'updateSale', 'deleteSale']),
+    ...mapActions('customers', { fetchCustomers: 'fetchCustomers' }),
     viewSale(item) {
       this.selectedSale = item;
       this.viewDialog = true;
@@ -291,32 +272,25 @@ export default {
     },
     async saveEdit() {
       try {
-        const res = await axios.put(`http://localhost:5000/api/sales/${this.editForm._id}`, this.editForm);
-        const index = this.salesData.findIndex(s => s._id === this.editForm._id);
-        if (index !== -1) this.salesData[index] = res.data;
-        this.showSnackbar("Satış başarıyla güncellendi");
+        await this.updateSale(this.editForm)
+        this.$store.dispatch('notifications/showSuccess', 'Satış başarıyla güncellendi')
         this.editDialog = false;
-      } catch (err) {
-        console.error("Güncelleme hatası:", err);
+      } catch (error) {
+        this.$store.dispatch('notifications/showError', 'Güncelleme hatası: ' + error.message)
       }
     },
-    deleteSale(item) {
+    openDeleteDialog(item) {
       this.deleteDialog = true;
       this.deleteTarget = item;
     },
     async confirmDelete() {
       try {
-        await axios.delete(`http://localhost:5000/api/sales/${this.deleteTarget._id}`);
-        this.salesData = this.salesData.filter((s) => s._id !== this.deleteTarget._id);
-        this.showSnackbar("Satış başarıyla silindi");
-      } catch (err) {
-        console.error("Silme hatası:", err);
+        await this.deleteSale(this.deleteTarget._id)
+        this.$store.dispatch('notifications/showSuccess', 'Satış başarıyla silindi')
+      } catch (error) {
+        this.$store.dispatch('notifications/showError', 'Silme hatası: ' + error.message)
       }
       this.deleteDialog = false;
-    },
-    showSnackbar(text) {
-      this.snackbarText = text;
-      this.snackbar = true;
     },
   },
 };

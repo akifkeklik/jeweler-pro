@@ -2,7 +2,7 @@ import axios, { AxiosError, AxiosInstance } from 'axios';
 
 // API instance oluştur
 const apiInstance: AxiosInstance = axios.create({
-  baseURL: process.env.VUE_APP_API_URL || 'http://localhost:5000/api',
+  baseURL: process.env.VUE_APP_API_URL || 'http://localhost:5000',
   timeout: parseInt(process.env.VUE_APP_API_TIMEOUT || '30000'),
   headers: {
     'Content-Type': 'application/json',

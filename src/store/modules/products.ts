@@ -57,7 +57,7 @@ const actions = {
     commit('SET_LOADING', true)
     commit('SET_ERROR', null)
     try {
-      const data = await apiService.get('/products')
+      const data = await apiService.get('/api/products')
       commit('SET_PRODUCTS', data)
     } catch (error: any) {
       commit('SET_ERROR', error.message)
@@ -69,7 +69,7 @@ const actions = {
 
   async createProduct({ commit }, product: Product) {
     try {
-      const newProduct = await apiService.post('/products', product)
+      const newProduct = await apiService.post('/api/products', product)
       commit('ADD_PRODUCT', newProduct)
       return newProduct
     } catch (error: any) {
@@ -80,7 +80,7 @@ const actions = {
 
   async updateProduct({ commit }, product: Product) {
     try {
-      const updated = await apiService.put(`/products/${product._id}`, product)
+      const updated = await apiService.put(`/api/products/${product._id}`, product)
       commit('UPDATE_PRODUCT', updated)
       return updated
     } catch (error: any) {
@@ -91,7 +91,7 @@ const actions = {
 
   async deleteProduct({ commit }, productId: number) {
     try {
-      await apiService.delete(`/products/${productId}`)
+      await apiService.delete(`/api/products/${productId}`)
       commit('DELETE_PRODUCT', productId)
     } catch (error: any) {
       commit('SET_ERROR', error.message)

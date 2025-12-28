@@ -51,7 +51,7 @@ const actions = {
     commit('SET_LOADING', true)
     commit('SET_ERROR', null)
     try {
-      const data = await apiService.get('/customers')
+      const data = await apiService.get('/api/customers')
       commit('SET_CUSTOMERS', data)
     } catch (error: any) {
       commit('SET_ERROR', error.message)
@@ -63,7 +63,7 @@ const actions = {
 
   async createCustomer({ commit }, customer: Customer) {
     try {
-      const newCustomer = await apiService.post('/customers', customer)
+      const newCustomer = await apiService.post('/api/customers', customer)
       commit('ADD_CUSTOMER', newCustomer)
       return newCustomer
     } catch (error: any) {
@@ -74,7 +74,7 @@ const actions = {
 
   async updateCustomer({ commit }, customer: Customer) {
     try {
-      const updated = await apiService.put(`/customers/${customer._id}`, customer)
+      const updated = await apiService.put(`/api/customers/${customer._id}`, customer)
       commit('UPDATE_CUSTOMER', updated)
       return updated
     } catch (error: any) {
@@ -85,7 +85,7 @@ const actions = {
 
   async deleteCustomer({ commit }, customerId: number) {
     try {
-      await apiService.delete(`/customers/${customerId}`)
+      await apiService.delete(`/api/customers/${customerId}`)
       commit('DELETE_CUSTOMER', customerId)
     } catch (error: any) {
       commit('SET_ERROR', error.message)

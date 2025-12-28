@@ -52,7 +52,7 @@ const actions = {
     commit('SET_LOADING', true)
     commit('SET_ERROR', null)
     try {
-      const data = await apiService.get('/sales')
+      const data = await apiService.get('/api/sales')
       commit('SET_SALES', data)
     } catch (error: any) {
       commit('SET_ERROR', error.message)
@@ -64,7 +64,7 @@ const actions = {
 
   async createSale({ commit }, sale: Sale) {
     try {
-      const newSale = await apiService.post('/sales', sale)
+      const newSale = await apiService.post('/api/sales', sale)
       commit('ADD_SALE', newSale)
       return newSale
     } catch (error: any) {
@@ -75,7 +75,7 @@ const actions = {
 
   async updateSale({ commit }, sale: Sale) {
     try {
-      const updated = await apiService.put(`/sales/${sale._id}`, sale)
+      const updated = await apiService.put(`/api/sales/${sale._id}`, sale)
       commit('UPDATE_SALE', updated)
       return updated
     } catch (error: any) {
@@ -86,7 +86,7 @@ const actions = {
 
   async deleteSale({ commit }, saleId: string) {
     try {
-      await apiService.delete(`/sales/${saleId}`)
+      await apiService.delete(`/api/sales/${saleId}`)
       commit('DELETE_SALE', saleId)
     } catch (error: any) {
       commit('SET_ERROR', error.message)

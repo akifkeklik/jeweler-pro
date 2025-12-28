@@ -1,6 +1,6 @@
 # Jeweler Pro
 
-Kuyumcu işletmeleri için hızlı, sade ve güvenilir yönetim.
+Kuyumculuk işinizi dijitalleştirmek için geliştirdiğimiz modern, kullanımı kolay bir yönetim aracı. Günlük işlerinizi hızlandırın, müşterilerinizi yakından takip edin ve stok yönetiminizi tek bir yerden kontrol edin—karmaşık menüler olmadan, sade ve etkili.
 
 ## Öz
 

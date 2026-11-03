@@ -2,25 +2,28 @@ const mongoose = require("mongoose");
 
 const categorySchema = new mongoose.Schema({
     _id: { type: Number, required: true },
-    name: { type: String, required: true }
+    name: { type: String, required: true, trim: true }
 }, { _id: false });
 
-// 6 haneli ID üretici
-function generate6DigitId() {
+function generateId() {
     return Math.floor(100000 + Math.random() * 900000);
 }
 
-categorySchema.pre("save", async function (next) {
-    if (!this._id) {
-        let newId;
-        let exists = true;
-        while (exists) {
-            newId = generate6DigitId();
-            exists = await mongoose.models.Category.exists({ _id: newId });
+// Mongoose validation runs before pre-save middleware; assign the required
+// numeric ID in pre-validate so a new document passes required-field checks.
+categorySchema.pre("validate", async function () {
+    if (!this.isNew || this._id != null) return;
+
+    for (let attempt = 0; attempt < 10; attempt += 1) {
+        const candidate = generateId();
+        const exists = await mongoose.models.Category.exists({ _id: candidate });
+        if (!exists) {
+            this._id = candidate;
+            return;
         }
-        this._id = newId;
     }
-    next();
+
+    throw new Error("Could not allocate a unique category ID after 10 attempts");
 });
 
 module.exports = mongoose.model("Category", categorySchema);

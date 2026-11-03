@@ -102,6 +102,10 @@ npm run serve
 npm run build
 ```
 
+## Security status
+
+This repository is an educational development project. The current API routes do not yet enforce user authentication or role-based authorization. Do not expose the backend to the public internet or use it with real customer data until an authentication and authorization layer has been implemented and tested.
+
 ## Notes
 
 This repository is an educational development project. Configure MongoDB and environment variables for your own environment before running it. Do not commit real credentials or local `.env` files.

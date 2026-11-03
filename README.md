@@ -93,6 +93,7 @@ Backend:
 ```bash
 npm run dev
 npm start
+npm test
 ```
 
 Frontend:

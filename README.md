@@ -110,4 +110,4 @@ This repository is an educational development project. The current API routes do
 
 ## License
 
-No license file is currently included. All rights remain with the author unless a license is added.
+The repository root does not include a LICENSE file. The backend package declares ISC in `backend/package.json`; confirm that this is the intended license before distributing the project.

@@ -107,6 +107,3 @@ npm run build
 
 This repository is an educational development project. The current API routes do not yet enforce user authentication or role-based authorization. The sales endpoints also need server-side price calculation and atomic inventory reconciliation; they currently must not be used as a source of truth for real transactions. Do not expose the backend to the public internet or use it with real customer data until these controls have been implemented and tested.
 
-## Notes
-
-This repository is an educational development project. Configure MongoDB and environment variables for your own environment before running it. Do not commit real credentials or local `.env` files.

@@ -10,7 +10,7 @@ const Price = require('../models/prices');
  */
 async function getTcmbCurrencies() {
   try {
-    const response = await axios.get('https://www.tcmb.gov.tr/kurlar/today.xml');
+    const response = await axios.get('https://www.tcmb.gov.tr/kurlar/today.xml', { timeout: 8000 });
     const data = await xml2js.parseStringPromise(response.data);
 
     const codes = ['USD', 'EUR', 'GBP', 'AUD'];
@@ -18,10 +18,14 @@ async function getTcmbCurrencies() {
       .map((code) => {
         const curr = data.Tarih_Date.Currency.find((c) => c.$.Kod === code);
         if (!curr) return null;
+        const buyPrice = Number.parseFloat(curr.ForexBuying?.[0] ?? "");
+        const sellPrice = Number.parseFloat(curr.ForexSelling?.[0] ?? "");
+        if (!Number.isFinite(buyPrice) || !Number.isFinite(sellPrice)) return null;
+
         return {
           currency: `${code}/TL`,
-          buyPrice: parseFloat(curr.ForexBuying[0]).toFixed(4),
-          sellPrice: parseFloat(curr.ForexSelling[0]).toFixed(4),
+          buyPrice: buyPrice.toFixed(4),
+          sellPrice: sellPrice.toFixed(4),
         };
       })
       .filter((c) => c !== null);
@@ -62,3 +66,4 @@ router.get('/database', asyncHandler(async (req, res) => {
 }));
 
 module.exports = router;
+module.exports.getTcmbCurrencies = getTcmbCurrencies;

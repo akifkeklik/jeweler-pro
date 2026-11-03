@@ -34,7 +34,8 @@ test("unexpected production errors do not expose internal messages", () => {
     assert.equal(response.body.error, "Sunucuda beklenmeyen bir hata oluştu");
     assert.equal(JSON.stringify(response.body).includes("database password"), false);
   } finally {
-    process.env.NODE_ENV = previousEnv;
+    if (previousEnv === undefined) delete process.env.NODE_ENV;
+    else process.env.NODE_ENV = previousEnv;
     console.error = previousConsoleError;
   }
 });

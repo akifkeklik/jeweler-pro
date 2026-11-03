@@ -7,7 +7,7 @@
     "start": "node server.js",
     "dev": "cross-env NODE_ENV=development node server.js",
     "dev:win": "set NODE_ENV=development&& node server.js",
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "test": "node --test"
   },
   "keywords": [],
   "author": "",

@@ -1,141 +1,107 @@
 # Jeweler Pro
 
-A modern and intuitive management platform designed to help jewelry businesses streamline their daily operations and move their business processes into the digital environment.
+Jeweler Pro is a jewelry-business management application with a Vue 2 frontend and an Express/MongoDB backend. It brings customer, product, sales, inventory, pricing, and reporting workflows into one interface.
 
-Jeweler Pro provides a centralized solution for managing customers, products, sales, inventory, pricing, and business reports — all through a clean and easy-to-use interface.
+## Features
 
-## Overview
+- Customer and product management
+- Sales records and inventory tracking
+- Material and category management
+- Dashboard statistics and business reports
+- Pricing and exchange-rate views
 
-Jeweler Pro allows you to manage the core operations of a jewelry business from a single dashboard.
+## Technology
 
-With the application, you can:
+| Area | Technologies |
+| --- | --- |
+| Frontend | Vue 2, TypeScript, Vuex, Vuetify |
+| Backend | Node.js, Express 5, Mongoose |
+| Database | MongoDB |
+| HTTP client | Axios |
 
-- Manage customers, products, and sales
-- Track inventory and product prices
-- Monitor daily and monthly business performance
-- View sales and operational reports
-- Access up-to-date exchange rates through the CBRT integration
+## Requirements
 
-The goal is simple: **make jewelry business management faster, easier, and more organized.**
+- Node.js and npm
+- MongoDB
 
-## Quick Start
+## Setup
 
-### Backend
+Run the backend and frontend in separate terminals.
 
-#### Windows
+### 1. Backend
 
-```bat
+```bash
 cd backend
 npm install
-copy .env.example .env
-npm run dev
-macOS / Linux
-cd backend
-npm install
-cp .env.example .env
-npm run dev
-Frontend
+```
 
-From the project root:
+Create `backend/.env` using `backend/.env.example` as a reference:
 
-Windows
-npm install
-copy .env.example .env
-npm run serve
-macOS / Linux
-npm install
-cp .env.example .env
-npm run serve
-
-Once the application is running:
-
-Frontend: http://localhost:8080
-Backend API: http://localhost:5000/api
-Environment Variables
-Backend
-
-Create a .env file inside the backend directory:
-
-MONGO_URI=mongodb://127.0.0.1:27017/kuyumcu_pro_official
+```env
 PORT=5000
 NODE_ENV=development
+MONGO_URI=mongodb://127.0.0.1:27017/kuyumcu_pro_official
 CORS_ORIGIN=http://localhost:8080
-Frontend
+```
 
-Create a .env file in the project root:
+Start the API:
 
+```bash
+npm run dev
+```
+
+The backend listens on `http://localhost:5000`. The health endpoint is `/health`.
+
+### 2. Frontend
+
+From the repository root:
+
+```bash
+npm install
+```
+
+Create a root `.env` file:
+
+```env
 VUE_APP_API_URL=http://localhost:5000/api
 VUE_APP_API_TIMEOUT=30000
-VUE_APP_ENV=development
-Features
-Customer Management
+```
 
-Manage customer records and keep customer information organized in one place.
+Start the Vue development server:
 
-Product Management
+```bash
+npm run serve
+```
 
-Create, update, and manage jewelry products with detailed product information.
+The frontend is available at `http://localhost:8080`.
 
-Sales Management
+## API routes
 
-Record and manage sales transactions while keeping business operations centralized.
+- `/api/materials`
+- `/api/categories`
+- `/api/products`
+- `/api/customers`
+- `/api/sales`
+- `/api/dashboard`
+- `/api/reports`
+- `/api/prices`
 
-Inventory & Price Tracking
+## Development scripts
 
-Monitor inventory levels and keep track of product prices efficiently.
+Backend:
 
-Dashboard
+```bash
+npm run dev
+npm start
+```
 
-Get a quick overview of key business metrics through a centralized dashboard.
+Frontend:
 
-Reports
+```bash
+npm run serve
+npm run build
+```
 
-Analyze business performance with daily and monthly reports.
+## Notes
 
-Exchange Rate Integration
-
-Integrates with the Central Bank of the Republic of Türkiye (CBRT) to retrieve exchange rate information.
-
-Tech Stack
-Frontend
-Vue 2
-Vuex
-TypeScript
-Vuetify
-Backend
-Node.js
-Express
-Mongoose
-Database
-MongoDB
-Project Structure
-Jeweler-Pro/
-├── backend/
-│   ├── ...
-│   └── .env.example
-│
-├── ...
-├── .env.example
-└── package.json
-Getting Started
-
-Before running the project, make sure you have the following installed:
-
-Node.js
-npm
-MongoDB
-
-After configuring the environment variables, start the backend and frontend separately using the commands described above.
-
-Purpose
-
-Jeweler Pro was built to simplify the management of jewelry businesses by bringing essential business operations together in a single, centralized platform.
-
-Instead of dealing with complicated workflows and disconnected tools, businesses can manage their daily operations through a simple and efficient interface.
-
-License
-
-This project is intended for educational and development purposes.
-
-
-Bu sürüm **README.md'ye direkt yapıştırılabilecek** şekilde hazırlanmıştır.
+This repository is an educational development project. Configure MongoDB and environment variables for your own environment before running it. Do not commit real credentials or local `.env` files.

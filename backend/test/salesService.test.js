@@ -13,7 +13,7 @@ function buildService(overrides = {}) {
     exists: async () => true,
     updateOne: async (_filter, update) => {
       state.stock += update.$inc.stock;
-      return { acknowledged: true };
+      return { acknowledged: true, matchedCount: 1 };
     },
   };
   const Customer = { findById: async () => ({ _id: 7 }) };

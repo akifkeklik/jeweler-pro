@@ -30,8 +30,7 @@
       />
 
       <v-text-field v-model="urun.weight" type="number" label="Gram" outlined dense :rules="[v => v > 0 || 'Gram > 0 olmalı']"/>
-      <v-text-field v-model="urun.price" type="number" label="Satış Fiyatı (₺)" outlined dense :rules="[v => v > 0 || 'Fiyat > 0 olmalı']"/>
-      <v-text-field v-model="urun.costPrice" type="number" label="Birim Maliyet (₺)" outlined dense :rules="[v => v === '' || v >= 0 || 'Maliyet 0 veya üstü olmalı']"/>
+      <v-text-field v-model="urun.price" type="number" label="Fiyat (₺)" outlined dense :rules="[v => v > 0 || 'Fiyat > 0 olmalı']"/>
       <v-text-field v-model="urun.barcode" label="Barkod" outlined dense />
       <v-text-field v-model="urun.description" label="Açıklama" outlined dense />
       <v-text-field v-model="urun.stock" type="number" label="Stok" outlined dense :rules="[v => v >= 0 || 'Stok 0 veya üstü olmalı']"/>
@@ -55,7 +54,6 @@ export default {
         materialId: "",
         weight: "",
         price: "",
-        costPrice: "",
         barcode: "",
         description: "",
         stock: ""
@@ -81,7 +79,7 @@ export default {
     submitForm() {
       if (this.$refs.urunForm.validate()) {
         this.$emit("urunEklendi", { ...this.urun });
-        this.urun = { name: "", categoryId: "", materialId: "", weight: "", price: "", costPrice: "", barcode: "", description: "", stock: "" };
+        this.urun = { name: "", categoryId: "", materialId: "", weight: "", price: "", barcode: "", description: "", stock: "" };
         this.$refs.urunForm.resetValidation();
       }
     }

@@ -6,6 +6,11 @@ function loginRateLimit(req, res, next) {
   const now = Date.now();
   const key = req.ip || req.socket.remoteAddress || 'unknown';
   const current = attempts.get(key);
+  if (attempts.size > 1000) {
+    for (const [address, entry] of attempts) {
+      if (entry.resetAt <= now) attempts.delete(address);
+    }
+  }
   if (!current || current.resetAt <= now) {
     attempts.set(key, { count: 1, resetAt: now + WINDOW_MS });
     return next();

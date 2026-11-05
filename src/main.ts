@@ -3,9 +3,8 @@ import App from './App.vue'
 import router from './router/index.js'
 import store from './store/index'
 
-import Vuetify from 'vuetify'
+import vuetify from './plugins/vuetify'
 import 'vuetify/dist/vuetify.min.css'
-Vue.use(Vuetify)
 
 Vue.config.productionTip = false
 
@@ -18,6 +17,6 @@ Vue.config.errorHandler = (err, vm, info) => {
 new Vue({
     router,
     store,
-    vuetify: new Vuetify(),
+    vuetify,
     render: h => h(App)
 }).$mount('#app')

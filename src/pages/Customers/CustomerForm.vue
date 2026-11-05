@@ -85,7 +85,7 @@ export default {
             // Yeni ekleme
             res = await apiService.post("/api/customers", this.musteri);
           }
-          this.$emit("ekle", res.data); // parent'a haber ver
+          this.$emit("ekle", res); // parent'a haber ver
           this.$emit("close");
           this.resetForm();
         } catch (err) {

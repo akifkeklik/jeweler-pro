@@ -1,9 +1,12 @@
 /**
- * Shared CRUD helpers with writable-field filtering.
- * Client input must never be allowed to set document IDs or audit metadata.
+ * Shared CRUD helpers with writable-field filtering and soft-delete support.
+ * Financial and customer history must remain referentially intact.
  */
-
 const PROTECTED_FIELDS = new Set(["_id", "id", "__v", "createdAt", "updatedAt"]);
+
+function hasArchive(Model) {
+  return Boolean(Model.schema.path("isArchived"));
+}
 
 function writableData(Model, data) {
   if (!data || typeof data !== "object" || Array.isArray(data)) {
@@ -15,24 +18,21 @@ function writableData(Model, data) {
   return Object.fromEntries(
     Object.entries(data).filter(([key]) =>
       !PROTECTED_FIELDS.has(key) &&
+      key !== "isArchived" &&
       !key.startsWith("$") &&
       Boolean(Model.schema.path(key))
     )
   );
 }
 
-/**
- * Generic GET all items
- */
 async function getAll(Model) {
-  return Model.find();
+  return Model.find(hasArchive(Model) ? { isArchived: { $ne: true } } : {});
 }
 
-/**
- * Generic GET by ID
- */
 async function getById(Model, id) {
-  const item = await Model.findById(id);
+  const item = hasArchive(Model)
+    ? await Model.findOne({ _id: id, isArchived: { $ne: true } })
+    : await Model.findById(id);
   if (!item) {
     const error = new Error(`${Model.modelName} bulunamadı`);
     error.statusCode = 404;
@@ -41,17 +41,11 @@ async function getById(Model, id) {
   return item;
 }
 
-/**
- * Generic CREATE
- */
 async function create(Model, data) {
   const item = new Model(writableData(Model, data));
   return item.save();
 }
 
-/**
- * Generic UPDATE
- */
 async function update(Model, id, data) {
   const safeData = writableData(Model, data);
   if (Object.keys(safeData).length === 0) {
@@ -60,11 +54,10 @@ async function update(Model, id, data) {
     throw error;
   }
 
-  const item = await Model.findByIdAndUpdate(
-    id,
-    { $set: safeData },
-    { new: true, runValidators: true, context: "query" }
-  );
+  const options = { new: true, runValidators: true, context: "query" };
+  const item = hasArchive(Model)
+    ? await Model.findOneAndUpdate({ _id: id, isArchived: { $ne: true } }, { $set: safeData }, options)
+    : await Model.findByIdAndUpdate(id, { $set: safeData }, options);
 
   if (!item) {
     const error = new Error(`${Model.modelName} bulunamadı`);
@@ -74,11 +67,15 @@ async function update(Model, id, data) {
   return item;
 }
 
-/**
- * Generic DELETE
- */
 async function deleteItem(Model, id) {
-  const item = await Model.findByIdAndDelete(id);
+  const item = hasArchive(Model)
+    ? await Model.findOneAndUpdate(
+      { _id: id, isArchived: { $ne: true } },
+      { $set: { isArchived: true } },
+      { new: true }
+    )
+    : await Model.findByIdAndDelete(id);
+
   if (!item) {
     const error = new Error(`${Model.modelName} bulunamadı`);
     error.statusCode = 404;
@@ -87,10 +84,4 @@ async function deleteItem(Model, id) {
   return item;
 }
 
-module.exports = {
-  getAll,
-  getById,
-  create,
-  update,
-  deleteItem,
-};
+module.exports = { getAll, getById, create, update, deleteItem, writableData };

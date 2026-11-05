@@ -4,21 +4,62 @@ const asyncHandler = require('../middleware/asyncHandler');
 const Sale = require('../models/Sale');
 const Product = require('../models/Product');
 
-function periodRange(period, previous = false) {
-  const now = new Date();
+function zonedMidnightUtc(calendarDate, timeZone) {
+  const target = calendarDate.getTime();
+  let guess = new Date(target);
+  const formatter = new Intl.DateTimeFormat('en-CA', {
+    timeZone,
+    year: 'numeric',
+    month: '2-digit',
+    day: '2-digit',
+    hour: '2-digit',
+    minute: '2-digit',
+    second: '2-digit',
+    hourCycle: 'h23',
+  });
+
+  for (let attempt = 0; attempt < 3; attempt += 1) {
+    const parts = Object.fromEntries(formatter.formatToParts(guess).map((part) => [part.type, part.value]));
+    const represented = Date.UTC(
+      Number(parts.year),
+      Number(parts.month) - 1,
+      Number(parts.day),
+      Number(parts.hour),
+      Number(parts.minute),
+      Number(parts.second)
+    );
+    guess = new Date(guess.getTime() - (represented - target));
+  }
+  return guess;
+}
+
+function periodRange(period, previous = false, now = new Date(), timeZone = process.env.REPORT_TIME_ZONE || 'Europe/Istanbul') {
+  const parts = Object.fromEntries(
+    new Intl.DateTimeFormat('en-CA', { timeZone, year: 'numeric', month: '2-digit', day: '2-digit' })
+      .formatToParts(now)
+      .map((part) => [part.type, part.value])
+  );
+  const localDate = new Date(Date.UTC(Number(parts.year), Number(parts.month) - 1, Number(parts.day)));
+  let startCalendar;
+  let endCalendar;
+
   if (period === 'daily') {
-    const start = new Date(now.getFullYear(), now.getMonth(), now.getDate());
-    return { start, end: new Date(start.getTime() + 24 * 60 * 60 * 1000) };
+    startCalendar = localDate;
+    endCalendar = new Date(localDate.getTime() + 86400000);
+  } else if (period === 'weekly') {
+    const daysSinceMonday = (localDate.getUTCDay() + 6) % 7;
+    startCalendar = new Date(localDate.getTime() - daysSinceMonday * 86400000);
+    endCalendar = new Date(startCalendar.getTime() + 7 * 86400000);
+  } else {
+    const monthOffset = previous ? 1 : 0;
+    startCalendar = new Date(Date.UTC(localDate.getUTCFullYear(), localDate.getUTCMonth() - monthOffset, 1));
+    endCalendar = new Date(Date.UTC(localDate.getUTCFullYear(), localDate.getUTCMonth() - monthOffset + 1, 1));
   }
-  if (period === 'weekly') {
-    const start = new Date(now.getFullYear(), now.getMonth(), now.getDate());
-    const day = (start.getDay() + 6) % 7;
-    start.setDate(start.getDate() - day);
-    return { start, end: new Date(start.getFullYear(), start.getMonth(), start.getDate() + 7) };
-  }
-  const offset = previous ? 1 : 0;
-  const start = new Date(now.getFullYear(), now.getMonth() - offset, 1);
-  return { start, end: new Date(now.getFullYear(), now.getMonth() - offset + 1, 1) };
+
+  return {
+    start: zonedMidnightUtc(startCalendar, timeZone),
+    end: zonedMidnightUtc(endCalendar, timeZone),
+  };
 }
 
 function saleDto(sale) {
@@ -86,7 +127,9 @@ router.get('/top-sellers', asyncHandler(async (req, res) => {
 }));
 
 router.get('/low-stock', asyncHandler(async (req, res) => {
-  const products = await Product.find({ stock: { $lte: 5 }, isArchived: { $ne: true } }).select('name stock').sort({ stock: 1, name: 1 });
+  const products = await Product.find({ stock: { $lte: 5 }, isArchived: { $ne: true } })
+    .select('name stock')
+    .sort({ stock: 1, name: 1 });
   res.json(products.map((product) => ({ isim: product.name, stok: product.stock })));
 }));
 

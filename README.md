@@ -40,7 +40,8 @@ npm ci
 
 Start the local replica-set database from the repository root with `docker compose up -d mongo`. Then copy `backend/.env.example` to `backend/.env` and set:
 
-- `MONGO_URI`: your MongoDB connection string
+- `MONGO_URI`: your MongoDB replica-set connection string
+- `REPORT_TIME_ZONE`: business timezone for daily/weekly/monthly reporting (default `Europe/Istanbul`)
 - `JWT_SECRET`: a unique random secret of at least 32 characters
 - `ADMIN_EMAIL`: the first administrator email
 - `ADMIN_PASSWORD`: a unique password of at least 14 characters
@@ -90,6 +91,8 @@ The frontend is available at `http://localhost:8080`. Sign in using the administ
 
 For production, terminate TLS at a trusted reverse proxy, use a secrets manager, configure a distributed rate limiter/WAF, rotate secrets deliberately, and use secure operational monitoring. The included in-memory login limiter is a baseline for a single backend process, not a substitute for distributed edge protection.
 
+Products, customers, categories and materials are archived rather than physically deleted, preserving historical sales references.
+
 ## Sales and stock integrity
 
 The API calculates sale totals from the current product price; client-provided totals are ignored. Stock deduction uses a conditional database update so concurrent sales cannot both consume the same remaining units. Failed sale persistence triggers a compensating stock update. Cancelling a sale retains the financial record and restores the sold quantity.
@@ -105,9 +108,9 @@ The current stock workflow uses conditional writes and compensation. For financi
 | POST | `/api/auth/login` | Authenticate and receive an access token |
 | GET | `/api/auth/me` | Return the current authenticated user |
 | GET/POST | `/api/products` | List/create products |
-| GET/PUT/DELETE | `/api/products/:id` | Read/update/delete a product (delete: admin) |
+| GET/PUT/DELETE | `/api/products/:id` | Read/update/archive a product (archive: admin) |
 | GET/POST | `/api/customers` | List/create customers |
-| GET/PUT/DELETE | `/api/customers/:id` | Read/update/delete a customer (delete: admin) |
+| GET/PUT/DELETE | `/api/customers/:id` | Read/update/archive a customer (archive: admin) |
 | GET/POST | `/api/sales` | List/create sales |
 | PUT/DELETE | `/api/sales/:id` | Update payment/date or cancel a sale (cancel: admin) |
 | GET | `/api/reports/daily` | Current-day sales |

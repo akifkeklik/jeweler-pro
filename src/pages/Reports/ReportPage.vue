@@ -110,7 +110,7 @@
 
 <script>
 import VueApexCharts from "vue-apexcharts";
-import axios from "axios";
+import apiService from "@/services/api";
 
 export default {
   name: "RaporlarPage",
@@ -186,13 +186,15 @@ export default {
   },
   methods: {
     tl(n) {
-      return new Intl.NumberFormat("tr-TR", { style: "currency", currency: "TRY" }).format(n || 0);
+      if (n === null || n === undefined) return "Maliyet verisi eksik";
+      return new Intl.NumberFormat("tr-TR", { style: "currency", currency: "TRY" }).format(n);
     },
     sumTotal(list) {
       return list.reduce((t, o) => t + (o.totalPrice || 0), 0);
     },
     sumKar(list) {
-      return list.reduce((t, o) => t + (o.kar || 0), 0);
+      if (list.some((o) => o.kar === null || o.kar === undefined)) return null;
+      return list.reduce((t, o) => t + o.kar, 0);
     },
     trend(current, prev) {
       if (!prev || prev === 0) return 100;
@@ -201,13 +203,13 @@ export default {
     async loadReports() {
       try {
         const [day, week, month, prevMonth, top, low, customers] = await Promise.all([
-          axios.get("http://localhost:5000/api/reports/daily"),
-          axios.get("http://localhost:5000/api/reports/weekly"),
-          axios.get("http://localhost:5000/api/reports/monthly"),
-          axios.get("http://localhost:5000/api/reports/monthly?prev=1"),
-          axios.get("http://localhost:5000/api/reports/top-sellers"),
-          axios.get("http://localhost:5000/api/reports/low-stock"),
-          axios.get("http://localhost:5000/api/customers"),
+          apiService.get("/api/reports/daily"),
+          apiService.get("/api/reports/weekly"),
+          apiService.get("/api/reports/monthly"),
+          apiService.get("/api/reports/monthly?prev=1"),
+          apiService.get("/api/reports/top-sellers"),
+          apiService.get("/api/reports/low-stock"),
+          apiService.get("/api/customers"),
         ]);
 
         this.dayOrders = day.data;

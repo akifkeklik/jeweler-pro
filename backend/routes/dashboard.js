@@ -3,26 +3,24 @@ const router = express.Router();
 const asyncHandler = require('../middleware/asyncHandler');
 const Sale = require('../models/Sale');
 
-/**
- * Dashboard summary - istatistikler
- */
 router.get('/summary', asyncHandler(async (req, res) => {
-  const sales = await Sale.find()
-    .populate('customerId', 'name')
-    .populate('productId', 'name');
+  const sales = await Sale.find({ status: { $ne: 'cancelled' } })
+    .populate('customerId', 'name');
 
-  const totalRevenue = sales.reduce((sum, s) => sum + (s.totalPrice || 0), 0);
-  const totalProfit = sales.reduce((sum, s) => sum + Math.round((s.totalPrice || 0) * 0.2), 0);
-  const totalQuantity = sales.reduce((sum, s) => sum + (s.quantity || 0), 0);
-
-  const uniqueCustomers = new Set(sales.map(s => s.customerId?._id?.toString()));
-  const totalCustomers = uniqueCustomers.size;
+  const totalRevenue = sales.reduce((sum, sale) => sum + (sale.totalPrice || 0), 0);
+  const totalQuantity = sales.reduce((sum, sale) => sum + (sale.quantity || 0), 0);
+  const customerIds = new Set(sales.map((sale) => sale.customerId?._id?.toString()).filter(Boolean));
+  const costComplete = sales.every((sale) => Number.isFinite(sale.unitCostAtSale) && sale.unitCostAtSale !== null);
+  const totalProfit = costComplete
+    ? sales.reduce((sum, sale) => sum + sale.totalPrice - sale.unitCostAtSale * sale.quantity, 0)
+    : null;
 
   res.json({
-    totalRevenue: Math.round(totalRevenue),
-    totalProfit: Math.round(totalProfit),
+    totalRevenue: Math.round(totalRevenue * 100) / 100,
+    totalProfit: totalProfit === null ? null : Math.round(totalProfit * 100) / 100,
+    profitDataComplete: costComplete,
     totalQuantity,
-    totalCustomers,
+    totalCustomers: customerIds.size,
   });
 }));
 

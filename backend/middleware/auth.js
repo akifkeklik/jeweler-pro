@@ -10,6 +10,14 @@ function getSecret() {
   return secret;
 }
 
+function decodeBase64UrlSegment(value) {
+  if (typeof value !== 'string' || !/^[A-Za-z0-9_-]+$/.test(value)) return null;
+  const decoded = Buffer.from(value, 'base64url');
+  // Reject non-canonical encodings (including alternate final characters that
+  // decode to the same bytes). This prevents JWT segment malleability.
+  return decoded.toString('base64url') === value ? decoded : null;
+}
+
 function signToken(user) {
   const now = Math.floor(Date.now() / 1000);
   const header = Buffer.from(JSON.stringify({ alg: 'HS256', typ: 'JWT' })).toString('base64url');
@@ -29,17 +37,25 @@ function verifyToken(token) {
   const parts = String(token || '').split('.');
   if (parts.length !== 3) return null;
   const [header, payload, signature] = parts;
+  const headerBytes = decodeBase64UrlSegment(header);
+  const payloadBytes = decodeBase64UrlSegment(payload);
+  const signatureBytes = decodeBase64UrlSegment(signature);
+  if (!headerBytes || !payloadBytes || !signatureBytes) return null;
+
   const expected = crypto.createHmac('sha256', getSecret()).update(header + '.' + payload).digest();
-  let actual;
-  try { actual = Buffer.from(signature, 'base64url'); } catch { return null; }
-  if (actual.length !== expected.length || !crypto.timingSafeEqual(actual, expected)) return null;
+  if (signatureBytes.length !== expected.length || !crypto.timingSafeEqual(signatureBytes, expected)) return null;
+
   try {
-    const parsedHeader = JSON.parse(Buffer.from(header, 'base64url').toString('utf8'));
-    const claims = JSON.parse(Buffer.from(payload, 'base64url').toString('utf8'));
+    const parsedHeader = JSON.parse(headerBytes.toString('utf8'));
+    const claims = JSON.parse(payloadBytes.toString('utf8'));
+    const now = Math.floor(Date.now() / 1000);
     if (parsedHeader.alg !== 'HS256' || parsedHeader.typ !== 'JWT') return null;
-    if (!claims.sub || !claims.exp || claims.exp <= Math.floor(Date.now() / 1000)) return null;
+    if (typeof claims.sub !== 'string' || !claims.sub.trim()) return null;
+    if (!Number.isSafeInteger(claims.exp) || claims.exp <= now) return null;
     return claims;
-  } catch { return null; }
+  } catch {
+    return null;
+  }
 }
 
 function authenticate(req, res, next) {

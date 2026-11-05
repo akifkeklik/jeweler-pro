@@ -27,7 +27,7 @@ Jeweler Pro is a jewelry-business management application built with Vue 2, Vueti
 
 - Node.js 20+
 - npm
-- MongoDB 6+ (replica set recommended for multi-document transactions when introduced)
+- MongoDB 6+ configured as a replica set (required for atomic sales and cancellations)
 
 ## Local setup
 

@@ -12,10 +12,20 @@ test('signs and verifies an authenticated user token', () => {
   assert.equal(claims.role, 'admin');
 });
 
-test('rejects malformed and tampered tokens', () => {
+test('rejects malformed, tampered and non-canonical tokens', () => {
   process.env.JWT_SECRET = 'test-secret-with-more-than-thirty-two-characters';
   const token = signToken({ _id: 'user-123', email: 'admin@example.com', role: 'admin' });
+  const [header, payload, signature] = token.split('.');
+  const alteredPayload = Buffer.from(JSON.stringify({
+    sub: 'user-123',
+    email: 'admin@example.com',
+    role: 'user',
+    iat: Math.floor(Date.now() / 1000),
+    exp: Math.floor(Date.now() / 1000) + 60 * 60 * 8,
+  })).toString('base64url');
+
   assert.equal(verifyToken('not-a-token'), null);
+  assert.equal(verifyToken(header + '.' + alteredPayload + '.' + signature), null);
   assert.equal(verifyToken(token.slice(0, -1) + (token.endsWith('a') ? 'b' : 'a')), null);
 });
 

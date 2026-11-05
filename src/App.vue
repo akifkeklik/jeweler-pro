@@ -19,11 +19,11 @@
 
       <div class="sidebar-search">
         <v-icon small>mdi-magnify</v-icon>
-        <span>Menüde ara</span>
-        <kbd>⌘ K</kbd>
+        <input v-model.trim="navSearch" type="search" placeholder="Menüde ara" aria-label="Menüde ara" />
+        <kbd>/</kbd>
       </div>
 
-      <div v-for="group in navGroups" :key="group.label" class="nav-group">
+      <div v-for="group in filteredNavGroups" :key="group.label" class="nav-group">
         <div class="nav-label">{{ group.label }}</div>
         <v-list dense nav class="nav-list">
           <v-list-item
@@ -69,9 +69,6 @@
       <v-btn icon class="topbar-icon" title="Koyu tema" @click="toggleDarkMode">
         <v-icon>{{ darkMode ? 'mdi-weather-sunny' : 'mdi-weather-night' }}</v-icon>
       </v-btn>
-      <v-btn icon class="topbar-icon" title="Bildirimler">
-        <v-badge dot color="info" overlap><v-icon>mdi-bell-outline</v-icon></v-badge>
-      </v-btn>
       <v-btn class="topbar-create d-none d-sm-flex" depressed @click="$router.push('/sales')">
         <v-icon left small>mdi-plus</v-icon> Yeni satış
       </v-btn>
@@ -103,6 +100,7 @@ export default {
     return {
       drawer: true,
       darkMode: true,
+      navSearch: '',
       navGroups: [
         { label: 'GENEL', items: [
           { title: 'Genel Bakış', icon: 'mdi-view-dashboard-outline', path: '/dashboard' },
@@ -121,6 +119,13 @@ export default {
     };
   },
   computed: {
+    filteredNavGroups() {
+      const query = this.navSearch.toLocaleLowerCase('tr-TR');
+      if (!query) return this.navGroups;
+      return this.navGroups
+        .map(group => ({ ...group, items: group.items.filter(item => item.title.toLocaleLowerCase('tr-TR').includes(query)) }))
+        .filter(group => group.items.length > 0);
+    },
     notifications() { return this.$store.state.notifications.notifications || []; },
     userName() {
       try {
@@ -188,6 +193,9 @@ html { overflow-y: auto; }
 .brand-name span { color:#62a8ff; }
 .brand-caption { margin-top:3px; font-size:8px; letter-spacing:1.45px; color:#73829a; font-weight:700; }
 .sidebar-search { height:39px; margin:18px 2px 22px; padding:0 11px; display:flex; align-items:center; gap:9px; color:#8290a7; border:1px solid rgba(148,163,184,.14); border-radius:9px; background:rgba(255,255,255,.025); font-size:12px; }
+.sidebar-search input { min-width:0; width:100%; border:0; outline:0; color:#dbe4f2; background:transparent; font:12px 'DM Sans',sans-serif; }
+.sidebar-search input::placeholder { color:#8290a7; opacity:1; }
+.sidebar-search input::-webkit-search-cancel-button { cursor:pointer; }
 .sidebar-search kbd { margin-left:auto; padding:2px 5px; border:1px solid rgba(148,163,184,.2); border-radius:4px; color:#8290a7; font:10px 'DM Sans',sans-serif; }
 .nav-group { margin-bottom:17px; }
 .nav-label { padding:0 10px 8px; color:#62718a; font-size:9px; font-weight:700; letter-spacing:1.5px; }

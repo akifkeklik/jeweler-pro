@@ -46,7 +46,7 @@ function createSalesService({ Sale, Product, Customer }) {
     }
 
     const unitPrice = Number(product.price);
-    if (!Number.isFinite(unitPrice) || unitPrice < 0) {
+    if (product.price === null || product.price === undefined || !Number.isFinite(unitPrice) || unitPrice < 0) {
       await Product.updateOne({ _id: productId }, { $inc: { stock: quantity } });
       throw httpError('Ürünün geçerli bir satış fiyatı tanımlı değil', 422);
     }

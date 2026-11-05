@@ -32,7 +32,7 @@ router.put('/:id', asyncHandler(async (req, res) => {
 // DELETE customer
 router.delete('/:id', requireRole('admin'), asyncHandler(async (req, res) => {
   const customer = await deleteItem(Customer, req.params.id);
-  res.json({ message: 'Müşteri silindi', data: customer });
+  res.json({ message: 'Müşteri arşivlendi; satış geçmişi korundu', data: customer });
 }));
 
 module.exports = router;

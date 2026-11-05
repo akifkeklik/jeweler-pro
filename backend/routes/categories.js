@@ -32,7 +32,7 @@ router.put('/:id', asyncHandler(async (req, res) => {
 // DELETE category
 router.delete('/:id', requireRole('admin'), asyncHandler(async (req, res) => {
   const category = await deleteItem(Category, req.params.id);
-  res.json({ message: 'Kategori silindi', data: category });
+  res.json({ message: 'Kategori arşivlendi', data: category });
 }));
 
 module.exports = router;

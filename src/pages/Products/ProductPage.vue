@@ -134,7 +134,7 @@
 
     <!-- Snackbar -->
     <v-snackbar v-model="snackbar" color="error" timeout="3000">
-      <span class="white--text">Ürün başarıyla silindi!</span>
+      <span class="white--text">Ürün arşivlendi.</span>
       <v-btn color="pink" text @click="snackbar = false">Kapat</v-btn>
     </v-snackbar>
   </v-container>

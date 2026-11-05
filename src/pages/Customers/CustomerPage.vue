@@ -188,7 +188,7 @@ export default {
       try {
         await apiService.delete("/api/customers/" + this.deleteTarget._id);
         this.musteriler = this.musteriler.filter(m => m._id !== this.deleteTarget._id);
-        this.showSnackbar("Müşteri silindi", "error");
+        this.showSnackbar("Müşteri arşivlendi", "error");
       } catch (err) {
         console.error("Silme hatası:", err);
       }

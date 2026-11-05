@@ -38,7 +38,7 @@ cd backend
 npm ci
 ```
 
-Copy `backend/.env.example` to `backend/.env` and set:
+Start the local replica-set database from the repository root with `docker compose up -d mongo`. Then copy `backend/.env.example` to `backend/.env` and set:
 
 - `MONGO_URI`: your MongoDB connection string
 - `JWT_SECRET`: a unique random secret of at least 32 characters

@@ -90,7 +90,7 @@
           </v-btn>
           <!-- Sil -->
           <v-btn icon color="red" text @click="openDeleteDialog(item)">
-            <v-icon>mdi-delete</v-icon>
+            <v-icon>mdi-cancel</v-icon>
           </v-btn>
         </template>
       </v-data-table>
@@ -145,13 +145,13 @@
     <v-dialog v-model="deleteDialog" max-width="400px" transition="dialog-bottom-transition">
       <v-card class="rounded-xl">
         <v-card-title class="text-h6 font-weight-bold">
-          <v-icon color="red" left>mdi-alert-circle</v-icon> Satışı Sil
+          <v-icon color="red" left>mdi-alert-circle</v-icon> Satışı İptal Et
         </v-card-title>
-        <v-card-text>Bu satışı silmek istediğinize emin misiniz?</v-card-text>
+        <v-card-text>Bu satışı iptal etmek istiyor musunuz? Satış kaydı korunacak ve ürün stoğu geri eklenecek.</v-card-text>
         <v-card-actions>
           <v-spacer></v-spacer>
           <v-btn rounded outlined color="grey" @click="deleteDialog = false">İptal</v-btn>
-          <v-btn rounded depressed color="red" @click="confirmDelete">Sil</v-btn>
+          <v-btn rounded depressed color="red" @click="confirmDelete">Satışı İptal Et</v-btn>
         </v-card-actions>
       </v-card>
     </v-dialog>

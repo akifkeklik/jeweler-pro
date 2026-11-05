@@ -26,7 +26,7 @@ const pricesRouter = require("./routes/prices");
 
 const app = express();
 const PORT = Number(process.env.PORT) || 5000;
-const MONGO_URI = process.env.MONGO_URI || "mongodb://127.0.0.1:27017/kuyumcu_pro_official";
+const MONGO_URI = process.env.MONGO_URI || "mongodb://127.0.0.1:27017/kuyumcu_pro_official?replicaSet=rs0";
 
 const allowedOrigins = (process.env.CORS_ORIGIN || "http://localhost:8080,http://localhost:3000")
   .split(",")
@@ -34,6 +34,7 @@ const allowedOrigins = (process.env.CORS_ORIGIN || "http://localhost:8080,http:/
   .filter(Boolean);
 
 app.disable("x-powered-by");
+if (process.env.TRUST_PROXY === "true") app.set("trust proxy", 1);
 app.use((req, res, next) => {
   res.setHeader("X-Content-Type-Options", "nosniff");
   res.setHeader("X-Frame-Options", "DENY");

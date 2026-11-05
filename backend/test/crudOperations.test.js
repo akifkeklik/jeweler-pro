@@ -41,3 +41,39 @@ test("generic updates reject an empty writable payload", async () => {
     (error) => error.statusCode === 400
   );
 });
+
+test("generic delete archives models that have an isArchived field", async () => {
+  const { deleteItem } = require("../utils/crudOperations");
+  let captured;
+  const Model = {
+    modelName: "Product",
+    schema: { path: (key) => key === "isArchived" ? {} : undefined },
+    findOneAndUpdate: async (filter, updateDoc, options) => {
+      captured = { filter, updateDoc, options };
+      return { _id: 12, isArchived: true };
+    },
+  };
+  const result = await deleteItem(Model, 12);
+  assert.equal(result.isArchived, true);
+  assert.deepEqual(captured.filter, { _id: 12, isArchived: { $ne: true } });
+  assert.deepEqual(captured.updateDoc, { $set: { isArchived: true } });
+  assert.equal(captured.options.new, true);
+});
+
+test("generic delete archives models that have an isArchived field", async () => {
+  const { deleteItem } = require("../utils/crudOperations");
+  let captured;
+  const Model = {
+    modelName: "Product",
+    schema: { path: (key) => key === "isArchived" ? {} : undefined },
+    findOneAndUpdate: async (filter, updateDoc, options) => {
+      captured = { filter, updateDoc, options };
+      return { _id: 12, isArchived: true };
+    },
+  };
+  const result = await deleteItem(Model, 12);
+  assert.equal(result.isArchived, true);
+  assert.deepEqual(captured.filter, { _id: 12, isArchived: { $ne: true } });
+  assert.deepEqual(captured.updateDoc, { $set: { isArchived: true } });
+  assert.equal(captured.options.new, true);
+});

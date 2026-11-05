@@ -30,7 +30,8 @@
       />
 
       <v-text-field v-model="urun.weight" type="number" label="Gram" outlined dense :rules="[v => v > 0 || 'Gram > 0 olmalı']"/>
-      <v-text-field v-model="urun.price" type="number" label="Fiyat (₺)" outlined dense :rules="[v => v > 0 || 'Fiyat > 0 olmalı']"/>
+      <v-text-field v-model="urun.price" type="number" label="Satış Fiyatı (₺)" outlined dense :rules="[v => v > 0 || 'Fiyat > 0 olmalı']"/>
+      <v-text-field v-model="urun.costPrice" type="number" label="Birim Maliyet (₺)" outlined dense :rules="[v => v === '' || v >= 0 || 'Maliyet 0 veya üstü olmalı']"/>
       <v-text-field v-model="urun.barcode" label="Barkod" outlined dense />
       <v-text-field v-model="urun.description" label="Açıklama" outlined dense />
       <v-text-field v-model="urun.stock" type="number" label="Stok" outlined dense :rules="[v => v >= 0 || 'Stok 0 veya üstü olmalı']"/>
@@ -43,7 +44,7 @@
 </template>
 
 <script>
-import axios from "axios";
+import apiService from "@/services/api";
 
 export default {
   data() {
@@ -54,6 +55,7 @@ export default {
         materialId: "",
         weight: "",
         price: "",
+        costPrice: "",
         barcode: "",
         description: "",
         stock: ""
@@ -69,17 +71,15 @@ export default {
   },
   methods: {
     async fetchCategories() {
-      const res = await axios.get("http://localhost:5000/api/categories");
-      this.categories = res.data;
+      this.categories = await apiService.get("/api/categories");
     },
     async fetchMaterials() {
-      const res = await axios.get("http://localhost:5000/api/materials");
-      this.materials = res.data;
+      this.materials = await apiService.get("/api/materials");
     },
     submitForm() {
       if (this.$refs.urunForm.validate()) {
-        this.$emit("urunEklendi", { ...this.urun });
-        this.urun = { name: "", categoryId: "", materialId: "", weight: "", price: "", barcode: "", description: "", stock: "" };
+        this.$emit("urunEklendi", { ...this.urun, weight: Number(this.urun.weight), price: Number(this.urun.price), costPrice: this.urun.costPrice === "" ? null : Number(this.urun.costPrice), stock: Number(this.urun.stock) });
+        this.urun = { name: "", categoryId: "", materialId: "", weight: "", price: "", costPrice: "", barcode: "", description: "", stock: "" };
         this.$refs.urunForm.resetValidation();
       }
     }

@@ -11,6 +11,9 @@ const bodyParser = require("body-parser");
 
 const requestLogger = require("./middleware/requestLogger");
 const errorHandler = require("./middleware/errorHandler");
+const { authenticate } = require("./middleware/auth");
+const authRouter = require("./routes/auth");
+const bootstrapAdmin = require("./scripts/bootstrapAdmin");
 
 const materialsRouter = require("./routes/materials");
 const categoriesRouter = require("./routes/categories");
@@ -23,7 +26,7 @@ const pricesRouter = require("./routes/prices");
 
 const app = express();
 const PORT = Number(process.env.PORT) || 5000;
-const MONGO_URI = process.env.MONGO_URI || "mongodb://127.0.0.1:27017/kuyumcu_pro_official";
+const MONGO_URI = process.env.MONGO_URI || "mongodb://127.0.0.1:27017/kuyumcu_pro_official?replicaSet=rs0";
 
 const allowedOrigins = (process.env.CORS_ORIGIN || "http://localhost:8080,http://localhost:3000")
   .split(",")
@@ -31,6 +34,15 @@ const allowedOrigins = (process.env.CORS_ORIGIN || "http://localhost:8080,http:/
   .filter(Boolean);
 
 app.disable("x-powered-by");
+if (process.env.TRUST_PROXY === "true") app.set("trust proxy", 1);
+app.use((req, res, next) => {
+  res.setHeader("X-Content-Type-Options", "nosniff");
+  res.setHeader("X-Frame-Options", "DENY");
+  res.setHeader("Referrer-Policy", "no-referrer");
+  res.setHeader("Permissions-Policy", "camera=(), microphone=(), geolocation=()");
+  res.setHeader("Cross-Origin-Resource-Policy", "same-site");
+  next();
+});
 app.use(cors({
   origin: allowedOrigins,
   credentials: true,
@@ -42,6 +54,8 @@ app.use(bodyParser.json({ limit: "10mb" }));
 app.use(bodyParser.urlencoded({ limit: "10mb", extended: true }));
 app.use(requestLogger);
 
+app.use("/api/auth", authRouter);
+app.use("/api", authenticate);
 app.use("/api/materials", materialsRouter);
 app.use("/api/categories", categoriesRouter);
 app.use("/api/products", productsRouter);
@@ -90,7 +104,11 @@ let server;
 
 async function startServer() {
   try {
+    if (!process.env.JWT_SECRET || Buffer.byteLength(process.env.JWT_SECRET) < 32) {
+      throw new Error("JWT_SECRET en az 32 karakter olmalıdır");
+    }
     await mongoose.connect(MONGO_URI);
+    await bootstrapAdmin();
     console.log("MongoDB veritabanına bağlandı");
 
     server = app.listen(PORT, () => {

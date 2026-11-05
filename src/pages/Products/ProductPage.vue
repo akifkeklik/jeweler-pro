@@ -99,7 +99,8 @@
                 class="rounded-input"
             />
             <v-text-field v-model="seciliUrun.weight" type="number" label="Gram" outlined dense class="rounded-input" />
-            <v-text-field v-model="seciliUrun.price" type="number" label="Fiyat (₺)" outlined dense class="rounded-input" />
+            <v-text-field v-model="seciliUrun.price" type="number" label="Satış Fiyatı (₺)" outlined dense class="rounded-input" />
+            <v-text-field v-model="seciliUrun.costPrice" type="number" label="Birim Maliyet (₺)" outlined dense class="rounded-input" />
             <v-text-field v-model="seciliUrun.barcode" label="Barkod" outlined dense class="rounded-input" />
             <v-text-field v-model="seciliUrun.description" label="Açıklama" outlined dense class="rounded-input" />
             <v-text-field v-model="seciliUrun.stock" type="number" label="Stok" outlined dense class="rounded-input" />
@@ -133,14 +134,14 @@
 
     <!-- Snackbar -->
     <v-snackbar v-model="snackbar" color="error" timeout="3000">
-      <span class="white--text">Ürün başarıyla silindi!</span>
+      <span class="white--text">Ürün arşivlendi.</span>
       <v-btn color="pink" text @click="snackbar = false">Kapat</v-btn>
     </v-snackbar>
   </v-container>
 </template>
 
 <script>
-import axios from "axios";
+import apiService from "@/services/api";
 import ProductForm from "./ProductForm.vue";
 import ProductList from "./ProductList.vue";
 
@@ -171,24 +172,21 @@ export default {
   methods: {
     async fetchProducts() {
       try {
-        const res = await axios.get("http://localhost:5000/api/products");
-        this.urunler = res.data; // direkt backend field'ları alıyoruz
+        this.urunler = await apiService.get("/api/products");
       } catch (err) {
         console.error("Ürünler alınamadı:", err);
       }
     },
     async fetchCategories() {
-      const res = await axios.get("http://localhost:5000/api/categories");
-      this.categories = res.data;
+      this.categories = await apiService.get("/api/categories");
     },
     async fetchMaterials() {
-      const res = await axios.get("http://localhost:5000/api/materials");
-      this.materials = res.data;
+      this.materials = await apiService.get("/api/materials");
     },
     async urunKaydet(yeni) {
       try {
-        const res = await axios.post("http://localhost:5000/api/products", yeni);
-        this.urunler.push(res.data);
+        const created = await apiService.post("/api/products", yeni);
+        this.urunler.push(created);
         this.yeniUrunDialog = false;
       } catch (err) {
         console.error("Ürün eklenemedi:", err.response?.data || err);
@@ -200,7 +198,7 @@ export default {
     },
     async confirmDelete() {
       try {
-        await axios.delete(`http://localhost:5000/api/products/${this.urunSilId}`);
+        await apiService.delete("/api/products/" + this.urunSilId);
         this.urunler = this.urunler.filter((u) => u._id !== this.urunSilId);
         this.deleteDialog = false;
         this.snackbar = true;
@@ -215,14 +213,11 @@ export default {
     async duzenlemeKaydet() {
       if (this.$refs.duzenleForm.validate()) {
         try {
-          const updated = await axios.put(
-              `http://localhost:5000/api/products/${this.seciliUrun._id}`,
-              this.seciliUrun
-          );
+          const updated = await apiService.put("/api/products/" + this.seciliUrun._id, this.seciliUrun);
 
           const index = this.urunler.findIndex((u) => u._id === this.seciliUrun._id);
           if (index !== -1) {
-            this.$set(this.urunler, index, updated.data);
+            this.$set(this.urunler, index, updated);
           }
           this.duzenleDialog = false;
         } catch (err) {

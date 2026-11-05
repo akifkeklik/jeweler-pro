@@ -105,7 +105,7 @@
 </template>
 
 <script>
-import axios from "axios";
+import apiService from "@/services/api";
 import CustomerForm from "./CustomerForm.vue";
 
 export default {
@@ -146,8 +146,7 @@ export default {
   methods: {
     async fetchMusteriler() {
       try {
-        const res = await axios.get("http://localhost:5000/api/customers");
-        this.musteriler = res.data;
+        this.musteriler = await apiService.get("/api/customers");
       } catch (err) {
         console.error("Müşteriler alınamadı:", err);
       }
@@ -187,9 +186,9 @@ export default {
     },
     async confirmDelete() {
       try {
-        await axios.delete(`http://localhost:5000/api/customers/${this.deleteTarget._id}`);
+        await apiService.delete("/api/customers/" + this.deleteTarget._id);
         this.musteriler = this.musteriler.filter(m => m._id !== this.deleteTarget._id);
-        this.showSnackbar("Müşteri silindi", "error");
+        this.showSnackbar("Müşteri arşivlendi", "error");
       } catch (err) {
         console.error("Silme hatası:", err);
       }

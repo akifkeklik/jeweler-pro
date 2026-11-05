@@ -1,7 +1,7 @@
 import apiService from '@/services/api'
 
 interface Sale {
-  _id?: string
+  _id?: number
   customerName: string
   productName: string
   quantity: number
@@ -36,7 +36,7 @@ const mutations = {
       state.sales.splice(index, 1, updatedSale)
     }
   },
-  DELETE_SALE(state, saleId: string) {
+  DELETE_SALE(state, saleId: number) {
     state.sales = state.sales.filter(s => s._id !== saleId)
   },
   SET_LOADING(state, loading: boolean) {

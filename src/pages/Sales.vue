@@ -11,7 +11,8 @@
               v-model="search"
               label="Satış Ara"
               prepend-inner-icon="mdi-magnify"
-              variant="solo-filled"
+              solo
+              filled
               rounded
               dense
               hide-details
@@ -34,7 +35,8 @@
                   readonly
                   v-bind="attrs"
                   v-on="on"
-                  variant="solo-filled"
+                  solo
+              filled
                   rounded
                   dense
               />
@@ -54,7 +56,8 @@
               item-text="name"
               item-value="name"
               label="Müşteri Seç"
-              variant="solo-filled"
+              solo
+              filled
               rounded
               dense
           />
@@ -67,7 +70,7 @@
           :items="filteredSales"
           :items-per-page="5"
           class="rounded-xl"
-          density="comfortable"
+          dense
           hover
       >
         <template v-slot:[`item.totalPrice`]="{ item }">
@@ -78,16 +81,16 @@
 
         <template v-slot:[`item.islemler`]="{ item }">
           <!-- Görüntüle -->
-          <v-btn icon color="teal" variant="text" @click="viewSale(item)">
+          <v-btn icon color="teal" text @click="viewSale(item)">
             <v-icon>mdi-eye</v-icon>
           </v-btn>
           <!-- Düzenle -->
-          <v-btn icon color="blue" variant="text" @click="openEditDialog(item)">
+          <v-btn icon color="blue" text @click="openEditDialog(item)">
             <v-icon>mdi-pencil</v-icon>
           </v-btn>
           <!-- Sil -->
-          <v-btn icon color="red" variant="text" @click="openDeleteDialog(item)">
-            <v-icon>mdi-delete</v-icon>
+          <v-btn icon color="red" text @click="openDeleteDialog(item)">
+            <v-icon>mdi-cancel</v-icon>
           </v-btn>
         </template>
       </v-data-table>
@@ -110,7 +113,7 @@
         </v-card-text>
         <v-card-actions>
           <v-spacer></v-spacer>
-          <v-btn color="teal" variant="flat" rounded @click="viewDialog = false">Kapat</v-btn>
+          <v-btn color="teal" depressed rounded @click="viewDialog = false">Kapat</v-btn>
         </v-card-actions>
       </v-card>
     </v-dialog>
@@ -122,10 +125,7 @@
           <v-icon left color="blue">mdi-pencil</v-icon> Satışı Düzenle
         </v-card-title>
         <v-card-text>
-          <v-text-field v-model="editForm.customerName" label="Müşteri" />
-          <v-text-field v-model="editForm.productName" label="Ürün" />
-          <v-text-field v-model="editForm.quantity" label="Miktar" type="number" />
-          <v-text-field v-model="editForm.totalPrice" label="Toplam Tutar" type="number" />
+          <p class="mb-3">Ürün, miktar ve satış tutarı işlem kaydının bütünlüğü için değiştirilemez.</p>
           <v-select
               v-model="editForm.paymentMethod"
               :items="['nakit','kredi kartı','havale']"
@@ -135,8 +135,8 @@
         </v-card-text>
         <v-card-actions>
           <v-spacer></v-spacer>
-          <v-btn color="grey" variant="outlined" rounded @click="editDialog = false">İptal</v-btn>
-          <v-btn color="blue" variant="flat" rounded @click="saveEdit">Kaydet</v-btn>
+          <v-btn color="grey" outlined rounded @click="editDialog = false">İptal</v-btn>
+          <v-btn color="blue" depressed rounded @click="saveEdit">Kaydet</v-btn>
         </v-card-actions>
       </v-card>
     </v-dialog>
@@ -145,13 +145,13 @@
     <v-dialog v-model="deleteDialog" max-width="400px" transition="dialog-bottom-transition">
       <v-card class="rounded-xl">
         <v-card-title class="text-h6 font-weight-bold">
-          <v-icon color="red" left>mdi-alert-circle</v-icon> Satışı Sil
+          <v-icon color="red" left>mdi-alert-circle</v-icon> Satışı İptal Et
         </v-card-title>
-        <v-card-text>Bu satışı silmek istediğinize emin misiniz?</v-card-text>
+        <v-card-text>Bu satışı iptal etmek istiyor musunuz? Satış kaydı korunacak ve ürün stoğu geri eklenecek.</v-card-text>
         <v-card-actions>
           <v-spacer></v-spacer>
-          <v-btn rounded variant="outlined" color="grey" @click="deleteDialog = false">İptal</v-btn>
-          <v-btn rounded variant="flat" color="red" @click="confirmDelete">Sil</v-btn>
+          <v-btn rounded outlined color="grey" @click="deleteDialog = false">İptal</v-btn>
+          <v-btn rounded depressed color="red" @click="confirmDelete">Satışı İptal Et</v-btn>
         </v-card-actions>
       </v-card>
     </v-dialog>

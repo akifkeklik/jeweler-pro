@@ -9,10 +9,21 @@ const apiInstance: AxiosInstance = axios.create({
   },
 });
 
+apiInstance.interceptors.request.use((config) => {
+  const token = sessionStorage.getItem('jeweler_token');
+  if (token) config.headers.Authorization = `Bearer ${token}`;
+  return config;
+});
+
 // Response interceptor - hata yönetimi
 apiInstance.interceptors.response.use(
   (response) => response,
   (error: AxiosError) => {
+    if (error.response?.status === 401 && window.location.pathname !== '/login') {
+      sessionStorage.removeItem('jeweler_token');
+      sessionStorage.removeItem('jeweler_user');
+      window.location.assign('/login');
+    }
     // Network hatası
     if (!error.response) {
       console.error('🔴 Network Error:', error.message);

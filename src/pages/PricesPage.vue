@@ -101,16 +101,21 @@ export default {
       dovizFiyatlari: [],
       yeniSarrafiye: [],
       eskiSarrafiye: [],
+      refreshTimer: null,
     };
   },
   mounted() {
     this.fetchPrices();
-    setInterval(this.fetchPrices, 5000); // 5 saniyede bir güncelle
+    this.refreshTimer = setInterval(this.fetchPrices, 5000);
+  },
+  beforeDestroy() {
+    if (this.refreshTimer) clearInterval(this.refreshTimer);
   },
   methods: {
     async fetchPrices() {
       try {
-        const response = await fetch("/prices.json?ts=" + new Date().getTime());
+        const response = await fetch("/Prices.json?ts=" + Date.now());
+        if (!response.ok) throw new Error(`Fiyat dosyası alınamadı (${response.status})`);
         const data = await response.json();
         this.altinFiyatlari = data.altinFiyatlari;
         this.dovizFiyatlari = data.dovizFiyatlari;
@@ -121,10 +126,11 @@ export default {
       }
     },
     getClass(value) {
-      return value.includes("▲") ? "text-green" : value.includes("▼") ? "text-red" : "";
+      const text = String(value ?? "");
+      return text.includes("▲") ? "text-green" : text.includes("▼") ? "text-red" : "";
     },
     cleanValue(value) {
-      return value.replace("▲", "").replace("▼", "").trim();
+      return String(value ?? "").replace("▲", "").replace("▼", "").trim();
     },
   },
 };

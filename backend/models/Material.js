@@ -2,7 +2,8 @@ const mongoose = require("mongoose");
 
 const materialSchema = new mongoose.Schema({
     _id: { type: Number, required: true },
-    name: { type: String, required: true, trim: true }
+    name: { type: String, required: true, trim: true },
+    isArchived: { type: Boolean, default: false, index: true }
 }, { _id: false });
 
 function generateId() {

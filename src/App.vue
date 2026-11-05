@@ -1,7 +1,7 @@
 <template>
   <v-app>
     <!-- Üst Bar (App Bar) -->
-    <v-app-bar app flat class="app-bar">
+    <v-app-bar v-if="$route.path !== '/login'" app flat class="app-bar">
       <v-app-bar-nav-icon @click="drawer = !drawer" class="menu-btn"></v-app-bar-nav-icon>
 
       <v-toolbar-title>
@@ -15,10 +15,12 @@
       <v-btn icon class="dark-toggle" @click="toggleDarkMode">
         <v-icon>{{ darkMode ? 'mdi-weather-sunny' : 'mdi-weather-night' }}</v-icon>
       </v-btn>
+      <v-btn text class="dark-toggle" @click="logout"><v-icon left>mdi-logout</v-icon>Çıkış</v-btn>
     </v-app-bar>
 
     <!-- Sidebar -->
     <v-navigation-drawer
+        v-if="$route.path !== '/login'"
         v-model="drawer"
         app
         class="modern-sidebar"
@@ -40,13 +42,14 @@
 
     <!-- İçerik -->
     <v-main>
-      <v-container fluid class="pa-6 fill-height" :class="[darkMode ? 'dark-bg' : 'light-bg']">
+      <v-container fluid :class="$route.path === '/login' ? 'pa-0' : ['pa-6', darkMode ? 'dark-bg' : 'light-bg']">
         <router-view />
       </v-container>
     </v-main>
 
     <!-- Değerler Butonu (Tüm Sayfalarda Görünür) -->
     <v-btn
+        v-if="$route.path !== '/login'"
         class="floating-values-btn"
         @click="goToPrices"
         fab
@@ -57,7 +60,7 @@
     </v-btn>
 
     <!-- Notification System -->
-    <div class="notification-container">
+    <div v-if="$route.path !== '/login'" class="notification-container">
       <v-slide-y-transition group>
         <div
             v-for="notification in notifications"
@@ -109,9 +112,19 @@ export default {
       ]
     };
   },
+  mounted() {
+    this.darkMode = this.$vuetify.theme.dark;
+  },
   methods: {
     toggleDarkMode() {
       this.darkMode = !this.darkMode;
+      this.$vuetify.theme.dark = this.darkMode;
+      try { localStorage.setItem("themeDark", String(this.darkMode)); } catch (error) { /* storage may be unavailable */ }
+    },
+    logout() {
+      sessionStorage.removeItem("jeweler_token");
+      sessionStorage.removeItem("jeweler_user");
+      this.$router.replace("/login");
     },
     goToPrices() {
       this.drawer = false;

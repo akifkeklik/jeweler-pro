@@ -19,11 +19,6 @@ jobs:
         image: mongo:7
         ports:
           - 27017:27017
-        options: >-
-          --health-cmd "mongosh --quiet --eval 'db.adminCommand(\\"ping\\").ok'"
-          --health-interval 5s
-          --health-timeout 10s
-          --health-retries 20
     env:
       MONGO_URI: mongodb://127.0.0.1:27017/jeweler_ci?replicaSet=rs0
     steps:
@@ -37,6 +32,10 @@ jobs:
         run: |
           MONGO_CONTAINER="$(docker ps -q --filter ancestor=mongo:7 | head -n 1)"
           test -n "$MONGO_CONTAINER"
+          for attempt in $(seq 1 30); do
+            if docker exec "$MONGO_CONTAINER" mongosh --quiet --eval 'db.adminCommand("ping").ok' >/dev/null 2>&1; then break; fi
+            sleep 2
+          done
           docker exec "$MONGO_CONTAINER" mongosh --quiet --eval 'try { rs.status().ok } catch (e) { rs.initiate({_id: "rs0", members: [{_id: 0, host: "localhost:27017"}] }).ok }'
           for attempt in $(seq 1 20); do
             if docker exec "$MONGO_CONTAINER" mongosh --quiet --eval 'rs.status().ok' >/dev/null 2>&1; then exit 0; fi

@@ -6,7 +6,8 @@ const customerSchema = new mongoose.Schema({
     phone: String,
     email: String,
     address: String,
-    customerType: { type: String, enum: ["bireysel", "kurumsal"], default: "bireysel" }
+    customerType: { type: String, enum: ["bireysel", "kurumsal"], default: "bireysel" },
+    isArchived: { type: Boolean, default: false, index: true }
 }, { timestamps: true, _id: false });
 
 function generateId() {

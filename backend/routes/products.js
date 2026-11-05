@@ -7,7 +7,7 @@ const Product = require('../models/Product');
 
 // GET all products
 router.get('/', asyncHandler(async (req, res) => {
-  const products = await Product.find()
+  const products = await Product.find({ isArchived: { $ne: true } })
     .populate('categoryId')
     .populate('materialId');
   res.json(products);
@@ -15,7 +15,7 @@ router.get('/', asyncHandler(async (req, res) => {
 
 // GET product by ID
 router.get('/:id', asyncHandler(async (req, res) => {
-  const product = await Product.findById(req.params.id)
+  const product = await Product.findOne({ _id: req.params.id, isArchived: { $ne: true } })
     .populate('categoryId')
     .populate('materialId');
   if (!product) {
@@ -41,7 +41,7 @@ router.put('/:id', asyncHandler(async (req, res) => {
 // DELETE product
 router.delete('/:id', requireRole('admin'), asyncHandler(async (req, res) => {
   const product = await deleteItem(Product, req.params.id);
-  res.json({ message: 'Ürün silindi', data: product });
+  res.json({ message: 'Ürün arşivlendi; satış geçmişi korundu', data: product });
 }));
 
 module.exports = router;

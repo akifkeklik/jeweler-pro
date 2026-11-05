@@ -86,7 +86,7 @@ router.get('/top-sellers', asyncHandler(async (req, res) => {
 }));
 
 router.get('/low-stock', asyncHandler(async (req, res) => {
-  const products = await Product.find({ stock: { $lte: 5 } }).select('name stock').sort({ stock: 1, name: 1 });
+  const products = await Product.find({ stock: { $lte: 5 }, isArchived: { $ne: true } }).select('name stock').sort({ stock: 1, name: 1 });
   res.json(products.map((product) => ({ isim: product.name, stok: product.stock })));
 }));
 

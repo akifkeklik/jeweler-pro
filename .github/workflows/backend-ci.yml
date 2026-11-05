@@ -11,9 +11,21 @@ permissions:
 
 jobs:
   backend:
-    name: Backend tests
+    name: Backend tests and MongoDB integration
     runs-on: ubuntu-latest
-    timeout-minutes: 10
+    timeout-minutes: 15
+    services:
+      mongo:
+        image: mongo:7
+        ports:
+          - 27017:27017
+        options: >-
+          --health-cmd "mongosh --quiet --eval 'try { rs.status().ok } catch (e) { rs.initiate({_id: \"rs0\", members: [{_id: 0, host: \"localhost:27017\"}]}).ok }'"
+          --health-interval 5s
+          --health-timeout 10s
+          --health-retries 20
+    env:
+      MONGO_URI: mongodb://127.0.0.1:27017/jeweler_ci?replicaSet=rs0
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4

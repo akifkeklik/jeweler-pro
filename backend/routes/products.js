@@ -1,6 +1,7 @@
 const express = require('express');
 const router = express.Router();
 const asyncHandler = require('../middleware/asyncHandler');
+const { requireRole } = require('../middleware/auth');
 const { getAll, getById, create, update, deleteItem } = require('../utils/crudOperations');
 const Product = require('../models/Product');
 
@@ -38,7 +39,7 @@ router.put('/:id', asyncHandler(async (req, res) => {
 }));
 
 // DELETE product
-router.delete('/:id', asyncHandler(async (req, res) => {
+router.delete('/:id', requireRole('admin'), asyncHandler(async (req, res) => {
   const product = await deleteItem(Product, req.params.id);
   res.json({ message: 'Ürün silindi', data: product });
 }));

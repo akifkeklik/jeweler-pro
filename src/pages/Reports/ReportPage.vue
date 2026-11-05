@@ -212,13 +212,13 @@ export default {
           apiService.get("/api/customers"),
         ]);
 
-        this.dayOrders = day.data;
-        this.weekOrders = week.data;
-        this.monthOrders = month.data;
-        this.prevMonthOrders = prevMonth.data;
-        this.topSellersMonth = top.data;
-        this.lowStock = low.data;
-        this.customers = customers.data;
+        this.dayOrders = day;
+        this.weekOrders = week;
+        this.monthOrders = month;
+        this.prevMonthOrders = prevMonth;
+        this.topSellersMonth = top;
+        this.lowStock = low;
+        this.customers = customers;
 
         this.dailyOptions.xaxis.categories = this.dayOrders.map(d =>
             new Date(d.date).toLocaleTimeString("tr-TR", { hour: "2-digit", minute: "2-digit" })

@@ -52,7 +52,7 @@
 </template>
 
 <script>
-import axios from "axios";
+import apiService from "@/services/api";
 
 export default {
   name: "CustomerForm",
@@ -80,16 +80,10 @@ export default {
           let res;
           if (this.musteri._id) {
             // Düzenleme
-            res = await axios.put(
-                `http://localhost:5000/api/customers/${this.musteri._id}`,
-                this.musteri
-            );
+            res = await apiService.put("/api/customers/" + this.musteri._id, this.musteri);
           } else {
             // Yeni ekleme
-            res = await axios.post(
-                "http://localhost:5000/api/customers",
-                this.musteri
-            );
+            res = await apiService.post("/api/customers", this.musteri);
           }
           this.$emit("ekle", res.data); // parent'a haber ver
           this.$emit("close");

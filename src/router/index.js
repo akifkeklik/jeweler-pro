@@ -1,8 +1,7 @@
 import Vue from 'vue';
 import Router from 'vue-router';
 
-// Sayfaları import et
-// Lazy-loaded sayfalar
+const LoginPage = () => import(/* webpackChunkName: "login" */ "@/pages/LoginPage.vue");
 const SalesPage = () => import(/* webpackChunkName: "sales" */ "@/pages/Sales.vue");
 const ProductPage = () => import(/* webpackChunkName: "products" */ "@/pages/Products/ProductPage.vue");
 const CustomerPage = () => import(/* webpackChunkName: "customers" */ "@/pages/Customers/CustomerPage.vue");
@@ -13,28 +12,28 @@ const CalculatorPage = () => import(/* webpackChunkName: "calculator" */ "@/comp
 
 Vue.use(Router);
 
-// 🔹 push ve replace metodlarını override et
-const originalPush = Router.prototype.push;
-Router.prototype.push = function push(location) {
-    return originalPush.call(this, location).catch(err => err);
-};
-
-const originalReplace = Router.prototype.replace;
-Router.prototype.replace = function replace(location) {
-    return originalReplace.call(this, location).catch(err => err);
-};
-
-export default new Router({
-    mode: "history",  // URL'yi temiz tutmak için history modunu kullan
-    routes: [
-        { path: "/sales", name: "Sales", component: SalesPage },
-        { path: "/products", name: "Products", component: ProductPage },
-        { path: "/customers", name: "Customers", component: CustomerPage },
-        { path: "/reports", name: "Reports", component: ReportPage },
-        { path: "/prices", name: "PricesPage", component: PricesPage },
-        { path: "/dashboard", name: "Dashboard", component: DashboardPage },
-        { path: "/calculator", name: "Calculator", component: CalculatorPage },
-        // Varsayılan yönlendirme
-        { path: "*", redirect: "/dashboard" }
-    ]
+const router = new Router({
+  mode: 'history',
+  routes: [
+    { path: '/login', name: 'Login', component: LoginPage, meta: { public: true } },
+    { path: '/sales', name: 'Sales', component: SalesPage, meta: { requiresAuth: true } },
+    { path: '/products', name: 'Products', component: ProductPage, meta: { requiresAuth: true } },
+    { path: '/customers', name: 'Customers', component: CustomerPage, meta: { requiresAuth: true } },
+    { path: '/reports', name: 'Reports', component: ReportPage, meta: { requiresAuth: true } },
+    { path: '/prices', name: 'PricesPage', component: PricesPage, meta: { requiresAuth: true } },
+    { path: '/dashboard', name: 'Dashboard', component: DashboardPage, meta: { requiresAuth: true } },
+    { path: '/calculator', name: 'Calculator', component: CalculatorPage, meta: { requiresAuth: true } },
+    { path: '*', redirect: '/dashboard' },
+  ],
 });
+
+router.beforeEach((to, from, next) => {
+  const token = sessionStorage.getItem('jeweler_token');
+  if (to.meta.public && token) return next('/dashboard');
+  if (to.matched.some((record) => record.meta.requiresAuth) && !token) {
+    return next({ path: '/login', query: { redirect: to.fullPath } });
+  }
+  return next();
+});
+
+export default router;

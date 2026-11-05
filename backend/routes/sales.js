@@ -1,6 +1,7 @@
 const express = require('express');
 const router = express.Router();
 const asyncHandler = require('../middleware/asyncHandler');
+const { requireRole } = require('../middleware/auth');
 const Sale = require('../models/Sale');
 const Product = require('../models/Product');
 const Customer = require('../models/Customer');
@@ -51,7 +52,7 @@ router.put('/:id', asyncHandler(async (req, res) => {
 }));
 
 // A sale is a financial record: DELETE means cancel and restore its stock, not erase history.
-router.delete('/:id', asyncHandler(async (req, res) => {
+router.delete('/:id', requireRole('admin'), asyncHandler(async (req, res) => {
   const sale = await salesService.cancelSale(req.params.id);
   res.json({ message: 'Satış iptal edildi; stok geri eklendi', data: sale });
 }));

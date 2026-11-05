@@ -44,7 +44,7 @@
 </template>
 
 <script>
-import axios from "axios";
+import apiService from "@/services/api";
 
 export default {
   data() {
@@ -71,16 +71,14 @@ export default {
   },
   methods: {
     async fetchCategories() {
-      const res = await axios.get("http://localhost:5000/api/categories");
-      this.categories = res.data;
+      this.categories = await apiService.get("/api/categories");
     },
     async fetchMaterials() {
-      const res = await axios.get("http://localhost:5000/api/materials");
-      this.materials = res.data;
+      this.materials = await apiService.get("/api/materials");
     },
     submitForm() {
       if (this.$refs.urunForm.validate()) {
-        this.$emit("urunEklendi", { ...this.urun });
+        this.$emit("urunEklendi", { ...this.urun, weight: Number(this.urun.weight), price: Number(this.urun.price), costPrice: this.urun.costPrice === "" ? null : Number(this.urun.costPrice), stock: Number(this.urun.stock) });
         this.urun = { name: "", categoryId: "", materialId: "", weight: "", price: "", costPrice: "", barcode: "", description: "", stock: "" };
         this.$refs.urunForm.resetValidation();
       }

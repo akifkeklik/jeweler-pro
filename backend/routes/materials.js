@@ -1,6 +1,7 @@
 const express = require('express');
 const router = express.Router();
 const asyncHandler = require('../middleware/asyncHandler');
+const { requireRole } = require('../middleware/auth');
 const { getAll, getById, create, update, deleteItem } = require('../utils/crudOperations');
 const Material = require('../models/Material');
 
@@ -29,7 +30,7 @@ router.put('/:id', asyncHandler(async (req, res) => {
 }));
 
 // DELETE material
-router.delete('/:id', asyncHandler(async (req, res) => {
+router.delete('/:id', requireRole('admin'), asyncHandler(async (req, res) => {
   const material = await deleteItem(Material, req.params.id);
   res.json({ message: 'Hammadde silindi', data: material });
 }));

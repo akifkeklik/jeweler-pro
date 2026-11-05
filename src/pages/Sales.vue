@@ -122,10 +122,7 @@
           <v-icon left color="blue">mdi-pencil</v-icon> Satışı Düzenle
         </v-card-title>
         <v-card-text>
-          <v-text-field v-model="editForm.customerName" label="Müşteri" />
-          <v-text-field v-model="editForm.productName" label="Ürün" />
-          <v-text-field v-model="editForm.quantity" label="Miktar" type="number" />
-          <v-text-field v-model="editForm.totalPrice" label="Toplam Tutar" type="number" />
+          <p class="mb-3">Ürün, miktar ve satış tutarı işlem kaydının bütünlüğü için değiştirilemez.</p>
           <v-select
               v-model="editForm.paymentMethod"
               :items="['nakit','kredi kartı','havale']"

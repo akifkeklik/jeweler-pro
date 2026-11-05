@@ -1,5 +1,3 @@
-const mongoose = require('mongoose');
-
 function httpError(message, statusCode) {
   const error = new Error(message);
   error.statusCode = statusCode;
@@ -90,7 +88,8 @@ function createSalesService({ Sale, Product, Customer }) {
     if (!updated) throw httpError('Satış başka bir işlem tarafından iptal edildi', 409);
 
     try {
-      await Product.updateOne({ _id: sale.productId }, { $inc: { stock: sale.quantity } });
+      const stockUpdate = await Product.updateOne({ _id: sale.productId }, { $inc: { stock: sale.quantity } });
+      if (!stockUpdate.matchedCount) throw httpError('Ürün kaydı bulunamadığı için stok geri yüklenemedi', 409);
     } catch (error) {
       await Sale.updateOne(
         { _id: id, status: 'cancelled' },

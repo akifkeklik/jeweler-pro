@@ -1,9 +1,12 @@
 <template>
-  <v-container fluid>
-    <h2 class="mb-4">Ürün & Stok Yönetimi</h2>
+  <div class="workspace-page">
+    <header class="page-heading">
+      <div><div class="eyebrow">İŞLETME <span>/</span> ENVANTER</div><h1>Ürün & stok yönetimi</h1><p>Ürün kataloğunu, gramaj ve fiyat bilgilerini, barkodları ve mevcut stoğu yönetin.</p></div>
+      <div class="heading-actions"><v-btn outlined class="secondary-action" @click="kameraDialog = true"><v-icon left small>mdi-barcode-scan</v-icon> Barkod tara</v-btn><v-btn depressed class="primary-action" @click="yeniUrunDialog = true"><v-icon left small>mdi-plus</v-icon> Yeni ürün</v-btn></div>
+    </header>
 
     <!-- Ana Kart -->
-    <v-card class="pa-6">
+    <v-card class="inventory-panel pa-5">
       <!-- Arama Kutusu -->
       <v-text-field
           v-model="search"
@@ -13,11 +16,11 @@
           dense
           hide-details
           clearable
-          class="search-bar mb-5 rounded-input"
+          class="inventory-search mb-5"
       />
 
       <!-- Kamera ile Barkod Tara -->
-      <v-btn color="primary" class="mb-5" @click="kameraDialog = true" block>
+      <v-btn color="primary" class="mb-5 d-none" @click="kameraDialog = true">
         <v-icon left>mdi-camera</v-icon>
         Barkod Tara
       </v-btn>
@@ -31,7 +34,7 @@
       />
 
       <!-- Yeni Ürün Ekle Butonu -->
-      <v-btn color="primary" class="mt-5" @click="yeniUrunDialog = true" block>
+      <v-btn color="primary" class="mt-5 d-none" @click="yeniUrunDialog = true">
         <v-icon left>mdi-plus</v-icon>
         Yeni Ürün Ekle
       </v-btn>
@@ -137,7 +140,7 @@
       <span class="white--text">Ürün arşivlendi.</span>
       <v-btn color="pink" text @click="snackbar = false">Kapat</v-btn>
     </v-snackbar>
-  </v-container>
+  </div>
 </template>
 
 <script>
@@ -259,9 +262,25 @@ export default {
 };
 </script>
 
-<style>
-.rounded-input .v-input__control,
-.rounded-input .v-field {
-  border-radius: 9999px !important;
-}
+<style scoped>
+.workspace-page { color:#e6edf7; }
+.page-heading { display:flex; align-items:flex-end; justify-content:space-between; gap:20px; margin:4px 0 24px; }
+.eyebrow { color:#71839d; font-size:9px; font-weight:800; letter-spacing:1.45px; }
+.eyebrow span { padding:0 6px; color:#3d83d9; }
+.page-heading h1 { margin:9px 0 6px; color:#f2f6fc; font:800 clamp(23px,3vw,29px) 'Manrope',sans-serif; letter-spacing:-.7px; }
+.page-heading p { margin:0; color:#8292a9; font-size:12px; }
+.heading-actions { display:flex; gap:9px; }
+.primary-action { height:40px !important; padding:0 16px !important; color:#fff !important; background:#216bd0 !important; border-radius:8px !important; text-transform:none !important; font-size:11px !important; font-weight:700 !important; }
+.secondary-action { height:40px !important; color:#a9bad0 !important; border-color:rgba(148,163,184,.2) !important; border-radius:8px !important; text-transform:none !important; font-size:11px !important; }
+.inventory-panel { border:1px solid rgba(148,163,184,.14) !important; border-radius:13px !important; background:#101a2a !important; box-shadow:none !important; }
+.inventory-search { max-width:390px; }
+.inventory-search >>> .v-input__slot { min-height:40px !important; background:rgba(255,255,255,.025) !important; }
+.inventory-search >>> fieldset { border-color:rgba(148,163,184,.18) !important; }
+.inventory-search >>> input { color:#e6edf7 !important; font-size:11px; }
+.inventory-panel >>> .v-data-table { background:transparent !important; color:#dce5f1 !important; }
+.inventory-panel >>> .v-data-table-header th { color:#8292a9 !important; background:rgba(255,255,255,.018); font-size:9px !important; text-transform:uppercase; letter-spacing:.6px; }
+.inventory-panel >>> tbody td { color:#aebbd0 !important; border-bottom-color:rgba(148,163,184,.08) !important; }
+.inventory-panel >>> tbody tr:hover { background:rgba(63,133,220,.055) !important; }
+.inventory-panel >>> .v-btn { text-transform:none; }
+@media(max-width:600px) { .page-heading { align-items:flex-start; flex-direction:column; } .heading-actions { width:100%; } .heading-actions .v-btn { flex:1; } }
 </style>

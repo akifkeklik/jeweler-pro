@@ -1,9 +1,13 @@
 <template>
-  <v-container fluid>
-    <h2 class="mb-6 text-h4 font-weight-bold">Satışlar</h2>
+  <div class="workspace-page">
+    <header class="page-heading">
+      <div><div class="eyebrow">İŞLETME <span>/</span> SATIŞLAR</div><h1>Satış yönetimi</h1><p>Gerçekleşen satışları arayın, filtreleyin ve işlem kayıtlarını yönetin.</p></div>
+      <v-btn outlined class="refresh-action" :loading="loading" @click="fetchSales"><v-icon left small>mdi-refresh</v-icon> Yenile</v-btn>
+    </header>
+    <div class="sales-overview"><div><span>Listelenen satış</span><strong>{{ filteredSales.length.toLocaleString('tr-TR') }}</strong></div><div><span>Toplam ciro</span><strong>{{ toplamCiro.toLocaleString('tr-TR',{style:'currency',currency:'TRY'}) }}</strong></div><div><span>Müşteri sayısı</span><strong>{{ musteriSayisi.toLocaleString('tr-TR') }}</strong></div></div>
 
     <!-- Filtreleme + Tablo Alanı -->
-    <v-card class="mt-8 pa-6 rounded-xl elevation-2 white-card">
+    <v-card class="sales-panel pa-5" elevation="0">
       <!-- Filtreleme Alanı -->
       <v-row class="mb-4">
         <v-col cols="12" md="4">
@@ -155,7 +159,7 @@
         </v-card-actions>
       </v-card>
     </v-dialog>
-  </v-container>
+  </div>
 </template>
 
 <script>
@@ -219,8 +223,9 @@ export default {
 
         let matchesDate = true;
         if (this.dateRange.length === 2) {
-          const start = new Date(this.dateRange[0]);
-          const end = new Date(this.dateRange[1]);
+          const [firstDate, secondDate] = [...this.dateRange].sort();
+          const start = new Date(firstDate + "T00:00:00");
+          const end = new Date(secondDate + "T23:59:59.999");
           const saleDate = new Date(s.date);
           matchesDate = saleDate >= start && saleDate <= end;
         }
@@ -297,10 +302,25 @@ export default {
 </script>
 
 <style scoped>
-.stat-card {
-  border: none !important;
-}
-.white-card {
-  background-color: #ffffff !important;
-}
+.workspace-page { color:#e6edf7; }
+.page-heading { display:flex; align-items:flex-end; justify-content:space-between; gap:20px; margin:4px 0 18px; }
+.eyebrow { color:#71839d; font-size:9px; font-weight:800; letter-spacing:1.45px; }
+.eyebrow span { padding:0 6px; color:#3d83d9; }
+.page-heading h1 { margin:9px 0 6px; color:#f2f6fc; font:800 clamp(23px,3vw,29px) 'Manrope',sans-serif; letter-spacing:-.7px; }
+.page-heading p { margin:0; color:#8292a9; font-size:12px; }
+.refresh-action { height:39px !important; color:#a9bad0 !important; border-color:rgba(148,163,184,.2) !important; border-radius:8px !important; text-transform:none !important; font-size:11px !important; }
+.sales-overview { display:grid; grid-template-columns:repeat(3,minmax(0,1fr)); gap:12px; margin-bottom:13px; }
+.sales-overview > div { display:flex; flex-direction:column; gap:6px; padding:14px 17px; border:1px solid rgba(148,163,184,.13); border-radius:10px; background:linear-gradient(145deg,#111d30,#0e1726); }
+.sales-overview span { color:#8191a8; font-size:10px; }
+.sales-overview strong { color:#f0f5fc; font:800 19px 'Manrope',sans-serif; }
+.sales-panel { border:1px solid rgba(148,163,184,.14) !important; border-radius:13px !important; background:#101a2a !important; }
+.sales-panel >>> .v-input__slot { background:rgba(255,255,255,.025) !important; }
+.sales-panel >>> fieldset { border-color:rgba(148,163,184,.18) !important; }
+.sales-panel >>> input,.sales-panel >>> .v-select__selection { color:#dce5f1 !important; font-size:11px; }
+.sales-panel >>> .v-data-table { background:transparent !important; color:#dce5f1 !important; }
+.sales-panel >>> .v-data-table-header th { height:43px; color:#8292a9 !important; background:rgba(255,255,255,.018); font-size:9px !important; text-transform:uppercase; letter-spacing:.6px; }
+.sales-panel >>> tbody td { color:#aebbd0 !important; border-bottom-color:rgba(148,163,184,.08) !important; font-size:11px; }
+.sales-panel >>> tbody tr:hover { background:rgba(63,133,220,.055) !important; }
+.sales-panel >>> .v-btn { text-transform:none; }
+@media(max-width:650px) { .page-heading { align-items:flex-start; flex-direction:column; } .sales-overview { grid-template-columns:1fr; } }
 </style>

@@ -10,9 +10,9 @@
           <h2 class="kpi-value">{{ kpi.value }}</h2>
           <p class="kpi-title">{{ kpi.title }}</p>
 
-          <div class="kpi-trend mt-2" :class="kpi.trend >= 0 ? 'trend-up' : 'trend-down'">
+          <div class="kpi-trend mt-2" :class="kpi.trend === null ? 'trend-neutral' : kpi.trend >= 0 ? 'trend-up' : 'trend-down'">
             <v-icon small left>
-              {{ kpi.trend >= 0 ? 'mdi-arrow-up-bold' : 'mdi-arrow-down-bold' }}
+              {{ kpi.trend === null ? 'mdi-minus' : kpi.trend >= 0 ? 'mdi-arrow-up-bold' : 'mdi-arrow-down-bold' }}
             </v-icon>
             <span v-if="kpi.trend !== null">{{ Math.abs(kpi.trend) }}%</span><span v-else>Yeni dönem</span>
           </div>
@@ -250,6 +250,7 @@ export default {
 .kpi-trend { display:flex; align-items:center; font-size:10px; font-weight:700; }
 .trend-up { color:#48d5a0; }
 .trend-down { color:#f08b8b; }
+.trend-neutral { color:#8797ae; }
 .card-title { min-height:53px; color:#dce5f1 !important; font-size:11px !important; font-weight:800 !important; letter-spacing:.5px; border-bottom:1px solid rgba(148,163,184,.1); }
 .report-card >>> .v-data-table { flex:1; background:transparent !important; color:#dce5f1 !important; font-size:10px; }
 .report-card >>> .v-data-table-header th { color:#8292a9 !important; background:rgba(255,255,255,.018); font-size:9px !important; text-transform:uppercase; letter-spacing:.5px; }

@@ -5,6 +5,7 @@ import store from './store/index'
 
 import vuetify from './plugins/vuetify'
 import 'vuetify/dist/vuetify.min.css'
+import './styles/premium-system.scss'
 
 Vue.config.productionTip = false
 

@@ -1,245 +1,244 @@
 <template>
-  <v-container fluid>
-    <v-row dense>
-      <!-- Altın Fiyatları -->
-      <v-col cols="12" md="6">
-        <v-card class="pa-4">
-          <v-card-title class="card-title">Altın Fiyatları</v-card-title>
-          <v-data-table
-              :headers="headers"
-              :items="altinFiyatlari"
-              hide-default-footer
-              item-class="price-table-item"
-              class="price-data-table"
-          >
-            <template v-slot:item.alis="{ item }">
-              <div :class="['price-box', getClass(item.alis)]">{{ cleanValue(item.alis) }}</div>
-            </template>
-            <template v-slot:item.satis="{ item }">
-              <div :class="['price-box', getClass(item.satis)]">{{ cleanValue(item.satis) }}</div>
-            </template>
-          </v-data-table>
-        </v-card>
-      </v-col>
+  <div class="market-page">
+    <header class="market-hero">
+      <div>
+        <div class="market-eyebrow"><span class="market-eyebrow-dot"></span> PİYASA MERKEZİ</div>
+        <h1>Canlı piyasa verileri</h1>
+        <p>Resmî döviz kurları ve işletmenizin tanımlı kıymetli maden fiyatları tek ekranda.</p>
+      </div>
+      <div class="market-hero-actions">
+        <div class="market-updated" v-if="lastUpdated">
+          <span class="market-updated-dot" :class="{ 'is-error': !!error }"></span>
+          Son kontrol {{ lastUpdated }}
+        </div>
+        <v-btn depressed class="market-refresh" :loading="loading" @click="fetchPrices">
+          <v-icon left small>mdi-refresh</v-icon> Yenile
+        </v-btn>
+      </div>
+    </header>
 
-      <!-- Döviz Fiyatları -->
-      <v-col cols="12" md="6">
-        <v-card class="pa-4">
-          <v-card-title class="card-title">Döviz Fiyatları</v-card-title>
-          <v-data-table
-              :headers="headers"
-              :items="dovizFiyatlari"
-              hide-default-footer
-              item-class="price-table-item"
-              class="price-data-table"
-          >
-            <template v-slot:item.alis="{ item }">
-              <div :class="['price-box', getClass(item.alis)]">{{ cleanValue(item.alis) }}</div>
-            </template>
-            <template v-slot:item.satis="{ item }">
-              <div :class="['price-box', getClass(item.satis)]">{{ cleanValue(item.satis) }}</div>
-            </template>
-          </v-data-table>
-        </v-card>
-      </v-col>
+    <v-alert v-if="error" type="warning" dense text class="market-alert">
+      {{ error }}
+    </v-alert>
 
-      <!-- Yeni Sarrafiye -->
-      <v-col cols="12" md="6">
-        <v-card class="pa-4">
-          <v-card-title class="card-title">Sarrafiye Fiyatları (Yeni)</v-card-title>
-          <v-data-table
-              :headers="headers"
-              :items="yeniSarrafiye"
-              hide-default-footer
-              item-class="price-table-item"
-              class="price-data-table"
-          >
-            <template v-slot:item.alis="{ item }">
-              <div class="price-box">{{ item.alis }}</div>
-            </template>
-            <template v-slot:item.satis="{ item }">
-              <div class="price-box">{{ item.satis }}</div>
-            </template>
-          </v-data-table>
-        </v-card>
-      </v-col>
+    <section class="market-source-grid">
+      <article class="market-source-card">
+        <div class="market-source-icon"><v-icon>mdi-bank</v-icon></div>
+        <div class="market-source-copy">
+          <strong>TCMB döviz kurları</strong>
+          <span>Türkiye Cumhuriyet Merkez Bankası · USD, EUR, GBP, AUD</span>
+        </div>
+        <v-chip small :color="currencies.length ? 'success' : 'warning'" text-color="white">
+          {{ currencies.length ? 'Veri alındı' : 'Veri bekleniyor' }}
+        </v-chip>
+      </article>
+      <article class="market-source-card">
+        <div class="market-source-icon market-source-icon-gold"><v-icon>mdi-gold</v-icon></div>
+        <div class="market-source-copy">
+          <strong>İşletme fiyat havuzu</strong>
+          <span>Veritabanında yönetici tarafından tanımlanan alış / satış fiyatları</span>
+        </div>
+        <v-chip small :color="metalPrices.length ? 'success' : 'default'" text-color="white">
+          {{ metalPrices.length ? metalPrices.length + ' kayıt' : 'Kayıt yok' }}
+        </v-chip>
+      </article>
+      <article class="market-source-card market-source-card-muted">
+        <div class="market-source-icon"><v-icon>mdi-chart-candlestick</v-icon></div>
+        <div class="market-source-copy">
+          <strong>Borsa İstanbul</strong>
+          <span>Lisanslı piyasa veri sağlayıcısı entegrasyonu henüz yapılandırılmadı.</span>
+        </div>
+        <v-chip small color="warning" text-color="white">Bağlı değil</v-chip>
+      </article>
+    </section>
 
-      <!-- Eski Sarrafiye -->
-      <v-col cols="12" md="6">
-        <v-card class="pa-4">
-          <v-card-title class="card-title">Sarrafiye Fiyatları (Eski)</v-card-title>
-          <v-data-table
-              :headers="headers"
-              :items="eskiSarrafiye"
-              hide-default-footer
-              item-class="price-table-item"
-              class="price-data-table"
-          >
-            <template v-slot:item.alis="{ item }">
-              <div class="price-box">{{ item.alis }}</div>
-            </template>
-            <template v-slot:item.satis="{ item }">
-              <div class="price-box">{{ item.satis }}</div>
-            </template>
-          </v-data-table>
-        </v-card>
-      </v-col>
-    </v-row>
-  </v-container>
+    <section class="market-section">
+      <div class="market-section-heading">
+        <div>
+          <div class="market-section-kicker">RESMÎ KAYNAK</div>
+          <h2>Döviz kurları</h2>
+        </div>
+        <span class="market-section-meta">Alış / satış · TL karşılığı</span>
+      </div>
+      <v-card flat class="market-table-card">
+        <v-data-table
+          :headers="currencyHeaders"
+          :items="currencies"
+          :loading="loading && !currencies.length"
+          hide-default-footer
+          disable-pagination
+          class="market-data-table"
+          no-data-text="TCMB verisi şu anda alınamıyor."
+        >
+          <template v-slot:item.currency="{ item }">
+            <div class="market-instrument">
+              <span class="market-instrument-symbol">{{ item.currency.split('/')[0] }}</span>
+              <strong>{{ item.currency }}</strong>
+            </div>
+          </template>
+          <template v-slot:item.buyPrice="{ item }">
+            <span class="market-number">{{ formatPrice(item.buyPrice) }}</span>
+          </template>
+          <template v-slot:item.sellPrice="{ item }">
+            <span class="market-number">{{ formatPrice(item.sellPrice) }}</span>
+          </template>
+        </v-data-table>
+      </v-card>
+      <p class="market-footnote">TCMB kurları resmî referans niteliğindedir; kuyumcu ekranındaki anlık serbest piyasa alış / satış fiyatlarıyla aynı olmayabilir.</p>
+    </section>
+
+    <section class="market-section">
+      <div class="market-section-heading">
+        <div>
+          <div class="market-section-kicker">İŞLETME TANIMLARI</div>
+          <h2>Kıymetli maden & sarrafiye</h2>
+        </div>
+        <span class="market-section-meta">MongoDB fiyat kayıtları</span>
+      </div>
+      <v-card flat class="market-table-card">
+        <v-data-table
+          :headers="metalHeaders"
+          :items="metalPrices"
+          :loading="loading && !metalPrices.length"
+          hide-default-footer
+          disable-pagination
+          class="market-data-table"
+          no-data-text="Henüz kıymetli maden veya sarrafiye fiyatı tanımlanmamış."
+        >
+          <template v-slot:item.type="{ item }">
+            <div class="market-instrument">
+              <span class="market-instrument-symbol market-instrument-gold"><v-icon small>mdi-gold</v-icon></span>
+              <strong>{{ item.type }}</strong>
+            </div>
+          </template>
+          <template v-slot:item.buy="{ item }"><span class="market-number">{{ formatPrice(item.buy) }}</span></template>
+          <template v-slot:item.sell="{ item }"><span class="market-number">{{ formatPrice(item.sell) }}</span></template>
+          <template v-slot:item.createdAt="{ item }"><span class="market-date">{{ formatDate(item.createdAt) }}</span></template>
+        </v-data-table>
+      </v-card>
+      <p class="market-footnote">Bu bölümdeki değerler harici canlı piyasa verisi olarak sunulmaz; veritabanındaki işletme fiyat kayıtlarıdır.</p>
+    </section>
+  </div>
 </template>
 
 <script>
+import apiService from '@/services/api';
+
 export default {
+  name: 'PricesPage',
   data() {
     return {
-      headers: [
-        { text: "Tür", value: "tur", align: "left", class: "header-tur" },
-        { text: "Alış", value: "alis", align: "center", width: "150px", class: "header-price" },
-        { text: "Satış", value: "satis", align: "center", width: "150px", class: "header-price" },
-      ],
-      altinFiyatlari: [],
-      dovizFiyatlari: [],
-      yeniSarrafiye: [],
-      eskiSarrafiye: [],
+      loading: false,
+      error: '',
+      lastUpdated: '',
+      currencies: [],
+      metalPrices: [],
       refreshTimer: null,
+      currencyHeaders: [
+        { text: 'Enstrüman', value: 'currency', sortable: false },
+        { text: 'Alış (₺)', value: 'buyPrice', align: 'end', sortable: false },
+        { text: 'Satış (₺)', value: 'sellPrice', align: 'end', sortable: false },
+      ],
+      metalHeaders: [
+        { text: 'Varlık', value: 'type', sortable: false },
+        { text: 'Alış (₺)', value: 'buy', align: 'end', sortable: false },
+        { text: 'Satış (₺)', value: 'sell', align: 'end', sortable: false },
+        { text: 'Kayıt tarihi', value: 'createdAt', align: 'end', sortable: false },
+      ],
     };
   },
   mounted() {
     this.fetchPrices();
-    this.refreshTimer = setInterval(this.fetchPrices, 5000);
+    // TCMB feed is not a tick-by-tick exchange feed. Refresh conservatively.
+    this.refreshTimer = setInterval(this.fetchPrices, 60000);
   },
   beforeDestroy() {
     if (this.refreshTimer) clearInterval(this.refreshTimer);
   },
   methods: {
     async fetchPrices() {
+      if (this.loading) return;
+      this.loading = true;
+      this.error = '';
       try {
-        const response = await fetch("/Prices.json?ts=" + Date.now());
-        if (!response.ok) throw new Error(`Fiyat dosyası alınamadı (${response.status})`);
-        const data = await response.json();
-        this.altinFiyatlari = data.altinFiyatlari;
-        this.dovizFiyatlari = data.dovizFiyatlari;
-        this.yeniSarrafiye = data.yeniSarrafiye;
-        this.eskiSarrafiye = data.eskiSarrafiye;
+        const data = await apiService.get('/api/prices');
+        this.currencies = Array.isArray(data.currencies) ? data.currencies : [];
+        this.metalPrices = Array.isArray(data.prices) ? data.prices : [];
+        this.lastUpdated = new Intl.DateTimeFormat('tr-TR', {
+          hour: '2-digit', minute: '2-digit', second: '2-digit',
+        }).format(new Date());
+        if (!this.currencies.length) {
+          this.error = 'TCMB kaynağından döviz verisi alınamadı. Son geçerli fiyat varmış gibi gösterim yapılmıyor.';
+        }
       } catch (error) {
-        console.error("Veri alınamadı:", error);
+        this.error = error.message || 'Piyasa verileri API üzerinden alınamadı.';
+      } finally {
+        this.loading = false;
       }
     },
-    getClass(value) {
-      const text = String(value ?? "");
-      return text.includes("▲") ? "text-green" : text.includes("▼") ? "text-red" : "";
+    formatPrice(value) {
+      const number = Number(value);
+      if (!Number.isFinite(number)) return '—';
+      return new Intl.NumberFormat('tr-TR', {
+        minimumFractionDigits: 2, maximumFractionDigits: 4,
+      }).format(number);
     },
-    cleanValue(value) {
-      return String(value ?? "").replace("▲", "").replace("▼", "").trim();
+    formatDate(value) {
+      if (!value) return '—';
+      const date = new Date(value);
+      if (Number.isNaN(date.getTime())) return '—';
+      return new Intl.DateTimeFormat('tr-TR', {
+        day: '2-digit', month: 'short', year: 'numeric',
+        hour: '2-digit', minute: '2-digit',
+      }).format(date);
     },
   },
 };
 </script>
 
 <style scoped>
-/* Tablo için genel stiller */
-.price-data-table ::v-deep(th),
-.price-data-table ::v-deep(td) {
-  padding: 6px 10px !important; /* Padding'i daha da küçültüyoruz */
-}
-
-/* Başlık stilleri */
-.price-data-table ::v-deep(.header-tur) {
-  font-weight: 600 !important;
-  font-size: 0.8rem !important; /* Başlık boyutunu küçültüyoruz */
-  color: #141e30 !important;
-  letter-spacing: 0.5px;
-}
-
-.price-data-table ::v-deep(.header-price) {
-  font-weight: 700 !important;
-  font-size: 0.8rem !important; /* Başlık boyutunu küçültüyoruz */
-  color: #141e30 !important;
-  text-align: center !important;
-}
-
-/* Tür sütunu stilleri */
-.price-data-table ::v-deep(td:first-child) {
-  font-weight: 600 !important;
-  font-size: 0.8rem !important; /* Satır metni boyutunu küçültüyoruz */
-  color: #141e30 !important;
-  padding: 6px 10px !important;
-}
-
-/* Fiyat kutusu */
-.price-box {
-  font-weight: 700 !important;
-  font-size: 0.9rem !important; /* Fiyat kutusunun font boyutunu küçültüyoruz */
-  text-align: center;
-  padding: 4px 8px;
-  white-space: nowrap;
-  color: #141e30 !important;
-  text-shadow: 0 0 8px rgba(20, 30, 48, 0.3);
-  border-radius: 8px;
-  background: rgba(255, 255, 255, 0.7);
-  transition: all 0.3s ease;
-  margin: 2px 0;
-  border: 1px solid rgba(20, 30, 48, 0.1);
-}
-
-.price-box:hover {
-  background: rgba(255, 255, 255, 0.9);
-  text-shadow: 0 0 12px rgba(20, 30, 48, 0.4);
-  transform: translateY(-1px);
-  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
-}
-
-/* Başlık stilleri */
-.card-title {
-  font-size: 1rem !important; /* Başlık boyutunu küçültüyoruz */
-  font-weight: 700 !important;
-  text-transform: uppercase;
-  letter-spacing: 1px;
-  padding: 6px 12px;
-  color: #141e30 !important;
-  border-radius: 8px;
-  background: linear-gradient(90deg, rgba(20, 30, 48, 0.1), transparent);
-  text-shadow: 0 0 6px rgba(20, 30, 48, 0.2);
-  margin-bottom: 8px; /* Margin'i küçültüyoruz */
-}
-
-/* Diğer stil düzenlemeleri */
-.text-green {
-  color: #2e7d32 !important;
-  text-shadow: 0 0 8px rgba(46, 125, 50, 0.3) !important;
-}
-
-.text-red {
-  color: #c62828 !important;
-  text-shadow: 0 0 8px rgba(198, 40, 40, 0.3) !important;
-}
-
-.price-table-item {
-  color: #333 !important;
-}
-
-/* Koyu mod için stiller */
-.v-application--is-dark .price-data-table ::v-deep(.header-tur),
-.v-application--is-dark .price-data-table ::v-deep(.header-price),
-.v-application--is-dark .price-data-table ::v-deep(td:first-child) {
-  color: #f5f5f5 !important;
-}
-
-.v-application--is-dark .price-box {
-  color: #f5f5f5 !important;
-  background: rgba(36, 59, 85, 0.3);
-  text-shadow: 0 0 10px rgba(192, 192, 192, 0.4);
-  border: 1px solid rgba(192, 192, 192, 0.2);
-}
-
-.v-application--is-dark .price-box:hover {
-  background: rgba(36, 59, 85, 0.5);
-  text-shadow: 0 0 15px rgba(192, 192, 192, 0.6);
-}
-
-.v-application--is-dark .card-title {
-  color: #f5f5f5 !important;
-  background: linear-gradient(90deg, rgba(36, 59, 85, 0.3), transparent);
-  text-shadow: 0 0 8px rgba(192, 192, 192, 0.3);
+.market-page { color:var(--jp-text, #e8eef8); }
+.market-hero { display:flex; align-items:flex-end; justify-content:space-between; gap:24px; margin:4px 0 28px; }
+.market-eyebrow,.market-section-kicker { display:flex; align-items:center; gap:8px; color:#8293ad; font-size:9px; font-weight:800; letter-spacing:1.55px; }
+.market-eyebrow-dot,.market-updated-dot { width:7px; height:7px; border-radius:50%; background:#36c58b; box-shadow:0 0 12px rgba(54,197,139,.5); }
+.market-hero h1 { margin:10px 0 7px; color:inherit; font:800 clamp(25px,3vw,34px)/1.2 'Manrope',sans-serif; letter-spacing:-1.1px; }
+.market-hero p { max-width:650px; margin:0; color:#91a0b7; font-size:13px; line-height:1.7; }
+.market-hero-actions { display:flex; align-items:center; gap:16px; }
+.market-updated { display:flex; align-items:center; gap:8px; color:#8797ad; font-size:11px; white-space:nowrap; }
+.market-updated-dot.is-error { background:#e3a64b; box-shadow:0 0 10px rgba(227,166,75,.35); }
+.market-refresh { color:#fff !important; background:linear-gradient(135deg,#398bfa,#175bb8) !important; padding:0 16px !important; }
+.market-alert { margin-bottom:20px; }
+.market-source-grid { display:grid; grid-template-columns:repeat(3,minmax(0,1fr)); gap:14px; margin-bottom:34px; }
+.market-source-card { min-width:0; display:flex; align-items:center; gap:12px; padding:16px; border:1px solid rgba(148,163,184,.14); border-radius:14px; background:linear-gradient(145deg,rgba(20,34,54,.94),rgba(14,24,39,.94)); }
+.market-source-card-muted { opacity:.82; }
+.market-source-icon,.market-instrument-symbol { flex:0 0 auto; width:38px; height:38px; display:grid; place-items:center; border-radius:11px; color:#8dbfff; background:rgba(57,139,250,.13); }
+.market-source-icon-gold,.market-instrument-gold { color:#e5c17f; background:rgba(214,173,104,.13); }
+.market-source-copy { min-width:0; flex:1; display:flex; flex-direction:column; gap:4px; }
+.market-source-copy strong { color:#e7eef9; font-size:12px; font-weight:750; }
+.market-source-copy span { color:#8797ad; font-size:10px; line-height:1.5; }
+.market-section { margin-top:28px; }
+.market-section-heading { display:flex; align-items:flex-end; justify-content:space-between; gap:16px; margin-bottom:13px; }
+.market-section-heading h2 { margin:5px 0 0; color:inherit; font:750 19px 'Manrope',sans-serif; letter-spacing:-.45px; }
+.market-section-meta { color:#8292a9; font-size:10px; }
+.market-table-card { padding:6px 12px; background:linear-gradient(145deg,#121e30,#0f1928) !important; }
+.market-data-table { background:transparent !important; }
+.market-instrument { display:flex; align-items:center; gap:11px; }
+.market-instrument-symbol { width:31px; height:31px; border-radius:9px; font-size:10px; font-weight:800; }
+.market-instrument strong { color:#e3ebf7; font-size:12px; font-weight:700; }
+.market-number { color:#e6edf8; font:700 12px 'DM Sans',sans-serif; font-variant-numeric:tabular-nums; }
+.market-date { color:#8998ad; font-size:11px; }
+.market-footnote { margin:10px 3px 0; color:#7e8da4; font-size:10px; line-height:1.6; }
+.v-application--is-light .market-page { color:#172338; }
+.v-application--is-light .market-hero h1,.v-application--is-light .market-section-heading h2 { color:#172338; }
+.v-application--is-light .market-hero p,.v-application--is-light .market-updated,.v-application--is-light .market-section-meta,.v-application--is-light .market-footnote { color:#64748b; }
+.v-application--is-light .market-source-card { background:#fff; border-color:#e5eaf2; }
+.v-application--is-light .market-source-copy strong,.v-application--is-light .market-instrument strong,.v-application--is-light .market-number { color:#172338; }
+.v-application--is-light .market-table-card { background:#fff !important; }
+@media(max-width:960px) { .market-source-grid { grid-template-columns:1fr; } }
+@media(max-width:650px) {
+  .market-hero { align-items:flex-start; flex-direction:column; }
+  .market-hero-actions { width:100%; justify-content:space-between; }
+  .market-section-heading { align-items:flex-start; flex-direction:column; gap:5px; }
+  .market-source-card { padding:13px; }
 }
 </style>

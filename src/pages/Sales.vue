@@ -4,7 +4,7 @@
       <div><div class="eyebrow">İŞLETME <span>/</span> SATIŞLAR</div><h1>Satış yönetimi</h1><p>Gerçekleşen satışları arayın, filtreleyin ve işlem kayıtlarını yönetin.</p></div>
       <v-btn outlined class="refresh-action" :loading="loading" @click="fetchSales"><v-icon left small>mdi-refresh</v-icon> Yenile</v-btn>
     </header>
-    <div class="sales-overview"><div><span>Listelenen satış</span><strong>{{ filteredSales.length.toLocaleString('tr-TR') }}</strong></div><div><span>Filtrelenen ciro</span><strong>{{ toplamCiro.toLocaleString('tr-TR',{style:'currency',currency:'TRY'}) }}</strong></div><div><span>Müşteri sayısı</span><strong>{{ musteriSayisi.toLocaleString('tr-TR') }}</strong></div></div>
+    <div class="sales-overview"><div><span>Listelenen satış</span><strong>{{ filteredSales.length.toLocaleString('tr-TR') }}</strong></div><div><span>Toplam ciro</span><strong>{{ toplamCiro.toLocaleString('tr-TR',{style:'currency',currency:'TRY'}) }}</strong></div><div><span>Müşteri sayısı</span><strong>{{ musteriSayisi.toLocaleString('tr-TR') }}</strong></div></div>
 
     <!-- Filtreleme + Tablo Alanı -->
     <v-card class="sales-panel pa-5" elevation="0">

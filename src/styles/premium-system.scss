@@ -1,0 +1,86 @@
+/* Jeweler Pro — shared product design system.
+   Keep this layer framework-compatible while legacy views are migrated. */
+:root {
+  --jp-bg: #080d17;
+  --jp-surface: #101a2a;
+  --jp-surface-raised: #142136;
+  --jp-border: rgba(148,163,184,.14);
+  --jp-text: #e8eef8;
+  --jp-muted: #91a0b7;
+  --jp-blue: #398bfa;
+  --jp-gold: #d6ad68;
+  --jp-radius: 16px;
+  --jp-shadow: 0 18px 48px rgba(0,0,0,.20);
+}
+html { scroll-behavior: smooth; }
+body { background: var(--jp-bg); }
+#app .v-application.jeweler-app { background: var(--jp-bg) !important; color: var(--jp-text); }
+#app .jeweler-main { background:
+  radial-gradient(ellipse at 88% 0%, rgba(37,99,173,.13), transparent 34%),
+  var(--jp-bg) !important; }
+#app .page-container { width: 100%; max-width: 1720px; margin: 0 auto; padding: 32px clamp(18px, 3vw, 48px) 56px !important; }
+#app .v-card {
+  border: 1px solid var(--jp-border);
+  border-radius: var(--jp-radius) !important;
+  box-shadow: var(--jp-shadow) !important;
+  overflow: hidden;
+}
+#app .v-card__title { font-family: 'Manrope', sans-serif; font-weight: 750; letter-spacing: -.025em; }
+#app .v-card__text { color: inherit; }
+#app .v-btn { text-transform: none; letter-spacing: 0; font-weight: 650; border-radius: 10px; }
+#app .v-btn.v-btn--has-bg { box-shadow: 0 5px 16px rgba(0,0,0,.12); }
+#app .v-btn:not(.v-btn--icon):not(.v-btn--round) { min-height: 38px; }
+#app .v-input__control, #app .v-input__slot { border-radius: 10px; }
+#app .v-text-field--outlined fieldset, #app .v-select--outlined fieldset { border-color: var(--jp-border); }
+#app .v-label, #app .v-input input, #app .v-input textarea { font-size: 13px; }
+#app .v-data-table { border-radius: 12px; overflow: hidden; }
+#app .v-data-table table { border-collapse: separate; border-spacing: 0; }
+#app .v-data-table thead th { height: 48px; font-size: 10px; font-weight: 800; letter-spacing: .09em; text-transform: uppercase; }
+#app .v-data-table tbody td { height: 54px; font-size: 12px; }
+#app .v-data-table .v-data-table__wrapper { border-radius: 12px; }
+#app .v-dialog > .v-card { border-radius: 18px !important; }
+#app .v-dialog .v-card__title { padding: 22px 24px; }
+#app .v-dialog .v-card__text { padding: 20px 24px; }
+#app .v-dialog .v-card__actions { padding: 12px 24px 20px; }
+#app .v-alert { border-radius: 12px; }
+#app .v-chip { font-weight: 650; letter-spacing: 0; }
+#app .v-pagination { padding: 12px 0; }
+#app .v-application--is-dark { --jp-bg:#080d17; --jp-surface:#101a2a; --jp-surface-raised:#142136; --jp-text:#e8eef8; --jp-muted:#91a0b7; }
+#app .v-application--is-dark .v-card { background: linear-gradient(145deg, #121e30, #0f1928) !important; color: var(--jp-text) !important; }
+#app .v-application--is-dark .v-data-table { background: transparent !important; color: var(--jp-text) !important; }
+#app .v-application--is-dark .v-data-table th { color: #93a4bc !important; border-bottom: 1px solid var(--jp-border) !important; }
+#app .v-application--is-dark .v-data-table td { color: #d8e2f0; border-bottom: 1px solid rgba(148,163,184,.08) !important; }
+#app .v-application--is-dark .v-data-table tr:hover { background: rgba(255,255,255,.035) !important; }
+#app .v-application--is-light { --jp-bg:#f3f6fb; --jp-surface:#fff; --jp-surface-raised:#f8faff; --jp-text:#172338; --jp-muted:#64748b; color:var(--jp-text); }
+#app .v-application--is-light.jeweler-app, #app .v-application--is-light .jeweler-main { background: #f3f6fb !important; color:var(--jp-text); }
+#app .v-application--is-light .jeweler-sidebar { background:#fff !important; border-color:#e5eaf2 !important; }
+#app .v-application--is-light .jeweler-topbar { background:rgba(255,255,255,.92) !important; border-color:#e5eaf2 !important; }
+#app .v-application--is-light .topbar-title, #app .v-application--is-light .brand-name { color:#172338; }
+#app .v-application--is-light .brand-caption, #app .v-application--is-light .nav-label { color:#8793a7; }
+#app .v-application--is-light .nav-item { color:#536178 !important; }
+#app .v-application--is-light .nav-item .v-icon { color:#738198 !important; }
+#app .v-application--is-light .nav-item-active { color:#1456a8 !important; }
+#app .v-application--is-light .profile-row { background:#f8faff; border-color:#e5eaf2; }
+#app .v-application--is-light .profile-copy strong { color:#172338; }
+#app .v-application--is-light .profile-copy span { color:#75839a; }
+#app .v-application--is-light .v-card { background:#fff !important; color:#172338 !important; border-color:#e5eaf2; box-shadow:0 12px 34px rgba(25,42,70,.06) !important; }
+#app .v-application--is-light .v-data-table { background:transparent !important; color:#172338 !important; }
+#app .v-application--is-light .v-data-table th { color:#68768d !important; border-bottom:1px solid #e8edf4 !important; }
+#app .v-application--is-light .v-data-table td { color:#26354c; border-bottom:1px solid #eef1f6 !important; }
+#app .v-application--is-light .v-data-table tr:hover { background:#f7f9fc !important; }
+#app .v-application--is-light .v-input input, #app .v-application--is-light .v-input textarea { color:#172338; }
+#app .v-application--is-light .v-label { color:#718096; }
+@media (max-width: 960px) {
+  #app .page-container { padding-top:24px !important; }
+  #app .jeweler-topbar { padding:0 12px; }
+}
+@media (max-width: 600px) {
+  #app .page-container { padding:18px 14px 32px !important; }
+  #app .v-card { border-radius:13px !important; }
+  #app .v-data-table tbody td { height:48px; }
+  #app .notification-container { left:12px; right:12px; top:76px; max-width:none; }
+}
+@media (prefers-reduced-motion: no-preference) {
+  #app .v-card { transition: border-color .18s ease, transform .18s ease, box-shadow .18s ease; }
+  #app .v-card:hover { border-color: rgba(83,151,239,.28); }
+}

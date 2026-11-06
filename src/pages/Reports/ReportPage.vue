@@ -1,5 +1,6 @@
 <template>
-  <v-container fluid class="py-6">
+  <v-container fluid class="reports-page py-2">
+    <header class="page-heading"><div><div class="eyebrow">ANALİZ / PERFORMANS</div><h1>İşletme raporları</h1><p>Günlük, haftalık ve aylık satış performansınızı işlem kayıtlarından izleyin.</p></div><v-btn outlined class="refresh-action" @click="loadReports"><v-icon left small>mdi-refresh</v-icon> Raporları yenile</v-btn></header>
 
     <!-- ✅ KPI Kartları -->
     <v-row dense class="mb-6">
@@ -13,7 +14,7 @@
             <v-icon small left>
               {{ kpi.trend >= 0 ? 'mdi-arrow-up-bold' : 'mdi-arrow-down-bold' }}
             </v-icon>
-            <span>{{ Math.abs(kpi.trend) }}%</span>
+            <span v-if="kpi.trend !== null">{{ Math.abs(kpi.trend) }}%</span><span v-else>Yeni dönem</span>
           </div>
         </v-card>
       </v-col>
@@ -197,7 +198,7 @@ export default {
       return list.reduce((t, o) => t + o.kar, 0);
     },
     trend(current, prev) {
-      if (!prev || prev === 0) return 100;
+      if (prev === 0) return current === 0 ? 0 : null;
       return Math.round(((current - prev) / prev) * 100);
     },
     async loadReports() {
@@ -232,45 +233,28 @@ export default {
 };
 </script>
 
+
 <style scoped>
-* { font-family: "Inter", "Roboto", sans-serif; }
-.v-row { align-items: stretch !important; }
-.v-col { display: flex; flex-direction: column; }
-
-.report-card,
-.kpi-card {
-  flex: 1;
-  height: 100%;
-  display: flex;
-  flex-direction: column;
-  justify-content: space-between;
-  border-radius: 16px;
-  background: #fff;
-  color: #333;
-  box-shadow: 0 4px 12px rgba(0,0,0,0.1);
-  transition: 0.3s;
-}
-
-.kpi-value { font-size: 2rem; font-weight: bold; color: #1976d2; }
-.kpi-title { font-size: 0.95rem; color: #1976d2; margin-bottom: 8px; }
-.kpi-trend { font-size: 0.9rem; font-weight: 600; }
-.trend-up { color: #4caf50; }
-.trend-down { color: #f44336; }
-
-.v-data-table {
-  flex: 1; border-radius: 12px; background: #fafafa;
-  color: #444; font-size: 0.9rem;
-}
-.v-data-table thead {
-  background: #f5f5f5; font-weight: bold; color: #333;
-}
-.v-data-table tbody tr:hover {
-  background: rgba(26, 119, 213, 0.08);
-}
-
-.summary-bar {
-  background: #f5f5f5; border-radius: 8px; padding: 10px 14px;
-  margin-top: 8px; color: #222; font-weight: 600;
-  font-size: 0.9rem; text-align: right;
-}
+.reports-page { color:#e6edf7; }
+.page-heading { display:flex; align-items:flex-end; justify-content:space-between; gap:20px; margin:4px 0 23px; }
+.eyebrow { color:#71839d; font-size:9px; font-weight:800; letter-spacing:1.45px; }
+.page-heading h1 { margin:9px 0 6px; color:#f2f6fc; font:800 clamp(23px,3vw,29px) 'Manrope',sans-serif; letter-spacing:-.7px; }
+.page-heading p { margin:0; color:#8292a9; font-size:12px; }
+.refresh-action { height:39px !important; color:#a9bad0 !important; border-color:rgba(148,163,184,.2) !important; border-radius:8px !important; text-transform:none !important; font-size:11px !important; }
+.v-row { align-items:stretch !important; }
+.v-col { display:flex; flex-direction:column; }
+.report-card,.kpi-card { flex:1; height:100%; display:flex; flex-direction:column; justify-content:space-between; border:1px solid rgba(148,163,184,.13) !important; border-radius:12px !important; background:linear-gradient(145deg,#111d30,#0e1726) !important; color:#dce5f1 !important; box-shadow:none !important; }
+.kpi-card { min-height:155px; align-items:flex-start; padding:19px !important; }
+.kpi-value { margin:4px 0 3px; color:#f2f6fc; font:800 22px 'Manrope',sans-serif; }
+.kpi-title { margin:0; color:#8b9bb1; font-size:10px; }
+.kpi-trend { display:flex; align-items:center; font-size:10px; font-weight:700; }
+.trend-up { color:#48d5a0; }
+.trend-down { color:#f08b8b; }
+.card-title { min-height:53px; color:#dce5f1 !important; font-size:11px !important; font-weight:800 !important; letter-spacing:.5px; border-bottom:1px solid rgba(148,163,184,.1); }
+.report-card >>> .v-data-table { flex:1; background:transparent !important; color:#dce5f1 !important; font-size:10px; }
+.report-card >>> .v-data-table-header th { color:#8292a9 !important; background:rgba(255,255,255,.018); font-size:9px !important; text-transform:uppercase; letter-spacing:.5px; }
+.report-card >>> tbody td { color:#aebbd0 !important; border-bottom-color:rgba(148,163,184,.08) !important; }
+.report-card >>> tbody tr:hover { background:rgba(63,133,220,.055) !important; }
+.summary-bar { margin:8px 12px 12px; padding:10px 12px; border:1px solid rgba(148,163,184,.1); border-radius:7px; background:rgba(255,255,255,.025); color:#aab8ca; font-size:10px; font-weight:600; text-align:right; }
+@media(max-width:600px) { .page-heading { align-items:flex-start; flex-direction:column; } }
 </style>

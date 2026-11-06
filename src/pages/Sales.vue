@@ -223,8 +223,9 @@ export default {
 
         let matchesDate = true;
         if (this.dateRange.length === 2) {
-          const start = new Date(this.dateRange[0]);
-          const end = new Date(this.dateRange[1]);
+          const [firstDate, secondDate] = [...this.dateRange].sort();
+          const start = new Date(firstDate + "T00:00:00");
+          const end = new Date(secondDate + "T23:59:59.999");
           const saleDate = new Date(s.date);
           matchesDate = saleDate >= start && saleDate <= end;
         }

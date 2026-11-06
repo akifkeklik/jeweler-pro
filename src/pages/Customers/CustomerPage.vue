@@ -148,7 +148,7 @@ export default {
   },
   computed: {
     filteredMusteriler() {
-      const query = this.search.toLocaleLowerCase("tr-TR");
+      const query = String(this.search || "").toLocaleLowerCase("tr-TR");
       if (!query) return this.musteriler;
       return this.musteriler.filter(m =>
         [m.name, m.phone, m.email, m.address].filter(Boolean)

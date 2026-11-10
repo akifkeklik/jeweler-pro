@@ -64,9 +64,9 @@
           <!-- Inputs Row -->
           <div class="inputs-row">
             <div class="input-col">
-              <label class="form-label">{{ $t('calculator.hesaplanacakMiktarAdet') }}</label>
+              <label class="form-label" for="calculator-f1">{{ $t('calculator.hesaplanacakMiktarAdet') }}</label>
               <div class="amount-control-wrap">
-                <input
+                <input id="calculator-f1"
                   v-model.number="amount"
                   type="number"
                   min="0.01"
@@ -83,8 +83,8 @@
             </div>
 
             <div class="input-col">
-              <label class="form-label">{{ $t('calculator.altinBirimTuru') }}</label>
-              <select v-model="selectedUnitValue" class="calc-select-full">
+              <label class="form-label" for="calculator-f2">{{ $t('calculator.altinBirimTuru') }}</label>
+              <select id="calculator-f2" v-model="selectedUnitValue" class="calc-select-full">
                 <option v-for="u in units" :key="u.value" :value="u.value">
                   {{ $t('calculator.p0P1GrP2', { p0: u.text, p1: $weight(u.gram, 3), p2: $n(u.milyem * 100, { minimumFractionDigits: 1, maximumFractionDigits: 1 }) }) }}
                 </option>
@@ -96,13 +96,13 @@
           <div class="gram-price-row mt-3">
             <div class="price-input-col">
               <div class="d-flex justify-space-between align-center">
-                <label class="form-label">{{ $t('calculator.hasGramAlisSatisBaz') }}</label>
+                <label class="form-label" for="calculator-f3">{{ $t('calculator.hasGramAlisSatisBaz') }}</label>
                 <span v-if="isPriceStale" class="text-caption text-warning tabular">
                   {{ $t('calculator.onbellekVeri') }}
                 </span>
               </div>
               <div class="price-input-wrap">
-                <input
+                <input id="calculator-f3"
                   v-model.number="pricePerGram"
                   type="number"
                   step="1"

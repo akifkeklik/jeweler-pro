@@ -74,7 +74,10 @@ describe('palette registry', () => {
           check(`${id} text on ${surface}`, b.text, b[surface], 4.5);
           check(`${id} textMuted on ${surface}`, b.textMuted, b[surface], 4.5);
         }
-        check(`${id} textSubtle on card`, b.textSubtle, b.card, 3);
+        // textSubtle is used for small text (captions, table headers, nav labels): AA 4.5.
+        for (const surface of ['bg', 'surface', 'card', 'cardHover', 'muted'] as const) {
+          check(`${id} textSubtle on ${surface}`, b.textSubtle, b[surface], 4.5);
+        }
         check(`${id} primary on card`, b.primary, b.card, 4.5);
         check(`${id} primary on bg`, b.primary, b.bg, 4.5);
         check(`${id} onPrimary on primary`, b.onPrimary, b.primary, 4.5);

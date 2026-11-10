@@ -28,22 +28,15 @@
       :data-expanded="expanded ? 'true' : 'false'"
       @update:rail="onRailHover"
     >
-      <div
-        class="brand-lockup"
-        role="link"
-        tabindex="0"
-        :aria-label="$t('nav.items.dashboard')"
-        @click="$router.push('/dashboard')"
-        @keydown.enter="$router.push('/dashboard')"
-      >
-        <div class="brand-mark">
+      <router-link to="/dashboard" class="brand-lockup" @click="closeMobileDrawer">
+        <span class="brand-mark" aria-hidden="true">
           <v-icon size="18">mdi-diamond-stone</v-icon>
-        </div>
-        <div class="brand-text-wrap jp-fade-label">
-          <div class="brand-name">JEWELER <span>PRO</span></div>
-          <div class="brand-caption">{{ $t('shell.caption') }}</div>
-        </div>
-      </div>
+        </span>
+        <span class="brand-text-wrap jp-fade-label">
+          <span class="brand-name">JEWELER <span>PRO</span></span>
+          <span class="brand-caption">{{ $t('shell.caption') }}</span>
+        </span>
+      </router-link>
 
       <div class="sidebar-search jp-fade-label" :aria-hidden="!expanded">
         <v-icon size="15">mdi-magnify</v-icon>
@@ -74,6 +67,7 @@
               location="end"
               :disabled="expanded"
               :open-delay="300"
+              :aria-label="item.title"
             >
               <template #activator="{ props: tip }">
                 <router-link
@@ -82,7 +76,6 @@
                   class="nav-link-btn"
                   :class="{ 'nav-link-active': isRouteActive(item.path) }"
                   :aria-current="isRouteActive(item.path) ? 'page' : undefined"
-                  :aria-label="item.title"
                   @click="closeMobileDrawer"
                 >
                   <span class="nav-icon-box"><v-icon size="18">{{ item.icon }}</v-icon></span>
@@ -97,7 +90,7 @@
       </nav>
 
       <div class="sidebar-bottom">
-        <v-tooltip :text="$t('nav.items.settings')" location="end" :disabled="expanded" :open-delay="300">
+        <v-tooltip :text="$t('nav.items.settings')" location="end" :disabled="expanded" :open-delay="300" :aria-label="$t('nav.items.settings')">
           <template #activator="{ props: tip }">
             <router-link
               v-bind="tip"
@@ -105,7 +98,6 @@
               class="nav-link-btn"
               :class="{ 'nav-link-active': isRouteActive('/settings') }"
               :aria-current="isRouteActive('/settings') ? 'page' : undefined"
-              :aria-label="$t('nav.items.settings')"
               @click="closeMobileDrawer"
             >
               <span class="nav-icon-box"><v-icon size="18">mdi-cog-outline</v-icon></span>
@@ -114,13 +106,13 @@
           </template>
         </v-tooltip>
 
-        <v-tooltip v-if="!isMobile" :text="sidebarToggleLabel + ' (Ctrl+B)'" location="end" :disabled="expanded" :open-delay="300">
+        <v-tooltip v-if="!isMobile" :text="sidebarToggleLabel + ' (Ctrl+B)'" location="end" :disabled="expanded" :open-delay="300" :aria-label="sidebarToggleLabel">
           <template #activator="{ props: tip }">
             <button
               v-bind="tip"
               type="button"
               class="sidebar-collapse-toggle-btn"
-              :aria-label="sidebarToggleLabel"
+              aria-keyshortcuts="Control+B"
               :aria-expanded="settings.sidebarMode === 'pinned' ? 'true' : 'false'"
               data-testid="sidebar-toggle"
               @click="toggleSidebarMode"
@@ -129,7 +121,7 @@
                 <v-icon size="16">mdi-chevron-double-left</v-icon>
               </span>
               <span class="toggle-text jp-fade-label">{{ sidebarToggleLabel }}</span>
-              <kbd class="toggle-kbd jp-fade-label">Ctrl+B</kbd>
+              <kbd class="toggle-kbd jp-fade-label" aria-hidden="true">Ctrl+B</kbd>
             </button>
           </template>
         </v-tooltip>
@@ -507,6 +499,8 @@ export default {
 
 /* Brand */
 .brand-lockup {
+  color: inherit;
+  text-decoration: none;
   display: flex;
   align-items: center;
   gap: 10px;
@@ -726,6 +720,10 @@ export default {
   text-overflow: ellipsis;
   flex: 1;
   min-width: 0;
+}
+:root[data-theme='light'] .nav-badge {
+  /* primary on the tinted badge background is below 4.5:1 in light mode. */
+  color: var(--jp-primary-hover);
 }
 .nav-badge {
   font-size: 8.5px;

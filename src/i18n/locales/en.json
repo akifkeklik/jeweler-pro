@@ -1597,7 +1597,8 @@
    "tahsilat": "Account collection",
    "sale_return": "Sale return",
    "sale_cancel": "Sale cancellation"
-  }
+  },
+  "selectForSettlement": "Add the {date} transaction to the settlement"
  },
  "calculator": {
   "hesapVeMilyemDonusumMerkezi": "Calculation & fineness conversion",

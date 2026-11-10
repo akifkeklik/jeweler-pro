@@ -2,8 +2,8 @@
   <form class="customer-form-container" @submit.prevent="kaydet">
     <div class="form-grid">
       <div class="form-col-span-2">
-        <label class="form-label">{{ $t('customers.adSoyadTicariUnvan') }}</label>
-        <input
+        <label class="form-label" for="customerform-f1">{{ $t('customers.adSoyadTicariUnvan') }}</label>
+        <input id="customerform-f1"
           v-model.trim="musteri.name"
           type="text"
           :placeholder="$t('customers.ornAhmetYilmazVeyaAltin')"
@@ -13,8 +13,8 @@
       </div>
 
       <div>
-        <label class="form-label">{{ $t('customers.telefonNumarasi') }}</label>
-        <input
+        <label class="form-label" for="customerform-f2">{{ $t('customers.telefonNumarasi') }}</label>
+        <input id="customerform-f2"
           v-model.trim="musteri.phone"
           type="tel"
           :placeholder="$t('customers.n05xxXxxXxXx')"
@@ -24,8 +24,8 @@
       </div>
 
       <div>
-        <label class="form-label">{{ $t('customers.ePostaAdresi') }}</label>
-        <input
+        <label class="form-label" for="customerform-f3">{{ $t('customers.ePostaAdresi') }}</label>
+        <input id="customerform-f3"
           v-model.trim="musteri.email"
           type="email"
           :placeholder="$t('customers.musteriOrnekCom')"
@@ -34,16 +34,16 @@
       </div>
 
       <div>
-        <label class="form-label">{{ $t('customers.musteriTuru') }}</label>
-        <select v-model="musteri.customerType" class="form-select-control">
+        <label class="form-label" for="customerform-f4">{{ $t('customers.musteriTuru') }}</label>
+        <select id="customerform-f4" v-model="musteri.customerType" class="form-select-control">
           <option value="bireysel">{{ $t('customers.bireyselMusteri') }}</option>
           <option value="kurumsal">{{ $t('customers.kurumsalToptan2') }}</option>
         </select>
       </div>
 
       <div class="form-col-span-2">
-        <label class="form-label">{{ $t('customers.adresLokasyon') }}</label>
-        <textarea
+        <label class="form-label" for="customerform-f5">{{ $t('customers.adresLokasyon') }}</label>
+        <textarea id="customerform-f5"
           v-model.trim="musteri.address"
           rows="2"
           :placeholder="$t('customers.ikametgahVeyaIsletmeAcikAdresi')"

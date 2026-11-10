@@ -11,7 +11,7 @@
  *   primary used as text on card   ≥ 4.5 : 1
  *   onPrimary on primary           ≥ 4.5 : 1
  *   semantic colours on card       ≥ 4.5 : 1
- *   textSubtle on card             ≥ 3   : 1   (captions, disabled, hints)
+ *   textSubtle on every surface    ≥ 4.5 : 1   (captions, table headers: small text)
  */
 
 export type PaletteId =
@@ -62,12 +62,12 @@ export const PALETTES: readonly PaletteDefinition[] = [
     id: 'obsidian',
     dark: {
       bg: '#0c0d10', surface: '#111216', card: '#16181d', cardHover: '#1c1e24', muted: '#1f2228', elevated: '#282b32',
-      border: '#2a2c32', text: '#eceae6', textEmphasis: '#ffffff', textMuted: '#a6a49f', textSubtle: '#7c7a75',
+      border: '#2a2c32', text: '#eceae6', textEmphasis: '#ffffff', textMuted: '#a6a49f', textSubtle: '#8c8a85',
       primary: '#c9a961', primaryHover: '#b8954a', onPrimary: '#16130b', secondary: '#9aa3b2', accent: '#dccba3',
     },
     light: {
       bg: '#f4f3f0', surface: '#ffffff', card: '#ffffff', cardHover: '#faf9f6', muted: '#efede8', elevated: '#e5e2db',
-      border: '#e1ddd4', text: '#25231f', textEmphasis: '#121110', textMuted: '#5d5950', textSubtle: '#86817a',
+      border: '#e1ddd4', text: '#25231f', textEmphasis: '#121110', textMuted: '#5d5950', textSubtle: '#6d6962',
       primary: '#86661c', primaryHover: '#6f5415', onPrimary: '#ffffff', secondary: '#4f5868', accent: '#a7843a',
     },
   },
@@ -75,12 +75,12 @@ export const PALETTES: readonly PaletteDefinition[] = [
     id: 'sapphire',
     dark: {
       bg: '#0a0f1c', surface: '#0d1424', card: '#121a2e', cardHover: '#172139', muted: '#1a2540', elevated: '#22304f',
-      border: '#232f4a', text: '#e8edf7', textEmphasis: '#ffffff', textMuted: '#9dabc6', textSubtle: '#73819e',
+      border: '#232f4a', text: '#e8edf7', textEmphasis: '#ffffff', textMuted: '#9dabc6', textSubtle: '#818ea9',
       primary: '#6b97f2', primaryHover: '#5482e6', onPrimary: '#06112a', secondary: '#b7c3da', accent: '#a9c6ff',
     },
     light: {
       bg: '#f2f5fb', surface: '#ffffff', card: '#ffffff', cardHover: '#f7f9fd', muted: '#e9eef8', elevated: '#dde5f3',
-      border: '#d9e0ee', text: '#182033', textEmphasis: '#0b1222', textMuted: '#4b5975', textSubtle: '#7a89a6',
+      border: '#d9e0ee', text: '#182033', textEmphasis: '#0b1222', textMuted: '#4b5975', textSubtle: '#5e6b85',
       primary: '#1f4fbf', primaryHover: '#183f9c', onPrimary: '#ffffff', secondary: '#4a5a7a', accent: '#3366d6',
     },
   },
@@ -88,12 +88,12 @@ export const PALETTES: readonly PaletteDefinition[] = [
     id: 'emerald',
     dark: {
       bg: '#08110d', surface: '#0b1611', card: '#101c16', cardHover: '#15241d', muted: '#182a21', elevated: '#20362b',
-      border: '#1f3328', text: '#e6efe9', textEmphasis: '#ffffff', textMuted: '#9cb1a5', textSubtle: '#71877b',
+      border: '#1f3328', text: '#e6efe9', textEmphasis: '#ffffff', textMuted: '#9cb1a5', textSubtle: '#7f9388',
       primary: '#4cb88a', primaryHover: '#3aa077', onPrimary: '#04140c', secondary: '#c6b37a', accent: '#a5d9c0',
     },
     light: {
       bg: '#f1f5f2', surface: '#ffffff', card: '#ffffff', cardHover: '#f7faf8', muted: '#e6eee9', elevated: '#d9e5de',
-      border: '#d5e0d9', text: '#17241d', textEmphasis: '#0b1510', textMuted: '#4a5f53', textSubtle: '#7a9082',
+      border: '#d5e0d9', text: '#17241d', textEmphasis: '#0b1510', textMuted: '#4a5f53', textSubtle: '#5a6d62',
       primary: '#1c6a49', primaryHover: '#155639', onPrimary: '#ffffff', secondary: '#7a6a2e', accent: '#2a805b',
     },
   },
@@ -101,12 +101,12 @@ export const PALETTES: readonly PaletteDefinition[] = [
     id: 'amethyst',
     dark: {
       bg: '#0f0b17', surface: '#140f1f', card: '#1a1428', cardHover: '#211a32', muted: '#251d38', elevated: '#2e2545',
-      border: '#2d2442', text: '#eee9f6', textEmphasis: '#ffffff', textMuted: '#aca2c4', textSubtle: '#807697',
+      border: '#2d2442', text: '#eee9f6', textEmphasis: '#ffffff', textMuted: '#aca2c4', textSubtle: '#8e85a3',
       primary: '#ab8af0', primaryHover: '#9775e2', onPrimary: '#160b2b', secondary: '#e0c78e', accent: '#cdb8fa',
     },
     light: {
       bg: '#f5f2fa', surface: '#ffffff', card: '#ffffff', cardHover: '#faf8fd', muted: '#ece7f5', elevated: '#e1d9ef',
-      border: '#e0d8ed', text: '#221a33', textEmphasis: '#140e21', textMuted: '#594f6f', textSubtle: '#888099',
+      border: '#e0d8ed', text: '#221a33', textEmphasis: '#140e21', textMuted: '#594f6f', textSubtle: '#6c647d',
       primary: '#6a3fc0', primaryHover: '#5631a3', onPrimary: '#ffffff', secondary: '#7e6420', accent: '#7f55d4',
     },
   },
@@ -114,12 +114,12 @@ export const PALETTES: readonly PaletteDefinition[] = [
     id: 'ruby',
     dark: {
       bg: '#130a0d', surface: '#190f13', card: '#201318', cardHover: '#28191f', muted: '#2c1c23', elevated: '#37242c',
-      border: '#3a252d', text: '#f3e9eb', textEmphasis: '#ffffff', textMuted: '#bba3a9', textSubtle: '#8e767e',
+      border: '#3a252d', text: '#f3e9eb', textEmphasis: '#ffffff', textMuted: '#bba3a9', textSubtle: '#9a848b',
       primary: '#de6680', primaryHover: '#d05a73', onPrimary: '#1f070d', secondary: '#d4b07a', accent: '#f0a3b3',
     },
     light: {
       bg: '#f8f3f4', surface: '#ffffff', card: '#ffffff', cardHover: '#fcf8f9', muted: '#f1e7e9', elevated: '#e8dade',
-      border: '#e8d9dd', text: '#2a1a1f', textEmphasis: '#1a0d11', textMuted: '#664f58', textSubtle: '#937c85',
+      border: '#e8d9dd', text: '#2a1a1f', textEmphasis: '#1a0d11', textMuted: '#664f58', textSubtle: '#776269',
       primary: '#951b38', primaryHover: '#7d152e', onPrimary: '#ffffff', secondary: '#7d5a24', accent: '#b02a4b',
     },
   },
@@ -127,12 +127,12 @@ export const PALETTES: readonly PaletteDefinition[] = [
     id: 'amber',
     dark: {
       bg: '#120e08', surface: '#18130b', card: '#1f180e', cardHover: '#271e12', muted: '#2b2215', elevated: '#362b1b',
-      border: '#3a2e1d', text: '#f3ece0', textEmphasis: '#ffffff', textMuted: '#bbac93', textSubtle: '#8c7f68',
+      border: '#3a2e1d', text: '#f3ece0', textEmphasis: '#ffffff', textMuted: '#bbac93', textSubtle: '#968a74',
       primary: '#e3a840', primaryHover: '#cc922c', onPrimary: '#1c1204', secondary: '#c98a55', accent: '#f2cc85',
     },
     light: {
       bg: '#f8f4ec', surface: '#ffffff', card: '#ffffff', cardHover: '#fcfaf5', muted: '#f1eadc', elevated: '#e7dcc6',
-      border: '#e6dcc8', text: '#2a2116', textEmphasis: '#19130a', textMuted: '#625440', textSubtle: '#91836a',
+      border: '#e6dcc8', text: '#2a2116', textEmphasis: '#19130a', textMuted: '#625440', textSubtle: '#736752',
       primary: '#94590b', primaryHover: '#7a4808', onPrimary: '#ffffff', secondary: '#8a4e22', accent: '#b0700f',
     },
   },
@@ -140,12 +140,12 @@ export const PALETTES: readonly PaletteDefinition[] = [
     id: 'arctic',
     dark: {
       bg: '#0a1216', surface: '#0d171c', card: '#121f25', cardHover: '#17272e', muted: '#1a2c34', elevated: '#22383f',
-      border: '#21343b', text: '#e7f1f4', textEmphasis: '#ffffff', textMuted: '#9bb2ba', textSubtle: '#6f878f',
+      border: '#21343b', text: '#e7f1f4', textEmphasis: '#ffffff', textMuted: '#9bb2ba', textSubtle: '#80969d',
       primary: '#62cbe2', primaryHover: '#46b5ce', onPrimary: '#04161b', secondary: '#bcd3dc', accent: '#a8e6f3',
     },
     light: {
       bg: '#f1f7f9', surface: '#ffffff', card: '#ffffff', cardHover: '#f6fafb', muted: '#e5f0f3', elevated: '#d6e6eb',
-      border: '#d3e2e7', text: '#142227', textEmphasis: '#0a1519', textMuted: '#465f67', textSubtle: '#7a929a',
+      border: '#d3e2e7', text: '#142227', textEmphasis: '#0a1519', textMuted: '#465f67', textSubtle: '#596e75',
       primary: '#0b6a81', primaryHover: '#08576a', onPrimary: '#ffffff', secondary: '#4c6670', accent: '#0f7f99',
     },
   },
@@ -153,12 +153,12 @@ export const PALETTES: readonly PaletteDefinition[] = [
     id: 'rose',
     dark: {
       bg: '#140e11', surface: '#1a1216', card: '#21181d', cardHover: '#291e24', muted: '#2d2228', elevated: '#382b32',
-      border: '#3a2c33', text: '#f3eaee', textEmphasis: '#ffffff', textMuted: '#bca6b0', textSubtle: '#8f7985',
+      border: '#3a2c33', text: '#f3eaee', textEmphasis: '#ffffff', textMuted: '#bca6b0', textSubtle: '#9c8893',
       primary: '#dc9bb0', primaryHover: '#cb849b', onPrimary: '#23101a', secondary: '#bba5cb', accent: '#ecc3d0',
     },
     light: {
       bg: '#f9f4f6', surface: '#ffffff', card: '#ffffff', cardHover: '#fcf9fa', muted: '#f2e8ec', elevated: '#e9dbe1',
-      border: '#e8dae0', text: '#2b1d23', textEmphasis: '#1b1015', textMuted: '#68535e', textSubtle: '#96818c',
+      border: '#e8dae0', text: '#2b1d23', textEmphasis: '#1b1015', textMuted: '#68535e', textSubtle: '#76636c',
       primary: '#9e4467', primaryHover: '#863756', onPrimary: '#ffffff', secondary: '#6e5684', accent: '#b4577b',
     },
   },
@@ -166,12 +166,12 @@ export const PALETTES: readonly PaletteDefinition[] = [
     id: 'graphite',
     dark: {
       bg: '#111213', surface: '#151617', card: '#1b1c1e', cardHover: '#222325', muted: '#262729', elevated: '#2f3033',
-      border: '#2e2f32', text: '#ebebec', textEmphasis: '#ffffff', textMuted: '#a7a8ab', textSubtle: '#7b7c80',
+      border: '#2e2f32', text: '#ebebec', textEmphasis: '#ffffff', textMuted: '#a7a8ab', textSubtle: '#8e8f92',
       primary: '#b7c0cc', primaryHover: '#a0aab8', onPrimary: '#111316', secondary: '#8fa3b8', accent: '#d5dbe3',
     },
     light: {
       bg: '#f3f3f4', surface: '#ffffff', card: '#ffffff', cardHover: '#f8f8f9', muted: '#ebebed', elevated: '#dedee1',
-      border: '#dcdcdf', text: '#1f2023', textEmphasis: '#111214', textMuted: '#55575c', textSubtle: '#85878c',
+      border: '#dcdcdf', text: '#1f2023', textEmphasis: '#111214', textMuted: '#55575c', textSubtle: '#67696e',
       primary: '#3d4857', primaryHover: '#2f3844', onPrimary: '#ffffff', secondary: '#5b6b7d', accent: '#4f5d70',
     },
   },

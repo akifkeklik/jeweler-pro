@@ -1597,7 +1597,8 @@
    "tahsilat": "تحصيل على الحساب",
    "sale_return": "مرتجع بيع",
    "sale_cancel": "إلغاء بيع"
-  }
+  },
+  "selectForSettlement": "إضافة عملية {date} إلى التسوية"
  },
  "calculator": {
   "hesapVeMilyemDonusumMerkezi": "الحساب وتحويل العيار",

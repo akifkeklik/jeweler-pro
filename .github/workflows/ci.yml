@@ -51,8 +51,11 @@ jobs:
           cache: npm
           cache-dependency-path: package-lock.json
       - run: npm ci --no-audit --no-fund
-      - name: Unit and component tests (vitest)
-        run: npm test
+      - name: Unit and component tests with coverage thresholds (vitest)
+        run: npm run test:coverage
+      - name: Coverage summary
+        if: always()
+        run: node scripts/coverage-summary.mjs >> "$GITHUB_STEP_SUMMARY"
       - name: Production build
         run: npm run build
 
@@ -70,10 +73,52 @@ jobs:
       - name: Install dependencies
         working-directory: backend
         run: npm ci --no-audit --no-fund
-      - name: Run tests
+      - name: Run tests with coverage thresholds
         working-directory: backend
         # scripts/runTests.js starts a throw-away replica set (mongodb-memory-server).
-        run: npm test
+        run: npm run test:coverage | tee coverage.txt
+      - name: Coverage summary
+        if: always()
+        working-directory: backend
+        run: |
+          echo '### Backend coverage' >> "$GITHUB_STEP_SUMMARY"
+          echo '```' >> "$GITHUB_STEP_SUMMARY"
+          grep -E 'all files|line %' coverage.txt | head -2 >> "$GITHUB_STEP_SUMMARY" || true
+          echo '```' >> "$GITHUB_STEP_SUMMARY"
+
+  e2e:
+    name: End-to-end, visual and accessibility QA
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-node@v7
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: npm
+          cache-dependency-path: |
+            package-lock.json
+            backend/package-lock.json
+      - run: npm ci --no-audit --no-fund
+      - run: npm ci --no-audit --no-fund
+        working-directory: backend
+      - name: Install Chromium
+        run: npx playwright install --with-deps chromium
+      - name: Auth and POS scenarios (Playwright, real API and database)
+        run: npm run test:e2e
+      - name: Transfer, settlement and purchase-return scenarios
+        run: npm run test:e2e:ops
+      - name: Visual QA, phone layouts and accessibility (axe-core, WCAG 2.1 AA)
+        run: npm run test:e2e:visual
+        env:
+          QA_OUT: ${{ runner.temp }}/visual-qa
+      - name: Upload QA screenshots and reports
+        if: always()
+        uses: actions/upload-artifact@v7
+        with:
+          name: visual-qa
+          path: ${{ runner.temp }}/visual-qa
+          retention-days: 7
 
   security:
     name: Dependency audit

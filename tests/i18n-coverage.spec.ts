@@ -32,7 +32,6 @@ const placeholders = (s: string) => [...new Set([...s.matchAll(/\{(\w+)\}/g)].ma
 
 /** Files that no route or component imports (kept as-is, excluded from scans). */
 const DEAD_FILES = [
-  'layouts/default.vue',
   'components/LineChart.vue',
   'components/dashboard/CurrencyPrices.vue',
   'components/dashboard/GoldPrices.vue',

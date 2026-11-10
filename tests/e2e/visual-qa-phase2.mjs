@@ -21,6 +21,7 @@ import { spawnSync } from 'node:child_process';
 import { createRequire } from 'node:module';
 import { fileURLToPath } from 'node:url';
 import { chromium } from 'playwright';
+import { AxeBuilder } from '@axe-core/playwright';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const projectRoot = path.resolve(__dirname, '..', '..');
@@ -363,6 +364,39 @@ for (const viewport of [{ width: 1024, height: 768, name: '1024x768' }, { width:
   }
   await context.close();
 }
+
+// 5b. Phones: every route at 390×844 (iPhone 14) without horizontal overflow.
+console.log('\n[qa] Phone');
+{
+  const { context, page } = await newSession({ width: 390, height: 844 }, { language: 'tr', themeMode: 'dark', palette: 'obsidian' });
+  for (const route of ROUTES) {
+    await page.goto(`${WEB}/${route}`);
+    await settle(page);
+    await inspect(page, `phone/${route}`, { language: 'tr' });
+    await shot(page, `phone-${route}`);
+  }
+  await context.close();
+}
+
+// 5c. Accessibility: no serious or critical axe-core violations (WCAG 2.1 A/AA)
+// on any route, in light and dark mode.
+console.log('\n[qa] Accessibility (axe-core)');
+const a11yReport = [];
+for (const themeMode of ['dark', 'light']) {
+  const { context, page } = await newSession({ width: 1440, height: 900 }, { language: 'tr', themeMode, palette: 'obsidian', sidebarMode: 'pinned' });
+  for (const route of ['login-redirect', ...ROUTES]) {
+    if (route === 'login-redirect') continue;
+    await page.goto(`${WEB}/${route}`);
+    await settle(page);
+    const result = await new AxeBuilder({ page }).withTags(['wcag2a', 'wcag2aa', 'wcag21a', 'wcag21aa']).analyze();
+    const blocking = result.violations.filter((v) => ['serious', 'critical'].includes(v.impact));
+    a11yReport.push(...blocking.map((v) => ({ themeMode, route, id: v.id, nodes: v.nodes.map((n) => ({ target: n.target.join(' '), html: n.html.slice(0, 160), summary: n.failureSummary?.slice(0, 200) })) })));
+    record(`a11y ${themeMode}/${route}: no serious/critical violations`, blocking.length === 0,
+      blocking.map((v) => `${v.id} (${v.nodes.length}): ${v.nodes[0]?.target?.join(' ')}`).join(' | '));
+  }
+  await context.close();
+}
+fs.writeFileSync(path.join(OUT, 'a11y.json'), JSON.stringify(a11yReport, null, 2));
 
 // 6. Dialogs, confirmations and RTL.
 console.log('\n[qa] Dialogs');

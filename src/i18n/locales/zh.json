@@ -1597,7 +1597,8 @@
    "tahsilat": "往来收款",
    "sale_return": "销售退货",
    "sale_cancel": "销售取消"
-  }
+  },
+  "selectForSettlement": "将 {date} 的交易加入结算"
  },
  "calculator": {
   "hesapVeMilyemDonusumMerkezi": "计算与成色换算",

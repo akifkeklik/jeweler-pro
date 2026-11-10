@@ -38,7 +38,7 @@
           <thead><tr><th style="width: 28px;"></th><th>{{ $t('pos.tarih') }}</th><th>POS</th><th>{{ $t('common.source') }}</th><th class="text-right">{{ $t('pos.taksit') }}</th><th class="text-right">{{ $t('pos.brut') }}</th><th class="text-right">{{ $t('pos.komisyon') }}</th><th class="text-right">{{ $t('common.net') }}</th><th class="text-right">{{ $t('pos.acik') }}</th><th>{{ $t('pos.valor') }}</th><th>{{ $t('common.status') }}</th></tr></thead>
           <tbody>
             <tr v-for="x in transactions" :key="x._id">
-              <td><input v-if="$can('pos:settle')" v-model="selected" type="checkbox" :value="x._id" :disabled="!selectable(x)" /></td>
+              <td><input v-if="$can('pos:settle')" v-model="selected" type="checkbox" :value="x._id" :disabled="!selectable(x)" :aria-label="$t('pos.selectForSettlement', { date: formatDate(x.capturedAt) })" /></td>
               <td class="tabular text-caption">{{ formatDate(x.capturedAt) }}</td>
               <td>{{ x.providerCode || $t('pos.tanimsiz') }}</td>
               <td class="text-caption">{{ x.kind === 'refund' ? $t('pos.iade') : '' }}{{ sourceLabel(x) }}</td>
@@ -106,14 +106,14 @@
           <div class="text-caption mb-2">{{ $t('pos.p0IslemPos', { p0: selected.length }) }} <strong>{{ settlementProviderLabel }}</strong> {{ $t('pos.beklenenNet') }} <strong class="tabular">{{ money(expectedTotal) }}</strong></div>
           <div v-if="mixedSelection" class="ops-error">{{ $t('pos.birHesapKesimindeYalnizcaAyni') }}</div>
           <div class="form-grid-2">
-            <div><label class="form-label">{{ $t('pos.bankayaYatanTutar') }}</label><input v-model.trim="settle.deposited" type="text" inputmode="decimal" class="form-input-full tabular" /></div>
-            <div><label class="form-label">{{ $t('pos.valorTarihi') }}</label><input v-model="settle.date" type="date" class="form-input-full" /></div>
+            <div><label class="form-label" for="pospage-f1">{{ $t('pos.bankayaYatanTutar') }}</label><input id="pospage-f1" v-model.trim="settle.deposited" type="text" inputmode="decimal" class="form-input-full tabular" /></div>
+            <div><label class="form-label" for="pospage-f2">{{ $t('pos.valorTarihi') }}</label><input id="pospage-f2" v-model="settle.date" type="date" class="form-input-full" /></div>
           </div>
           <div class="form-grid-2 mt-2">
-            <div><label class="form-label">{{ $t('pos.dekontReferans') }}</label><input v-model.trim="settle.reference" type="text" maxlength="80" class="form-input-full" /></div>
+            <div><label class="form-label" for="pospage-f3">{{ $t('pos.dekontReferans') }}</label><input id="pospage-f3" v-model.trim="settle.reference" type="text" maxlength="80" class="form-input-full" /></div>
             <div>
-              <label class="form-label">{{ $t('pos.farkCozumuFarkVarsa') }}</label>
-              <select v-model="settle.resolution" class="form-select-full">
+              <label class="form-label" for="pospage-f4">{{ $t('pos.farkCozumuFarkVarsa') }}</label>
+              <select id="pospage-f4" v-model="settle.resolution" class="form-select-full">
                 <option value="">{{ $t('pos.farkYok') }}</option>
                 <option value="commission">{{ $t('pos.komisyonDuzeltmesi') }}</option>
                 <option value="settlement_difference">{{ $t('pos.hesapKesimFarkiIncelenecek') }}</option>
@@ -138,18 +138,18 @@
         <v-card-title class="dialog-header"><v-icon size="18" color="primary" class="mr-2">mdi-credit-card-settings-outline</v-icon>{{ providerForm._id ? $t('pos.posDuzenle') : $t('pos.yeniPosBanka') }}</v-card-title>
         <v-card-text>
           <div class="form-grid-2">
-            <div><label class="form-label">{{ $t('pos.kod') }}</label><input v-model.trim="providerForm.code" :disabled="Boolean(providerForm._id)" type="text" maxlength="40" class="form-input-full" /></div>
-            <div><label class="form-label">{{ $t('pos.ad') }}</label><input v-model.trim="providerForm.name" type="text" maxlength="120" class="form-input-full" /></div>
+            <div><label class="form-label" for="pospage-f5">{{ $t('pos.kod') }}</label><input id="pospage-f5" v-model.trim="providerForm.code" :disabled="Boolean(providerForm._id)" type="text" maxlength="40" class="form-input-full" /></div>
+            <div><label class="form-label" for="pospage-f6">{{ $t('pos.ad') }}</label><input id="pospage-f6" v-model.trim="providerForm.name" type="text" maxlength="120" class="form-input-full" /></div>
           </div>
           <div class="form-grid-2 mt-2">
             <div>
-              <label class="form-label">{{ $t('pos.iadedeKomisyon2') }}</label>
-              <select v-model="providerForm.refundCommissionPolicy" class="form-select-full">
+              <label class="form-label" for="pospage-f7">{{ $t('pos.iadedeKomisyon2') }}</label>
+              <select id="pospage-f7" v-model="providerForm.refundCommissionPolicy" class="form-select-full">
                 <option value="retained">{{ $t('pos.bankaKomisyonuTutar') }}</option>
                 <option value="reversed">{{ $t('pos.bankaKomisyonuOransalIadeEder') }}</option>
               </select>
             </div>
-            <div v-if="providerForm._id"><label class="form-label">{{ $t('common.status') }}</label><select v-model="providerForm.active" class="form-select-full"><option :value="true">{{ $t('common.active') }}</option><option :value="false">{{ $t('common.inactive') }}</option></select></div>
+            <div v-if="providerForm._id"><label class="form-label" for="pospage-f8">{{ $t('common.status') }}</label><select id="pospage-f8" v-model="providerForm.active" class="form-select-full"><option :value="true">{{ $t('common.active') }}</option><option :value="false">{{ $t('common.inactive') }}</option></select></div>
           </div>
           <div class="line-box mt-3">
             <div class="rule-row rule-head"><span>{{ $t('pos.taksit2') }}</span><span>{{ $t('pos.oran') }}</span><span>{{ $t('pos.sabitUcretTl') }}</span><span>{{ $t('pos.valorGun') }}</span><span></span></div>

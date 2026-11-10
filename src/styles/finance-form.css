@@ -1,0 +1,23 @@
+/* Dialog and form styles of the finance screens (scoped via <style scoped src>). */
+.dialog-header { display: flex; align-items: center; font-size: 14px; font-weight: 700; padding-bottom: 6px; border-bottom: 1px solid var(--jp-border); }
+.dialog-actions { border-top: 1px solid var(--jp-border); padding-top: 8px; }
+.form-row { display: flex; flex-direction: column; }
+.form-label { font-size: 10px; letter-spacing: 0.04em; text-transform: uppercase; color: var(--jp-text-subtle); margin-bottom: 4px; display: block; }
+.form-select-full,
+.form-input-full {
+  width: 100%;
+  height: 34px;
+  padding: 0 10px;
+  border: 1px solid var(--jp-border);
+  border-radius: var(--jp-radius-sm);
+  background: var(--jp-surface-muted);
+  color: var(--jp-text);
+  font-size: 12px;
+  outline: none;
+}
+.form-select-full:focus,
+.form-input-full:focus { border-color: var(--jp-gold); }
+.form-grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+@media (max-width: 720px) {
+  .form-grid-2 { grid-template-columns: 1fr; }
+}

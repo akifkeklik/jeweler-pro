@@ -3,6 +3,7 @@ import fs from 'node:fs';
 import path from 'node:path';
 import App from '@/App.vue';
 import SettingsPage from '@/pages/SettingsPage.vue';
+import AppearanceSettings from '@/components/settings/AppearanceSettings.vue';
 import { loadAllLocales, setI18nPreferences, t } from '@/i18n';
 
 beforeAll(() => loadAllLocales());
@@ -93,7 +94,7 @@ describe('sidebar behaviour', () => {
 });
 
 describe('settings preferences apply instantly with compact feedback', () => {
-  const sm = (SettingsPage as any).methods;
+  const sm = { ...(AppearanceSettings as any).methods, ...(SettingsPage as any).methods };
 
   function page(settings: Record<string, unknown>) {
     const dispatched: Array<[string, unknown]> = [];

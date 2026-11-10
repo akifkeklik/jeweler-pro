@@ -135,7 +135,7 @@
             <span class="text-caption text-disabled tabular">{{ $t('market.rates', { count: $n(currencyPrices.length) }) }}</span>
           </div>
 
-          <div class="table-scroll-wrap-half">
+          <div class="table-scroll-wrap-half" tabindex="0" role="region" :aria-label="$t('market.tcmbTitle')">
             <table class="jp-enterprise-table">
               <thead>
                 <tr>
@@ -176,7 +176,7 @@
             <span class="text-caption text-disabled">{{ $t('market.theoreticalHint') }}</span>
           </div>
 
-          <div class="table-scroll-wrap-half">
+          <div class="table-scroll-wrap-half" tabindex="0" role="region" :aria-label="$t('market.theoreticalTitle')">
             <table class="jp-enterprise-table">
               <thead>
                 <tr>
@@ -206,7 +206,7 @@
             <span class="text-caption text-disabled tabular">{{ $t('market.shopCount', { count: $n(databasePrices.length) }) }}</span>
           </div>
 
-          <div class="table-scroll-wrap-half">
+          <div class="table-scroll-wrap-half" tabindex="0" role="region" :aria-label="$t('market.shopTitle')">
             <table class="jp-enterprise-table">
               <thead>
                 <tr>

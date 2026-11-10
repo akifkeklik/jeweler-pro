@@ -2,8 +2,8 @@
   <form class="product-form-container" @submit.prevent="submitForm">
     <div class="form-grid-2">
       <div class="form-col-span-2">
-        <label class="form-label">{{ $t('products.urunAdi') }}</label>
-        <input
+        <label class="form-label" for="productform-f1">{{ $t('products.urunAdi') }}</label>
+        <input id="productform-f1"
           v-model.trim="urun.name"
           type="text"
           :placeholder="$t('products.orn22AyarBurmaBilezik')"
@@ -13,8 +13,8 @@
       </div>
 
       <div>
-        <label class="form-label">{{ $t('products.kategori2') }}</label>
-        <select v-model="urun.categoryId" class="form-select-control" required>
+        <label class="form-label" for="productform-f2">{{ $t('products.kategori2') }}</label>
+        <select id="productform-f2" v-model="urun.categoryId" class="form-select-control" required>
           <option value="" disabled>{{ $t('products.kategoriSecin') }}</option>
           <option v-for="c in categories" :key="c._id" :value="c._id">
             {{ c.name }}
@@ -23,8 +23,8 @@
       </div>
 
       <div>
-        <label class="form-label">{{ $t('products.hammaddeMaden') }}</label>
-        <select v-model="urun.materialId" class="form-select-control" required>
+        <label class="form-label" for="productform-f3">{{ $t('products.hammaddeMaden') }}</label>
+        <select id="productform-f3" v-model="urun.materialId" class="form-select-control" required>
           <option value="" disabled>{{ $t('products.madenSecin') }}</option>
           <option v-for="m in materials" :key="m._id" :value="m._id">
             {{ m.name }}
@@ -33,8 +33,8 @@
       </div>
 
       <div>
-        <label class="form-label">{{ $t('products.gramAgirlik') }}</label>
-        <input
+        <label class="form-label" for="productform-f4">{{ $t('products.gramAgirlik') }}</label>
+        <input id="productform-f4"
           v-model.number="urun.weight"
           type="number"
           step="0.001"
@@ -46,8 +46,8 @@
       </div>
 
       <div>
-        <label class="form-label">{{ $t('products.stokAdedi') }}</label>
-        <input
+        <label class="form-label" for="productform-f5">{{ $t('products.stokAdedi') }}</label>
+        <input id="productform-f5"
           v-model.number="urun.stock"
           type="number"
           min="0"
@@ -58,8 +58,8 @@
       </div>
 
       <div>
-        <label class="form-label">{{ $t('products.birimMaliyet') }}</label>
-        <input
+        <label class="form-label" for="productform-f6">{{ $t('products.birimMaliyet') }}</label>
+        <input id="productform-f6"
           v-model.number="urun.costPrice"
           type="number"
           step="0.01"
@@ -70,8 +70,8 @@
       </div>
 
       <div>
-        <label class="form-label">{{ urun.pricingMode === 'gram' ? $t('products.listeFiyatiBilgiAmacli') : $t('products.satisFiyati') }}</label>
-        <input
+        <label class="form-label" for="productform-f7">{{ urun.pricingMode === 'gram' ? $t('products.listeFiyatiBilgiAmacli') : $t('products.satisFiyati') }}</label>
+        <input id="productform-f7"
           v-model.number="urun.price"
           type="number"
           step="0.01"
@@ -82,23 +82,23 @@
         />
       </div>
       <div class="form-col-span-2">
-        <label class="form-label">{{ $t('products.fiyatlandirma') }}</label>
-        <select v-model="urun.pricingMode" class="form-select-control">
+        <label class="form-label" for="productform-f8">{{ $t('products.fiyatlandirma') }}</label>
+        <select id="productform-f8" v-model="urun.pricingMode" class="form-select-control">
           <option value="fixed">{{ $t('products.sabitFiyatAdet') }}</option>
           <option value="gram">{{ $t('products.gramFiyatiSatisAnindaCanli') }}</option>
         </select>
       </div>
       <template v-if="urun.pricingMode === 'gram'">
         <div>
-          <label class="form-label">{{ $t('products.ayar') }}</label>
-          <select v-model.number="urun.karat" class="form-select-control">
+          <label class="form-label" for="productform-f9">{{ $t('products.ayar') }}</label>
+          <select id="productform-f9" v-model.number="urun.karat" class="form-select-control">
             <option v-for="o in purityOptions" :key="o.karat" :value="o.karat">{{ o.label }}</option>
           </select>
         </div>
         <div>
-          <label class="form-label">{{ $t('products.iscilik') }}</label>
+          <label class="form-label" for="productform-f10">{{ $t('products.iscilik') }}</label>
           <div class="labor-pair">
-            <select v-model="urun.laborType" class="form-select-control">
+            <select id="productform-f10" v-model="urun.laborType" class="form-select-control">
               <option value="none">{{ $t('products.yok') }}</option>
               <option value="milyem">{{ $t('products.milyem') }}</option>
               <option value="per_gram">{{ $t('products.tlGram') }}</option>
@@ -117,8 +117,8 @@
       </template>
 
       <div class="form-col-span-2">
-        <label class="form-label">{{ $t('products.barkod') }}</label>
-        <input
+        <label class="form-label" for="productform-f11">{{ $t('products.barkod') }}</label>
+        <input id="productform-f11"
           v-model.trim="urun.barcode"
           type="text"
           :placeholder="$t('products.barkodNumarasiOpsiyonel')"
@@ -127,8 +127,8 @@
       </div>
 
       <div class="form-col-span-2">
-        <label class="form-label">{{ $t('products.urunAciklamasiNotlar') }}</label>
-        <textarea
+        <label class="form-label" for="productform-f12">{{ $t('products.urunAciklamasiNotlar') }}</label>
+        <textarea id="productform-f12"
           v-model.trim="urun.description"
           rows="2"
           :placeholder="$t('products.urunIsciligiTasBilgisiVeya')"

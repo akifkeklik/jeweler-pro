@@ -84,4 +84,5 @@ export default defineMessages({
     sale_return: P('Satış iadesi', 'Sale return', 'Verkaufsretoure', 'Retour de vente', 'Devolución de venta', 'Возврат продажи', 'مرتجع بيع', '销售退货'),
     sale_cancel: P('Satış iptali', 'Sale cancellation', 'Verkaufsstorno', 'Annulation de vente', 'Cancelación de venta', 'Отмена продажи', 'إلغاء بيع', '销售取消'),
   },
+  selectForSettlement: P('{date} tarihli işlemi hesap kesimine ekle', 'Add the {date} transaction to the settlement', 'Vorgang vom {date} zur Abrechnung hinzufügen', 'Ajouter l’opération du {date} au relevé', 'Añadir la operación del {date} a la liquidación', 'Добавить операцию от {date} в расчёт', 'إضافة عملية {date} إلى التسوية', '将 {date} 的交易加入结算'),
 });

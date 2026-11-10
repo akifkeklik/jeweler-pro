@@ -105,14 +105,14 @@
         </div>
 
         <div class="filter-controls">
-          <select v-model="categoryFilter" class="compact-select">
+          <select v-model="categoryFilter" class="compact-select" :aria-label="$t('products.kategori')">
             <option value="">{{ $t('products.tumKategoriler') }}</option>
             <option v-for="c in categories" :key="c._id" :value="c._id">
               {{ c.name }}
             </option>
           </select>
 
-          <select v-model="stockFilter" class="compact-select">
+          <select v-model="stockFilter" class="compact-select" :aria-label="$t('products.stokDurumu')">
             <option value="">{{ $t('products.tumStokSeviyeleri') }}</option>
             <option value="low">{{ $t('products.kritikStok5') }}</option>
             <option value="in">{{ $t('products.yeterliStok5') }}</option>
@@ -164,53 +164,53 @@
         <v-card-text>
           <form class="edit-form-grid" @submit.prevent="duzenlemeKaydet">
             <div class="col-span-2">
-              <label class="form-label">{{ $t('products.urunAdi') }}</label>
-              <input v-model.trim="seciliUrun.name" type="text" class="form-input-full" required />
+              <label class="form-label" for="productpage-f1">{{ $t('products.urunAdi') }}</label>
+              <input id="productpage-f1" v-model.trim="seciliUrun.name" type="text" class="form-input-full" required />
             </div>
 
             <div>
-              <label class="form-label">{{ $t('products.kategori') }}</label>
-              <select v-model="seciliUrun.categoryId" class="form-select-full">
+              <label class="form-label" for="productpage-f2">{{ $t('products.kategori') }}</label>
+              <select id="productpage-f2" v-model="seciliUrun.categoryId" class="form-select-full">
                 <option v-for="c in categories" :key="c._id" :value="c._id">{{ c.name }}</option>
               </select>
             </div>
 
             <div>
-              <label class="form-label">{{ $t('products.hammadde') }}</label>
-              <select v-model="seciliUrun.materialId" class="form-select-full">
+              <label class="form-label" for="productpage-f3">{{ $t('products.hammadde') }}</label>
+              <select id="productpage-f3" v-model="seciliUrun.materialId" class="form-select-full">
                 <option v-for="m in materials" :key="m._id" :value="m._id">{{ m.name }}</option>
               </select>
             </div>
 
             <div>
-              <label class="form-label">{{ $t('products.agirlikGram') }}</label>
-              <input v-model.number="seciliUrun.weight" type="number" step="0.01" min="0.01" class="form-input-full tabular" required />
+              <label class="form-label" for="productpage-f4">{{ $t('products.agirlikGram') }}</label>
+              <input id="productpage-f4" v-model.number="seciliUrun.weight" type="number" step="0.01" min="0.01" class="form-input-full tabular" required />
             </div>
 
             <div>
-              <label class="form-label">{{ $t('products.stokAdedi') }} <span v-if="!$can('inventory:adjust')" class="text-disabled">{{ $t('products.degisiklikIcinYetkiGerekir') }}</span></label>
-              <input v-model.number="seciliUrun.stock" type="number" min="0" class="form-input-full tabular" :disabled="!$can('inventory:adjust')" required />
+              <label class="form-label" for="productpage-f5">{{ $t('products.stokAdedi') }} <span v-if="!$can('inventory:adjust')" class="text-disabled">{{ $t('products.degisiklikIcinYetkiGerekir') }}</span></label>
+              <input id="productpage-f5" v-model.number="seciliUrun.stock" type="number" min="0" class="form-input-full tabular" :disabled="!$can('inventory:adjust')" required />
             </div>
 
             <div>
-              <label class="form-label">{{ $t('products.birimMaliyet') }}</label>
-              <input v-model.number="seciliUrun.costPrice" type="number" step="0.01" min="0" class="form-input-full tabular" :disabled="!$can('inventory:adjust')" />
+              <label class="form-label" for="productpage-f6">{{ $t('products.birimMaliyet') }}</label>
+              <input id="productpage-f6" v-model.number="seciliUrun.costPrice" type="number" step="0.01" min="0" class="form-input-full tabular" :disabled="!$can('inventory:adjust')" />
             </div>
 
             <div>
-              <label class="form-label">{{ seciliUrun.pricingMode === 'gram' ? $t('products.listeFiyatiSatistaCanliGram') : $t('products.satisFiyati') }}</label>
-              <input v-model.number="seciliUrun.price" type="number" step="0.01" min="0" class="form-input-full tabular" :required="seciliUrun.pricingMode !== 'gram'" />
+              <label class="form-label" for="productpage-f7">{{ seciliUrun.pricingMode === 'gram' ? $t('products.listeFiyatiSatistaCanliGram') : $t('products.satisFiyati') }}</label>
+              <input id="productpage-f7" v-model.number="seciliUrun.price" type="number" step="0.01" min="0" class="form-input-full tabular" :required="seciliUrun.pricingMode !== 'gram'" />
               <p v-if="$can('inventory:adjust')" class="text-caption text-disabled mt-1">{{ $t('products.stokVeyaMaliyetDegisikligiGerekcesiyle') }}</p>
             </div>
 
             <div class="col-span-2">
-              <label class="form-label">{{ $t('products.barkod') }}</label>
-              <input v-model.trim="seciliUrun.barcode" type="text" class="form-input-full tabular" />
+              <label class="form-label" for="productpage-f8">{{ $t('products.barkod') }}</label>
+              <input id="productpage-f8" v-model.trim="seciliUrun.barcode" type="text" class="form-input-full tabular" />
             </div>
 
             <div class="col-span-2">
-              <label class="form-label">{{ $t('common.description') }}</label>
-              <textarea v-model.trim="seciliUrun.description" rows="2" class="form-textarea-full"></textarea>
+              <label class="form-label" for="productpage-f9">{{ $t('common.description') }}</label>
+              <textarea id="productpage-f9" v-model.trim="seciliUrun.description" rows="2" class="form-textarea-full"></textarea>
             </div>
           </form>
         </v-card-text>

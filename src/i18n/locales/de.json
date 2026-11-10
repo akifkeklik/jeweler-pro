@@ -1597,7 +1597,8 @@
    "tahsilat": "Kontozahlung",
    "sale_return": "Verkaufsretoure",
    "sale_cancel": "Verkaufsstorno"
-  }
+  },
+  "selectForSettlement": "Vorgang vom {date} zur Abrechnung hinzufügen"
  },
  "calculator": {
   "hesapVeMilyemDonusumMerkezi": "Berechnung & Feingehalt",

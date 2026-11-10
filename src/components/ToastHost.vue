@@ -1,5 +1,5 @@
 <template>
-  <div class="jp-toast-region" :aria-label="$t('toast.region')">
+  <div class="jp-toast-region" role="region" :aria-label="$t('toast.region')">
     <transition-group name="jp-toast" tag="div" class="jp-toast-stack">
       <div
         v-for="item in notifications"

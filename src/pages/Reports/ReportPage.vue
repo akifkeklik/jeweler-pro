@@ -139,6 +139,7 @@
             v-if="chartData.datasets[0].data.length"
             :data="chartData"
             :options="chartOptions"
+            :aria-label="chartSummary"
           />
           <div v-else class="empty-chart-state">
             <v-icon size="36" class="mb-2 jp-empty-icon">mdi-chart-bar</v-icon>
@@ -335,8 +336,8 @@
 
             <div class="d-flex gap-3 align-center mt-3">
               <div class="flex-1">
-                <label class="form-label">{{ $t('reports.fiiliSayilanKasaNakit') }}</label>
-                <input
+                <label class="form-label" for="reportpage-f1">{{ $t('reports.fiiliSayilanKasaNakit') }}</label>
+                <input id="reportpage-f1"
                   v-model.number="closingForm.closingCashActual"
                   type="number"
                   step="0.01"
@@ -346,8 +347,8 @@
                 />
               </div>
               <div class="flex-1">
-                <label class="form-label">{{ $t('reports.fiiliSayilanHasAltinGram') }}</label>
-                <input
+                <label class="form-label" for="reportpage-f2">{{ $t('reports.fiiliSayilanHasAltinGram') }}</label>
+                <input id="reportpage-f2"
                   v-model.number="closingForm.closingGoldActual"
                   type="number"
                   step="0.001"
@@ -381,8 +382,8 @@
             </div>
 
             <div class="mt-3">
-              <label class="form-label">{{ $t('reports.kapanisMutabakatNotu') }}</label>
-              <input
+              <label class="form-label" for="reportpage-f3">{{ $t('reports.kapanisMutabakatNotu') }}</label>
+              <input id="reportpage-f3"
                 v-model.trim="closingForm.notes"
                 type="text"
                 :placeholder="$t('reports.ornAksamKasaSayimiEksiksiz')"
@@ -536,6 +537,11 @@ export default {
         const prod = o.productName || t('reports.chartSale');
         return prod.length > 12 ? prod.substring(0, 12) + "…" : prod;
       });
+    },
+    /** Text alternative of the chart for screen readers. */
+    chartSummary() {
+      const items = this.chartLabels.map((label, i) => `${label}: ${money(this.chartData.datasets[0].data[i])}`);
+      return `${t('reports.p0SatisTrendiGrafigi', { p0: this.periodLabel })}. ${items.join(', ')}`;
     },
     chartData() {
       const data = this.activeOrders.slice(0, 8).map((o) => Number(o.netTotal ?? o.totalPrice ?? 0) || 0);

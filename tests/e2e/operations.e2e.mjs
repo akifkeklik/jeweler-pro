@@ -61,10 +61,12 @@ Object.assign(process.env, {
 const mongoose = requireBackend('mongoose');
 const app = requireBackend('./server.js');
 const User = requireBackend('./models/User.js');
-const Product = requireBackend('./models/Product.js');
-const StockTransfer = requireBackend('./models/StockTransfer.js');
-const PosSettlement = requireBackend('./models/PosSettlement.js');
-const Purchase = requireBackend('./models/Purchase.js');
+// Test-only: the scenario's own assertion queries are marked as tenant-guard bypasses.
+const { inspect } = requireBackend('./testSupport/tenantInspection.js');
+const Product = inspect(requireBackend('./models/Product.js'));
+const StockTransfer = inspect(requireBackend('./models/StockTransfer.js'));
+const PosSettlement = inspect(requireBackend('./models/PosSettlement.js'));
+const Purchase = inspect(requireBackend('./models/Purchase.js'));
 const { signToken } = requireBackend('./middleware/auth.js');
 const { hashPassword } = requireBackend('./utils/passwords.js');
 const { resetAllRateLimiters } = requireBackend('./middleware/rateLimit.js');

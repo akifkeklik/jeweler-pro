@@ -63,6 +63,8 @@ delete process.env.SMTP_PASS;
 const mongoose = requireBackend('mongoose');
 const app = requireBackend('./server.js');
 const User = requireBackend('./models/User.js');
+// Test-only: the scenario's own assertion queries are marked as tenant-guard bypasses.
+const { inspect } = requireBackend('./testSupport/tenantInspection.js');
 const emailService = requireBackend('./services/emailService.js');
 const { hashPassword } = requireBackend('./utils/passwords.js');
 const { resetAllRateLimiters } = requireBackend('./middleware/rateLimit.js');
@@ -310,11 +312,11 @@ await scenario('Settings › Users: staff sees no user management; admin creates
 });
 
 // ---------------------------------------------------------------- financial core
-const Product = requireBackend('./models/Product.js');
-const Customer = requireBackend('./models/Customer.js');
-const Sale = requireBackend('./models/Sale.js');
-const Purchase = requireBackend('./models/Purchase.js');
-const DailyClosing = requireBackend('./models/DailyClosing.js');
+const Product = inspect(requireBackend('./models/Product.js'));
+const Customer = inspect(requireBackend('./models/Customer.js'));
+const Sale = inspect(requireBackend('./models/Sale.js'));
+const Purchase = inspect(requireBackend('./models/Purchase.js'));
+const DailyClosing = inspect(requireBackend('./models/DailyClosing.js'));
 
 async function apiAs(user) {
   const res = await fetch(`http://localhost:${API_PORT}/api/auth/login`, {

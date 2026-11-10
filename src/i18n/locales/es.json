@@ -1597,7 +1597,8 @@
    "tahsilat": "Cobro en cuenta",
    "sale_return": "Devolución de venta",
    "sale_cancel": "Cancelación de venta"
-  }
+  },
+  "selectForSettlement": "Añadir la operación del {date} a la liquidación"
  },
  "calculator": {
   "hesapVeMilyemDonusumMerkezi": "Cálculo y conversión de ley",

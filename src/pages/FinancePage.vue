@@ -174,14 +174,14 @@
       <v-card class="pa-2">
         <v-card-title class="dialog-header"><v-icon size="18" color="primary" class="mr-2">mdi-truck-outline</v-icon>{{ $t('finance.tedarikciEkle') }}</v-card-title>
         <v-card-text>
-          <div class="form-row"><label class="form-label">{{ $t('finance.unvan') }}</label><input v-model.trim="supplierForm.name" type="text" maxlength="160" class="form-input-full" /></div>
+          <div class="form-row"><label class="form-label" for="financepage-f1">{{ $t('finance.unvan') }}</label><input id="financepage-f1" v-model.trim="supplierForm.name" type="text" maxlength="160" class="form-input-full" /></div>
           <div class="form-grid-2 mt-3">
-            <div><label class="form-label">{{ $t('finance.telefon2') }}</label><input v-model.trim="supplierForm.phone" type="text" class="form-input-full" /></div>
-            <div><label class="form-label">{{ $t('finance.ePosta') }}</label><input v-model.trim="supplierForm.email" type="email" class="form-input-full" /></div>
+            <div><label class="form-label" for="financepage-f2">{{ $t('finance.telefon2') }}</label><input id="financepage-f2" v-model.trim="supplierForm.phone" type="text" class="form-input-full" /></div>
+            <div><label class="form-label" for="financepage-f3">{{ $t('finance.ePosta') }}</label><input id="financepage-f3" v-model.trim="supplierForm.email" type="email" class="form-input-full" /></div>
           </div>
           <div class="form-grid-2 mt-3">
-            <div><label class="form-label">{{ $t('finance.vergiNo2') }}</label><input v-model.trim="supplierForm.taxNumber" type="text" class="form-input-full" /></div>
-            <div><label class="form-label">{{ $t('finance.vergiDairesi') }}</label><input v-model.trim="supplierForm.taxOffice" type="text" class="form-input-full" /></div>
+            <div><label class="form-label" for="financepage-f4">{{ $t('finance.vergiNo2') }}</label><input id="financepage-f4" v-model.trim="supplierForm.taxNumber" type="text" class="form-input-full" /></div>
+            <div><label class="form-label" for="financepage-f5">{{ $t('finance.vergiDairesi') }}</label><input id="financepage-f5" v-model.trim="supplierForm.taxOffice" type="text" class="form-input-full" /></div>
           </div>
         </v-card-text>
         <v-card-actions class="dialog-actions">
@@ -199,13 +199,13 @@
         <v-card-text>
           <div class="form-grid-2">
             <div>
-              <label class="form-label">{{ $t('finance.tedarikci2') }}</label>
-              <select v-model="purchaseForm.supplierId" class="form-select-full">
+              <label class="form-label" for="financepage-f6">{{ $t('finance.tedarikci2') }}</label>
+              <select id="financepage-f6" v-model="purchaseForm.supplierId" class="form-select-full">
                 <option value="" disabled>{{ $t('common.select') }}</option>
                 <option v-for="s in suppliers" :key="s._id" :value="s._id">{{ s.name }}</option>
               </select>
             </div>
-            <div><label class="form-label">{{ $t('finance.faturaNo') }}</label><input v-model.trim="purchaseForm.invoiceNo" type="text" maxlength="60" class="form-input-full" /></div>
+            <div><label class="form-label" for="financepage-f7">{{ $t('finance.faturaNo') }}</label><input id="financepage-f7" v-model.trim="purchaseForm.invoiceNo" type="text" maxlength="60" class="form-input-full" /></div>
           </div>
           <div class="purchase-lines mt-3">
             <div v-for="(line, index) in purchaseForm.lines" :key="line.key" class="purchase-row">
@@ -234,14 +234,14 @@
           </div>
           <div class="form-grid-2 mt-3">
             <div>
-              <label class="form-label">{{ $t('finance.pesinOdemeYontemi') }}</label>
-              <select v-model="purchaseForm.paymentMethod" class="form-select-full">
+              <label class="form-label" for="financepage-f8">{{ $t('finance.pesinOdemeYontemi') }}</label>
+              <select id="financepage-f8" v-model="purchaseForm.paymentMethod" class="form-select-full">
                 <option value="havale">{{ $t('finance.havaleEft') }}</option>
                 <option value="nakit">{{ $t('finance.nakit') }}</option>
                 <option value="kredi kartı">{{ $t('finance.krediKarti') }}</option>
               </select>
             </div>
-            <div><label class="form-label">{{ $t('finance.pesinOdenenBossaTamamiTedarikci') }}</label><input v-model.trim="purchaseForm.paymentAmount" type="text" inputmode="decimal" placeholder="0.00" class="form-input-full tabular" /></div>
+            <div><label class="form-label" for="financepage-f9">{{ $t('finance.pesinOdenenBossaTamamiTedarikci') }}</label><input id="financepage-f9" v-model.trim="purchaseForm.paymentAmount" type="text" inputmode="decimal" placeholder="0.00" class="form-input-full tabular" /></div>
           </div>
           <p class="text-caption text-disabled mt-2">{{ $t('finance.toplamVeStokEtkisiSunucuda') }}</p>
         </v-card-text>
@@ -261,14 +261,14 @@
           <div class="text-caption text-disabled mb-2">{{ $t('finance.kalanBorc') }} <strong class="tabular">{{ money(paymentForm.max) }}</strong></div>
           <div class="form-grid-2">
             <div>
-              <label class="form-label">{{ $t('finance.odemeYontemi') }}</label>
-              <select v-model="paymentForm.method" class="form-select-full">
+              <label class="form-label" for="financepage-f10">{{ $t('finance.odemeYontemi') }}</label>
+              <select id="financepage-f10" v-model="paymentForm.method" class="form-select-full">
                 <option value="havale">{{ $t('finance.havaleEft') }}</option>
                 <option value="nakit">{{ $t('finance.nakit') }}</option>
                 <option value="kredi kartı">{{ $t('finance.krediKarti') }}</option>
               </select>
             </div>
-            <div><label class="form-label">{{ $t('finance.tutarTl') }}</label><input v-model.trim="paymentForm.amount" type="text" inputmode="decimal" class="form-input-full tabular" /></div>
+            <div><label class="form-label" for="financepage-f11">{{ $t('finance.tutarTl') }}</label><input id="financepage-f11" v-model.trim="paymentForm.amount" type="text" inputmode="decimal" class="form-input-full tabular" /></div>
           </div>
         </v-card-text>
         <v-card-actions class="dialog-actions">
@@ -286,13 +286,13 @@
         <v-card-text>
           <div class="form-grid-2">
             <div>
-              <label class="form-label">{{ $t('finance.tur') }}</label>
-              <select v-model="returnForm.kind" class="form-select-full">
+              <label class="form-label" for="financepage-f12">{{ $t('finance.tur') }}</label>
+              <select id="financepage-f12" v-model="returnForm.kind" class="form-select-full">
                 <option value="goods">{{ $t('finance.malIadesiStoktanCikar') }}</option>
                 <option value="price_adjustment">{{ $t('finance.fiyatFarkiAlacakDekontuStok') }}</option>
               </select>
             </div>
-            <div><label class="form-label">{{ $t('finance.belgeNoIadeFaturasiDekont') }}</label><input v-model.trim="returnForm.creditNoteNo" type="text" maxlength="60" class="form-input-full" /></div>
+            <div><label class="form-label" for="financepage-f13">{{ $t('finance.belgeNoIadeFaturasiDekont') }}</label><input id="financepage-f13" v-model.trim="returnForm.creditNoteNo" type="text" maxlength="60" class="form-input-full" /></div>
           </div>
           <div class="table-scroll-wrap mt-3" style="max-height: 240px;">
             <table class="jp-enterprise-table">
@@ -309,16 +309,16 @@
             </table>
           </div>
           <div class="form-grid-2 mt-3">
-            <div><label class="form-label">{{ $t('finance.gerekce') }}</label><input v-model.trim="returnForm.reason" type="text" maxlength="300" class="form-input-full" /></div>
+            <div><label class="form-label" for="financepage-f14">{{ $t('finance.gerekce') }}</label><input id="financepage-f14" v-model.trim="returnForm.reason" type="text" maxlength="300" class="form-input-full" /></div>
             <div class="form-grid-2">
               <div>
-                <label class="form-label">{{ $t('finance.tedarikciGeriOdemesi') }}</label>
-                <select v-model="returnForm.refundMethod" class="form-select-full">
+                <label class="form-label" for="financepage-f15">{{ $t('finance.tedarikciGeriOdemesi') }}</label>
+                <select id="financepage-f15" v-model="returnForm.refundMethod" class="form-select-full">
                   <option value="havale">{{ $t('finance.havaleEft') }}</option>
                   <option value="nakit">{{ $t('finance.nakit') }}</option>
                 </select>
               </div>
-              <div><label class="form-label">{{ $t('finance.tutarOps') }}</label><input v-model.trim="returnForm.refundAmount" type="text" inputmode="decimal" placeholder="0.00" class="form-input-full tabular" /></div>
+              <div><label class="form-label" for="financepage-f16">{{ $t('finance.tutarOps') }}</label><input id="financepage-f16" v-model.trim="returnForm.refundAmount" type="text" inputmode="decimal" placeholder="0.00" class="form-input-full tabular" /></div>
             </div>
           </div>
           <div v-if="returnHint" class="return-hint mt-2">{{ returnHint }}</div>

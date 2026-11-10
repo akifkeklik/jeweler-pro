@@ -1597,7 +1597,8 @@
    "tahsilat": "Поступление по счёту",
    "sale_return": "Возврат продажи",
    "sale_cancel": "Отмена продажи"
-  }
+  },
+  "selectForSettlement": "Добавить операцию от {date} в расчёт"
  },
  "calculator": {
   "hesapVeMilyemDonusumMerkezi": "Расчёты и пересчёт пробы",

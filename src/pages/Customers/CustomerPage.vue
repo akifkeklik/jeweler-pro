@@ -88,7 +88,7 @@
           </div>
 
           <div class="filter-controls">
-            <select v-model="typeFilter" class="compact-select">
+            <select v-model="typeFilter" class="compact-select" :aria-label="$t('customers.musteriTuru')">
               <option value="">{{ $t('customers.tumTurler') }}</option>
               <option value="bireysel">{{ $t('customers.bireysel') }}</option>
               <option value="kurumsal">{{ $t('customers.kurumsal') }}</option>
@@ -322,8 +322,8 @@
           </div>
 
           <div class="form-group mb-3">
-            <label class="form-label">{{ $t('customers.islemTuru') }}</label>
-            <select v-model="tahsilatForm.type" class="settings-select-full">
+            <label class="form-label" for="customerpage-f1">{{ $t('customers.islemTuru') }}</label>
+            <select id="customerpage-f1" v-model="tahsilatForm.type" class="settings-select-full">
               <option value="tahsilat">{{ $t('customers.musteridenTahsilatBorcDuser') }}</option>
               <option value="tediye">{{ $t('customers.musteriyeOdemeBorcArtarAlacak') }}</option>
               <!-- Opening balances move equity: backend requires accounts:manage. -->
@@ -333,16 +333,16 @@
           </div>
 
           <div v-if="tahsilatForm.type === 'devir'" class="form-group mb-3">
-            <label class="form-label">{{ $t('customers.devirYonu') }}</label>
-            <select v-model="tahsilatForm.direction" class="settings-select-full">
+            <label class="form-label" for="customerpage-f2">{{ $t('customers.devirYonu') }}</label>
+            <select id="customerpage-f2" v-model="tahsilatForm.direction" class="settings-select-full">
               <option value="borc">{{ $t('customers.musteriBizeBorclu') }}</option>
               <option value="alacak">{{ $t('customers.bizMusteriyeBorcluyuz') }}</option>
             </select>
           </div>
 
           <div v-if="tahsilatForm.type !== 'devir'" class="form-group mb-3">
-            <label class="form-label">{{ $t('customers.odemeAraci') }}</label>
-            <select v-model="tahsilatForm.paymentMethod" class="settings-select-full">
+            <label class="form-label" for="customerpage-f3">{{ $t('customers.odemeAraci') }}</label>
+            <select id="customerpage-f3" v-model="tahsilatForm.paymentMethod" class="settings-select-full">
               <option value="nakit">{{ $t('customers.nakitTl') }}</option>
               <option value="kredi kartı">{{ $t('customers.krediKartiPos') }}</option>
               <option value="havale">{{ $t('customers.bankaHavalesiEft') }}</option>
@@ -353,46 +353,46 @@
           <template v-if="tahsilatForm.type === 'hurda_alimi'">
             <div class="d-flex gap-2 mb-3">
               <div class="form-group flex-1">
-                <label class="form-label">{{ $t('customers.brutGramaj') }}</label>
-                <input v-model.trim="tahsilatForm.weightGrams" type="text" inputmode="decimal" placeholder="0.000" class="settings-input-full tabular" />
+                <label class="form-label" for="customerpage-f4">{{ $t('customers.brutGramaj') }}</label>
+                <input id="customerpage-f4" v-model.trim="tahsilatForm.weightGrams" type="text" inputmode="decimal" placeholder="0.000" class="settings-input-full tabular" />
               </div>
               <div class="form-group flex-1">
-                <label class="form-label">{{ $t('customers.ayar') }}</label>
-                <select v-model.number="tahsilatForm.karat" class="settings-select-full">
+                <label class="form-label" for="customerpage-f5">{{ $t('customers.ayar') }}</label>
+                <select id="customerpage-f5" v-model.number="tahsilatForm.karat" class="settings-select-full">
                   <option v-for="o in purityOptions" :key="o.karat" :value="o.karat">{{ o.label }}</option>
                 </select>
               </div>
               <div class="form-group flex-1">
-                <label class="form-label">{{ $t('customers.fire') }}</label>
-                <input v-model.trim="tahsilatForm.deductionMilyem" type="text" inputmode="decimal" placeholder="0" class="settings-input-full tabular" />
+                <label class="form-label" for="customerpage-f6">{{ $t('customers.fire') }}</label>
+                <input id="customerpage-f6" v-model.trim="tahsilatForm.deductionMilyem" type="text" inputmode="decimal" placeholder="0" class="settings-input-full tabular" />
               </div>
             </div>
             <div class="d-flex gap-2 mb-3">
               <div class="form-group flex-1">
-                <label class="form-label">{{ $t('customers.anlasilanTutarBossaFiyattanHesaplanir') }}</label>
-                <input v-model.trim="tahsilatForm.amountTry" type="text" inputmode="decimal" placeholder="0.00" class="settings-input-full tabular" />
+                <label class="form-label" for="customerpage-f7">{{ $t('customers.anlasilanTutarBossaFiyattanHesaplanir') }}</label>
+                <input id="customerpage-f7" v-model.trim="tahsilatForm.amountTry" type="text" inputmode="decimal" placeholder="0.00" class="settings-input-full tabular" />
               </div>
               <div class="form-group flex-1">
-                <label class="form-label">{{ $t('customers.hasAlisGramFiyatiBossa') }}</label>
-                <input v-model.trim="tahsilatForm.manualPricePerGram" type="text" inputmode="decimal" :placeholder="$t('customers.canliAlisFiyati')" class="settings-input-full tabular" />
+                <label class="form-label" for="customerpage-f8">{{ $t('customers.hasAlisGramFiyatiBossa') }}</label>
+                <input id="customerpage-f8" v-model.trim="tahsilatForm.manualPricePerGram" type="text" inputmode="decimal" :placeholder="$t('customers.canliAlisFiyati')" class="settings-input-full tabular" />
               </div>
             </div>
           </template>
 
           <div v-else class="d-flex gap-2 mb-3">
             <div class="form-group flex-1">
-              <label class="form-label">{{ $t('customers.tutar') }}</label>
-              <input v-model.trim="tahsilatForm.amountTry" type="text" inputmode="decimal" placeholder="0.00" class="settings-input-full tabular" />
+              <label class="form-label" for="customerpage-f9">{{ $t('customers.tutar') }}</label>
+              <input id="customerpage-f9" v-model.trim="tahsilatForm.amountTry" type="text" inputmode="decimal" placeholder="0.00" class="settings-input-full tabular" />
             </div>
             <div class="form-group flex-1">
-              <label class="form-label">{{ $t('customers.hasAltinGram') }}</label>
-              <input v-model.trim="tahsilatForm.amountGoldGrams" type="text" inputmode="decimal" placeholder="0.000" class="settings-input-full tabular" />
+              <label class="form-label" for="customerpage-f10">{{ $t('customers.hasAltinGram') }}</label>
+              <input id="customerpage-f10" v-model.trim="tahsilatForm.amountGoldGrams" type="text" inputmode="decimal" placeholder="0.000" class="settings-input-full tabular" />
             </div>
           </div>
 
           <div class="form-group">
-            <label class="form-label">{{ $t('customers.aciklamaMakbuzNotu') }}</label>
-            <input
+            <label class="form-label" for="customerpage-f11">{{ $t('customers.aciklamaMakbuzNotu') }}</label>
+            <input id="customerpage-f11"
               v-model.trim="tahsilatForm.description"
               type="text"
               :placeholder="$t('customers.orn22AyarBilezikBozdurma')"

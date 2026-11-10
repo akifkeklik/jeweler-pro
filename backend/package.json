@@ -21,6 +21,7 @@
     "start": "node server.js",
     "dev": "cross-env NODE_ENV=development node server.js",
     "test": "node scripts/runTests.js",
+    "test:coverage": "node scripts/runTests.js --experimental-test-coverage --test-coverage-exclude=test/** --test-coverage-exclude=testSupport/** --test-coverage-exclude=scripts/** --test-coverage-lines=93 --test-coverage-branches=80 --test-coverage-functions=90",
     "test:integration": "node scripts/runIntegration.js",
     "test:unit": "node --test"
   },

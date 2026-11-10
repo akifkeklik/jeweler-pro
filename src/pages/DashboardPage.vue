@@ -70,7 +70,7 @@
         <span class="live-dot"></span>
         <span class="ticker-title">{{ $t('dashboard.ticker') }}</span>
       </div>
-      <div class="ticker-scroll">
+      <div class="ticker-scroll" tabindex="0" role="region" :aria-label="$t('dashboard.ticker')">
         <div
           v-for="quote in displayQuotes"
           :key="quote.symbol"

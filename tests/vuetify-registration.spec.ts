@@ -35,8 +35,7 @@ function registeredComponents(): Set<string> {
 describe('Vuetify component registration', () => {
   it('every <v-*> tag used by a reachable template is registered', () => {
     const registered = registeredComponents();
-    // layouts/default.vue is a dead Vuetify-2 leftover (not imported anywhere).
-    const files = vueFiles(src).filter((f) => !f.includes(`${path.sep}layouts${path.sep}`));
+    const files = vueFiles(src);
     const used = new Map<string, string>();
     for (const file of files) {
       const template = fs.readFileSync(file, 'utf8').split('<script')[0];

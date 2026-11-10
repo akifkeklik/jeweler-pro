@@ -1597,7 +1597,8 @@
    "tahsilat": "Encaissement sur compte",
    "sale_return": "Retour de vente",
    "sale_cancel": "Annulation de vente"
-  }
+  },
+  "selectForSettlement": "Ajouter l’opération du {date} au relevé"
  },
  "calculator": {
   "hesapVeMilyemDonusumMerkezi": "Calcul & conversion du titre",

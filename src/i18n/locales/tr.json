@@ -1597,7 +1597,8 @@
    "tahsilat": "Cari tahsilat",
    "sale_return": "Satış iadesi",
    "sale_cancel": "Satış iptali"
-  }
+  },
+  "selectForSettlement": "{date} tarihli işlemi hesap kesimine ekle"
  },
  "calculator": {
   "hesapVeMilyemDonusumMerkezi": "Hesap ve milyem dönüşümü",

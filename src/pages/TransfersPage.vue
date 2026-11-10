@@ -50,10 +50,10 @@
         <v-card-title class="dialog-header"><v-icon size="18" color="primary" class="mr-2">mdi-truck-plus-outline</v-icon>{{ $t('transfers.yeniTransferTaslagi') }}</v-card-title>
         <v-card-text>
           <div class="form-grid-2">
-            <div><label class="form-label">{{ $t('transfers.kaynakSube') }}</label><input :value="currentBranch" disabled class="form-input-full" /></div>
+            <div><label class="form-label" for="transferspage-f1">{{ $t('transfers.kaynakSube') }}</label><input id="transferspage-f1" :value="currentBranch" disabled class="form-input-full" /></div>
             <div>
-              <label class="form-label">{{ $t('transfers.hedefSube') }}</label>
-              <select v-model="form.destinationBranch" class="form-select-full">
+              <label class="form-label" for="transferspage-f2">{{ $t('transfers.hedefSube') }}</label>
+              <select id="transferspage-f2" v-model="form.destinationBranch" class="form-select-full">
                 <option value="" disabled>{{ $t('common.select') }}</option>
                 <option v-for="b in destinationOptions" :key="b" :value="b">{{ b }}</option>
               </select>
@@ -83,7 +83,7 @@
             </div>
             <v-btn size="x-small" variant="text" color="primary" @click="form.lines.push(newLine())"><v-icon start size="14">mdi-plus</v-icon> {{ $t('transfers.satirEkle') }}</v-btn>
           </div>
-          <div class="mt-3"><label class="form-label">{{ $t('common.note') }}</label><input v-model.trim="form.notes" type="text" maxlength="300" class="form-input-full" /></div>
+          <div class="mt-3"><label class="form-label" for="transferspage-f3">{{ $t('common.note') }}</label><input id="transferspage-f3" v-model.trim="form.notes" type="text" maxlength="300" class="form-input-full" /></div>
           <p class="text-caption text-disabled mt-2">
             {{ $t('transfers.taslakStokAyirmazOnayKaynak') }}
           </p>
@@ -131,13 +131,13 @@
 
           <div v-if="actions.resolve || actions.reject || actions.cancel" class="form-grid-2 mt-3">
             <div v-if="actions.resolve">
-              <label class="form-label">{{ $t('transfers.farkCozumu') }}</label>
-              <select v-model="resolution" class="form-select-full">
+              <label class="form-label" for="transferspage-f4">{{ $t('transfers.farkCozumu') }}</label>
+              <select id="transferspage-f4" v-model="resolution" class="form-select-full">
                 <option value="return_to_source">{{ $t('transfers.kaynakSubeyeIadeStokGeri') }}</option>
                 <option value="write_off">{{ $t('transfers.kayipFireGiderYazilir') }}</option>
               </select>
             </div>
-            <div><label class="form-label">{{ $t('transfers.gerekceRetIptalVeFark') }}</label><input v-model.trim="reason" type="text" maxlength="300" class="form-input-full" /></div>
+            <div><label class="form-label" for="transferspage-f5">{{ $t('transfers.gerekceRetIptalVeFark') }}</label><input id="transferspage-f5" v-model.trim="reason" type="text" maxlength="300" class="form-input-full" /></div>
           </div>
 
           <div class="detail-grid mt-3">

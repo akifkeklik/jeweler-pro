@@ -41,6 +41,11 @@ export default tseslint.config(
     },
   },
   {
+    // The logic layer is strict TypeScript: no escape hatches.
+    files: ['src/**/*.ts'],
+    rules: { '@typescript-eslint/no-explicit-any': 'error' },
+  },
+  {
     files: ['tests/**'],
     languageOptions: { globals: { ...globals.vitest } },
     rules: { 'max-lines': 'off', 'no-console': 'off' },

@@ -49,11 +49,20 @@ export function manualPricesPayload(
   return Object.keys(out).length ? out : undefined;
 }
 
+/** Price snapshot of a quoted gram line (see backend salesService snapshotOf). */
+export interface QuotedPrice {
+  priceType?: 'live' | 'manual';
+  pricePerGram?: string;
+  source?: string;
+  sourceTimestamp?: string;
+  [key: string]: unknown;
+}
+
 /** Price snapshot the quote used for each metal (first gram line of that metal). */
 export function quotedMetalPrices(
-  quoteLines: Array<{ pricingMode?: string; metal?: string; price?: any }> | undefined,
-): Partial<Record<MetalCode, any>> {
-  const out: Partial<Record<MetalCode, any>> = {};
+  quoteLines: Array<{ pricingMode?: string; metal?: string; price?: QuotedPrice }> | undefined,
+): Partial<Record<MetalCode, QuotedPrice>> {
+  const out: Partial<Record<MetalCode, QuotedPrice>> = {};
   for (const line of quoteLines || []) {
     if (line?.pricingMode === 'gram' && isMetalCode(line.metal) && line.price && !out[line.metal]) out[line.metal] = line.price;
   }

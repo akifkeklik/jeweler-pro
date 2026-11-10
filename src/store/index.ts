@@ -1,28 +1,17 @@
-import Vuex from 'vuex'
-import customersModule from './modules/customers'
-import notificationModule from './modules/notification'
-import productsModule from './modules/products'
-import salesModule from './modules/sales'
-import settingsModule from './modules/settings'
+import { createStore } from 'vuex';
+import { createListModule } from './modules/listModule';
+import notificationModule from './modules/notification';
+import settingsModule from './modules/settings';
 
-export default new Vuex.Store({
-  state: {
-    appLoading: false,
-  },
-  getters: {
-    isAppLoading: (state) => state.appLoading,
-  },
-  mutations: {
-    setAppLoading(state, loading: boolean) {
-      state.appLoading = loading;
-    },
-  },
-  actions: {},
+/**
+ * Root store. Server-owned lists are read models (createListModule); UI
+ * preferences and toasts are client state.
+ */
+export default createStore({
   modules: {
-    sales: salesModule,
-    products: productsModule,
-    customers: customersModule,
+    sales: createListModule('/api/sales'),
+    customers: createListModule('/api/customers'),
     notifications: notificationModule,
     settings: settingsModule,
-  }
-})
+  },
+});

@@ -64,7 +64,7 @@ function pick<T>(value: unknown, allowed: readonly T[], fallback: T): T {
  * (e.g. an accent id from before the nine-palette system) can never break the
  * UI; it is migrated or replaced by the default instead.
  */
-export function normalizeSettings(stored: Record<string, any>): SettingsState {
+export function normalizeSettings(stored: Record<string, unknown>): SettingsState {
   const s = stored || {};
   return {
     language: isLanguage(s.language) ? s.language : defaultSettings.language,
@@ -114,7 +114,8 @@ export function applySettings(settings: SettingsState): void {
   });
   applyAppearance({
     themeMode: settings.themeMode,
-    palette: resolvePaletteId(settings.palette ?? (settings as any).accent),
+    // `accent` is the pre-palette name of the same preference.
+    palette: resolvePaletteId(settings.palette ?? (settings as { accent?: unknown }).accent),
     reducedMotion: settings.reducedMotion,
     density: settings.density,
   });

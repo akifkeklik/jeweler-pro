@@ -120,17 +120,23 @@ export function applyAppearance(prefs: AppearancePreferences): ThemeTokens {
  * changes (only relevant for `system` mode / reduced motion). Returns an
  * unsubscribe function.
  */
+/** Safari < 14 only implements the deprecated listener API. */
+type LegacyMediaQueryList = MediaQueryList & {
+  addListener?: (handler: () => void) => void;
+  removeListener?: (handler: () => void) => void;
+};
+
 export function watchSystemAppearance(onChange: () => void): () => void {
-  const lists = [media(DARK_QUERY), media(MOTION_QUERY)].filter(Boolean) as MediaQueryList[];
+  const lists = [media(DARK_QUERY), media(MOTION_QUERY)].filter(Boolean) as LegacyMediaQueryList[];
   const handler = () => onChange();
   for (const list of lists) {
     if (typeof list.addEventListener === 'function') list.addEventListener('change', handler);
-    else if (typeof (list as any).addListener === 'function') (list as any).addListener(handler);
+    else list.addListener?.(handler);
   }
   return () => {
     for (const list of lists) {
       if (typeof list.removeEventListener === 'function') list.removeEventListener('change', handler);
-      else if (typeof (list as any).removeListener === 'function') (list as any).removeListener(handler);
+      else list.removeListener?.(handler);
     }
   };
 }

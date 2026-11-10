@@ -1,3 +1,4 @@
+import type { ActionContext } from 'vuex';
 import {
   applySettings,
   defaultSettings,
@@ -22,7 +23,7 @@ const settingsModule = {
       if (state[key] === value) return;
       // Re-validate through the normaliser so invalid values never persist.
       const next = normalizeSettings({ ...state, [key]: value });
-      (state as any)[key] = next[key];
+      (state as Record<Key, SettingsState[Key]>)[key] = next[key];
       persistSettings(state);
       applySettings(state);
     },
@@ -34,12 +35,12 @@ const settingsModule = {
   },
   actions: {
     /** Language switches wait for the catalog so text never mixes languages. */
-    async setPreference({ commit }: any, payload: { key: Key; value: unknown }) {
+    async setPreference({ commit }: ActionContext<SettingsState, unknown>, payload: { key: Key; value: unknown }) {
       if (payload.key === 'language' && isLanguage(payload.value)) await loadLocale(payload.value);
       commit('setPreference', payload);
     },
     /** Restores default preferences (the business profile lives on the server). */
-    reset({ commit }: any) {
+    reset({ commit }: ActionContext<SettingsState, unknown>) {
       commit('replace', { ...defaultSettings });
     },
   },

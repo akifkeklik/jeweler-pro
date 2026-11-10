@@ -46,7 +46,7 @@ describe('authentication UI flows', () => {
     authMock.login.mockResolvedValueOnce({ id: '1', email: 'user@example.com', role: 'staff', permissions: [] });
     const context = loginContext({ rememberMe: true });
 
-    await LoginPage.methods.login.call(context);
+    await LoginPage.methods!.login.call(context);
 
     expect(authMock.login).toHaveBeenCalledWith('user@example.com', 'valid-password-123', true);
     expect(context.$router.replace).toHaveBeenCalledWith('/dashboard');
@@ -58,22 +58,22 @@ describe('authentication UI flows', () => {
   it('only follows same-origin redirects after login (no open redirect)', async () => {
     authMock.login.mockResolvedValue({});
     const safe = loginContext({ $route: { query: { redirect: '/reports' } } });
-    await LoginPage.methods.login.call(safe);
+    await LoginPage.methods!.login.call(safe);
     expect(safe.$router.replace).toHaveBeenCalledWith('/reports');
 
     const evil = loginContext({ $route: { query: { redirect: '//evil.example/phish' } } });
-    await LoginPage.methods.login.call(evil);
+    await LoginPage.methods!.login.call(evil);
     expect(evil.$router.replace).toHaveBeenCalledWith('/dashboard');
   });
 
   it('shows the server error and a dedicated message when rate limited', async () => {
     authMock.login.mockRejectedValueOnce({ message: 'E-posta veya şifre hatalı', status: 401 });
     const context = loginContext();
-    await LoginPage.methods.login.call(context);
+    await LoginPage.methods!.login.call(context);
     expect(context.error).toBe('E-posta veya şifre hatalı');
 
     authMock.login.mockRejectedValueOnce({ message: 'x', status: 429 });
-    await LoginPage.methods.login.call(context);
+    await LoginPage.methods!.login.call(context);
     expect(context.error).toMatch(/15 dakika/);
   });
 
@@ -81,17 +81,17 @@ describe('authentication UI flows', () => {
     const context = { forgotEmail: 'a@b.co', forgotLoading: false, forgotError: '', forgotSuccess: '' };
 
     apiMock.post.mockRejectedValueOnce({ code: 'SMTP_UNCONFIGURED', status: 503 });
-    await LoginPage.methods.requestPasswordReset.call(context);
+    await LoginPage.methods!.requestPasswordReset.call(context);
     expect(context.forgotSuccess).toBe('');
     expect(context.forgotError).toMatch(/yapılandırılmamış/);
 
     apiMock.post.mockRejectedValueOnce({ code: 'SMTP_UNAVAILABLE', status: 503 });
-    await LoginPage.methods.requestPasswordReset.call(context);
+    await LoginPage.methods!.requestPasswordReset.call(context);
     expect(context.forgotSuccess).toBe('');
     expect(context.forgotError).toMatch(/ulaşılamıyor/);
 
     apiMock.post.mockResolvedValueOnce({ message: 'Eğer e-posta adresi sistemimizde kayıtlı ise …' });
-    await LoginPage.methods.requestPasswordReset.call(context);
+    await LoginPage.methods!.requestPasswordReset.call(context);
     expect(apiMock.post).toHaveBeenLastCalledWith('/api/auth/forgot-password', { email: 'a@b.co' });
     expect(context.forgotSuccess).toMatch(/kayıtlı ise/);
   });
@@ -101,7 +101,7 @@ describe('authentication UI flows', () => {
     authMock.logout.mockImplementationOnce(async () => { order.push('server-logout'); });
     const replace = vi.fn(() => order.push('navigate'));
 
-    await App.methods.logout.call({ $router: { replace } });
+    await App.methods!.logout.call({ $router: { replace } });
 
     expect(authMock.logout).toHaveBeenCalledTimes(1);
     expect(replace).toHaveBeenCalledWith('/login');

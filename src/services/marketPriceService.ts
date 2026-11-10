@@ -60,6 +60,20 @@ export interface MarketPriceState {
   error: string | null;
 }
 
+/** Shape of GET /api/prices (fields are optional: the API degrades gracefully). */
+interface PricesResponse {
+  timestamp?: string;
+  currencies?: CurrencyItem[];
+  prices?: DatabasePriceItem[];
+  marketData?: {
+    preferredQuotes?: MarketQuote[];
+    indicativeQuotes?: MarketQuote[];
+    quotes?: MarketQuote[];
+    providers?: ProviderStatus[];
+    isStale?: boolean;
+  };
+}
+
 class MarketPriceService {
   private state: MarketPriceState = {
     preferredQuotes: [],
@@ -127,7 +141,7 @@ class MarketPriceService {
       }, 15000); // 15-second client timeout
 
       try {
-        const response = await apiService.get<any>('/api/prices', {
+        const response = await apiService.get<PricesResponse>('/api/prices', {
           signal: abortController.signal,
           timeout: 15000,
         });
@@ -155,7 +169,8 @@ class MarketPriceService {
           error: null,
         };
         this.lastFetchTime = Date.now();
-      } catch (err: any) {
+      } catch (caught: unknown) {
+        const err = caught as { name?: string; code?: string; message?: string } | undefined;
         clearTimeout(timeoutId);
         const isTimeout =
           err?.name === 'AbortError' ||

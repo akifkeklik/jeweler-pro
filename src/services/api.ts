@@ -1,8 +1,15 @@
-import axios, { AxiosError, AxiosInstance, InternalAxiosRequestConfig } from 'axios';
+import axios, { AxiosError, AxiosInstance, AxiosRequestConfig, InternalAxiosRequestConfig } from 'axios';
 import { API_BASE_URL, clearSession, getAccessToken, refreshSession } from '@/services/authSession';
 import { localizeApiError } from '@/services/apiErrors';
 import { API_TIMEOUT_MS } from '@/config/env';
 import { t } from '@/i18n';
+
+/** Error body every API error response carries (backend errorHandler). */
+interface ApiErrorBody {
+  error?: string;
+  code?: string;
+  fields?: Array<{ path: string; message: string }>;
+}
 
 // API instance
 const apiInstance: AxiosInstance = axios.create({
@@ -75,7 +82,7 @@ apiInstance.interceptors.response.use(
     // Server error (5xx)
     if (error.response.status >= 500) {
       console.error('🔴 Server Error:', error.response.status, error.response.data);
-      const resData = error.response.data as Record<string, any>;
+      const resData = error.response.data as ApiErrorBody | undefined;
       return Promise.reject({
         message: localizeApiError({ status: error.response.status, code: resData?.code, serverMessage: resData?.error }),
         code: resData?.code || 'SERVER_ERROR',
@@ -86,7 +93,7 @@ apiInstance.interceptors.response.use(
     // Client error (4xx)
     if (error.response.status >= 400) {
       console.error('🟡 Client Error:', error.response.status, error.response.data);
-      const responseData = error.response.data as Record<string, any>;
+      const responseData = error.response.data as ApiErrorBody | undefined;
       return Promise.reject({
         message: localizeApiError({ status: error.response.status, code: responseData?.code, serverMessage: responseData?.error }),
         code: responseData?.code || 'CLIENT_ERROR',
@@ -101,27 +108,27 @@ apiInstance.interceptors.response.use(
 
 // API service functions
 export const apiService = {
-  async get<T = any>(endpoint: string, config?: any): Promise<T> {
+  async get<T = unknown>(endpoint: string, config?: AxiosRequestConfig): Promise<T> {
     const response = await apiInstance.get<T>(endpoint, config);
     return response.data;
   },
 
-  async post<T = any>(endpoint: string, data?: any, config?: any): Promise<T> {
+  async post<T = unknown>(endpoint: string, data?: unknown, config?: AxiosRequestConfig): Promise<T> {
     const response = await apiInstance.post<T>(endpoint, data, config);
     return response.data;
   },
 
-  async put<T = any>(endpoint: string, data: any): Promise<T> {
+  async put<T = unknown>(endpoint: string, data: unknown): Promise<T> {
     const response = await apiInstance.put<T>(endpoint, data);
     return response.data;
   },
 
-  async patch<T = any>(endpoint: string, data?: any): Promise<T> {
+  async patch<T = unknown>(endpoint: string, data?: unknown): Promise<T> {
     const response = await apiInstance.patch<T>(endpoint, data);
     return response.data;
   },
 
-  async delete<T = any>(endpoint: string): Promise<T> {
+  async delete<T = unknown>(endpoint: string): Promise<T> {
     const response = await apiInstance.delete<T>(endpoint);
     return response.data;
   },

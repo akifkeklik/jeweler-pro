@@ -1,38 +1,55 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
+import { createStore } from 'vuex';
 import apiService from '@/services/api';
-import productsModule from '@/store/modules/products';
-import salesModule from '@/store/modules/sales';
+import { createListModule, type ListState } from '@/store/modules/listModule';
+import store from '@/store';
 
 vi.mock('@/services/api', () => ({
-  default: {
-    post: vi.fn(),
-    get: vi.fn(),
-    put: vi.fn(),
-    delete: vi.fn(),
-  },
+  default: { get: vi.fn(), post: vi.fn(), put: vi.fn(), delete: vi.fn() },
 }));
 
-describe('store CRUD actions', () => {
+interface Row { _id: number; name: string }
+
+function listStore() {
+  return createStore<{ rows: ListState<Row> }>({ modules: { rows: createListModule<Row>('/api/rows') } });
+}
+
+describe('server-owned list modules (read models)', () => {
   beforeEach(() => vi.clearAllMocks());
 
-  it('creates a product from the API response, not client state', async () => {
-    const product = { _id: 4, name: 'Ring', price: 1250 };
-    vi.mocked(apiService.post).mockResolvedValueOnce(product);
-    const commit = vi.fn();
-
-    await productsModule.actions.createProduct({ commit }, { name: 'Ring', price: 1 } as never);
-
-    expect(apiService.post).toHaveBeenCalledWith('/api/products', { name: 'Ring', price: 1 });
-    expect(commit).toHaveBeenCalledWith('ADD_PRODUCT', product);
+  it('loads the list from the API and exposes the count', async () => {
+    vi.mocked(apiService.get).mockResolvedValueOnce([{ _id: 1, name: 'A' }, { _id: 2, name: 'B' }]);
+    const s = listStore();
+    const pending = s.dispatch('rows/fetch');
+    expect(s.state.rows.loading).toBe(true);
+    await expect(pending).resolves.toHaveLength(2);
+    expect(apiService.get).toHaveBeenCalledWith('/api/rows');
+    expect(s.state.rows.items.map((r) => r.name)).toEqual(['A', 'B']);
+    expect(s.getters['rows/count']).toBe(2);
+    expect(s.state.rows.loading).toBe(false);
+    expect(s.state.rows.error).toBeNull();
   });
 
-  it('updates the sales store only with the server result', async () => {
-    const sale = { _id: 7, totalPrice: 2500 };
-    vi.mocked(apiService.post).mockResolvedValueOnce(sale);
-    const commit = vi.fn();
+  it('records the error, keeps the previous list and rethrows', async () => {
+    const s = listStore();
+    vi.mocked(apiService.get).mockResolvedValueOnce([{ _id: 1, name: 'A' }]);
+    await s.dispatch('rows/fetch');
+    vi.mocked(apiService.get).mockRejectedValueOnce({ message: 'Sunucuya bağlanılamadı' });
+    await expect(s.dispatch('rows/fetch')).rejects.toMatchObject({ message: 'Sunucuya bağlanılamadı' });
+    expect(s.state.rows.error).toBe('Sunucuya bağlanılamadı');
+    expect(s.state.rows.items).toHaveLength(1);
+    expect(s.state.rows.loading).toBe(false);
+  });
 
-    await salesModule.actions.createSale({ commit }, { totalPrice: 1 } as never);
+  it('treats a non-array response as an empty list', async () => {
+    vi.mocked(apiService.get).mockResolvedValueOnce(null);
+    const s = listStore();
+    await expect(s.dispatch('rows/fetch')).resolves.toEqual([]);
+    expect(s.state.rows.items).toEqual([]);
+  });
 
-    expect(commit).toHaveBeenCalledWith('ADD_SALE', sale);
+  it('the root store registers exactly the modules the screens use', () => {
+    expect(Object.keys((store as unknown as { _modules: { root: { _children: Record<string, unknown> } } })._modules.root._children).sort())
+      .toEqual(['customers', 'notifications', 'sales', 'settings']);
   });
 });

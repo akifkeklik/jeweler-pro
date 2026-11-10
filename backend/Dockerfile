@@ -1,12 +1,12 @@
 # Jeweler Pro API: production image.
 # Multi-stage: dependencies are installed from the lockfile without dev
 # dependencies; the runtime runs as the unprivileged "node" user.
-FROM node:24-alpine AS deps
+FROM node:26-alpine AS deps
 WORKDIR /app
 COPY package.json package-lock.json ./
 RUN npm ci --omit=dev --no-audit --no-fund
 
-FROM node:24-alpine AS runtime
+FROM node:26-alpine AS runtime
 ENV NODE_ENV=production
 WORKDIR /app
 COPY --from=deps /app/node_modules ./node_modules

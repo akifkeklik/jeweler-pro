@@ -10,17 +10,21 @@ const Supplier = require('../models/Supplier');
 const MetalStock = require('../models/MetalStock');
 const AuditLog = require('../models/AuditLog');
 const { recordAudit } = require('../utils/audit');
-const {
-  parseDecimal, toSafeInteger, toDisplayNumber, roundDiv, DecimalError,
-} = require('../domain/decimal');
-const { SCALE, LIMITS, ROUNDING_MODE } = require('../domain/precision');
-const { resolvePurity, fineWeightMg, assertMetal } = require('../domain/metals');
+const { parseDecimal, toSafeInteger, toDisplayNumber } = require('../domain/decimal');
+const { SCALE, LIMITS } = require('../domain/precision');
 const ledger = require('./finance/ledgerService');
 const inventory = require('./finance/inventoryService');
 const {
   badRequest, notFound, conflict, unprocessable, runInTransaction, parseNumericId,
 } = require('./finance/core');
 const { assertBranch } = require('./finance/branchDirectory');
+const {
+  lineReturnOf, remainingLineValue, share, parseReturnCommand,
+} = require('./purchases/purchaseReturnLines');
+const { purchaseDto } = require('./purchases/purchaseViews');
+const {
+  PAYMENT_METHODS, money, wrap, parsePayments, parsePurchaseCommand, paymentStatus, openFigures,
+} = require('./purchases/purchaseCommand');
 
 /** Non-admins only see / change purchases of their own branch; others behave as missing (404). */
 function assertPurchaseVisible(ctx, purchase) {
@@ -29,70 +33,6 @@ function assertPurchaseVisible(ctx, purchase) {
 }
 
 const { ACCOUNTS, paymentAccount, debit, credit } = ledger;
-const PAYMENT_METHODS = ['nakit', 'kredi kartı', 'havale'];
-const money = (minor) => toDisplayNumber(minor, SCALE.MONEY);
-
-function wrap(error) {
-  if (error instanceof DecimalError) return badRequest(error.message, error.code);
-  return error;
-}
-
-function parsePayments(raw) {
-  if (raw === undefined || raw === null) return [];
-  if (!Array.isArray(raw)) throw badRequest('payments bir dizi olmalıdır');
-  return raw.map((p) => {
-    if (!p || !PAYMENT_METHODS.includes(p.method)) throw badRequest('Geçersiz ödeme yöntemi');
-    return { method: p.method, amountMinor: parseDecimal(p.amount, SCALE.MONEY, { field: 'Ödeme tutarı', allowZero: false, max: LIMITS.MAX_MONEY_MINOR }) };
-  });
-}
-
-function parsePurchaseCommand(payload) {
-  if (!payload || typeof payload !== 'object') throw badRequest('Geçerli bir alış bilgisi gönderilmelidir');
-  const supplierId = parseNumericId(payload.supplierId, 'tedarikçi');
-  if (!Array.isArray(payload.lines) || !payload.lines.length) throw badRequest('Alışta en az bir satır olmalıdır');
-  if (payload.lines.length > 100) throw badRequest('Bir alışta en fazla 100 satır olabilir');
-  const lines = payload.lines.map((raw, index) => {
-    const lineId = index + 1;
-    if (raw?.metal) {
-      const metal = assertMetal(raw.metal);
-      const purity = resolvePurity(raw);
-      const weightMg = parseDecimal(raw.weightGrams, SCALE.WEIGHT, { field: 'Gramaj', allowZero: false, max: LIMITS.MAX_WEIGHT_MG });
-      const totalMinor = parseDecimal(raw.totalCost, SCALE.MONEY, { field: 'Alış tutarı', max: LIMITS.MAX_MONEY_MINOR });
-      return { lineId, itemType: 'metal', metal, purity, weightMg, fineMg: fineWeightMg(weightMg, purity), totalMinor };
-    }
-    const productId = parseNumericId(raw?.productId, 'ürün');
-    const quantity = Number(raw?.quantity);
-    if (!Number.isSafeInteger(quantity) || quantity <= 0 || quantity > LIMITS.MAX_QUANTITY) throw badRequest('Alış miktarı pozitif bir tam sayı olmalıdır');
-    const unitCostMinor = parseDecimal(raw?.unitCost, SCALE.MONEY, { field: 'Birim maliyet', max: LIMITS.MAX_MONEY_MINOR });
-    return { lineId, itemType: 'product', productId, quantity, unitCostMinor, totalMinor: unitCostMinor * BigInt(quantity) };
-  });
-  return {
-    supplierId,
-    lines,
-    payments: parsePayments(payload.payments),
-    invoiceNo: typeof payload.invoiceNo === 'string' ? payload.invoiceNo.trim().slice(0, 60) : undefined,
-    notes: typeof payload.notes === 'string' ? payload.notes.trim().slice(0, 1000) : undefined,
-  };
-}
-
-function paymentStatus(total, paid) {
-  if (paid > total) return 'overpaid';
-  if (paid <= 0n) return total === 0n ? 'paid' : 'unpaid';
-  return paid >= total ? 'paid' : 'partial';
-}
-
-/**
- * Open figures of a purchase after returns and refunds:
- *   net   = total − returned (goods returns + price adjustments)
- *   paid  = payments − refunds received from the supplier
- *   due   = net − paid (> 0: we still owe; < 0: the supplier owes us)
- */
-function openFigures(purchase) {
-  const net = BigInt(purchase.totalMinor) - BigInt(purchase.returnedMinor || 0);
-  const paid = BigInt(purchase.paidMinor || 0) - BigInt(purchase.refundedMinor || 0);
-  return { net, paid, due: net - paid };
-}
-
 function refreshPaymentStatus(purchase) {
   const { net, paid } = openFigures(purchase);
   purchase.paymentStatus = paymentStatus(net, paid);
@@ -367,82 +307,6 @@ async function allocateSupplierPayment(session, ctx, { supplierId, amountMinor, 
 
 /* ------------------------------------------------------- purchase returns */
 
-const RETURN_KINDS = ['goods', 'price_adjustment'];
-
-function lineReturnOf(purchase, lineId) {
-  let entry = purchase.lineReturns.find((r) => r.lineId === lineId);
-  if (!entry) {
-    purchase.lineReturns.push({ lineId, quantity: 0, weightMg: 0, fineMg: 0, amountMinor: 0, adjustedMinor: 0 });
-    entry = purchase.lineReturns[purchase.lineReturns.length - 1];
-  }
-  return entry;
-}
-
-/** Supplier value still open on a line: total − goods credited − price adjustments. */
-function remainingLineValue(line, returned) {
-  return BigInt(line.totalMinor) - BigInt(returned?.amountMinor || 0) - BigInt(returned?.adjustedMinor || 0);
-}
-
-function share(total, part, whole) {
-  if (part >= whole) return BigInt(total);
-  return roundDiv(BigInt(total) * BigInt(part), BigInt(whole), ROUNDING_MODE);
-}
-
-function parseReturnCommand(payload) {
-  if (!payload || typeof payload !== 'object' || Array.isArray(payload)) throw badRequest('Geçerli bir iade bilgisi gönderilmelidir');
-  const kind = payload.kind || 'goods';
-  if (!RETURN_KINDS.includes(kind)) throw badRequest('İade türü goods veya price_adjustment olmalıdır', 'INVALID_RETURN_KIND');
-  const reason = typeof payload.reason === 'string' ? payload.reason.trim().slice(0, 300) : '';
-  if (!reason) throw badRequest('İade gerekçesi girilmelidir', 'REASON_REQUIRED');
-  if (!Array.isArray(payload.lines) || !payload.lines.length) throw badRequest('İade edilecek satırlar belirtilmelidir');
-  const seen = new Set();
-  const lines = payload.lines.map((raw) => {
-    const lineId = Number(raw?.lineId);
-    if (!Number.isSafeInteger(lineId) || lineId <= 0) throw badRequest('İade satırı geçersiz', 'PURCHASE_LINE_NOT_FOUND');
-    if (seen.has(lineId)) throw badRequest('Aynı satır bir iadede yalnızca bir kez yer alabilir', 'DUPLICATE_RETURN_LINE');
-    seen.add(lineId);
-    if (kind === 'price_adjustment') {
-      return { lineId, amountMinor: parseDecimal(raw.amount, SCALE.MONEY, { field: 'Fiyat farkı', allowZero: false, max: LIMITS.MAX_MONEY_MINOR }) };
-    }
-    const out = { lineId };
-    if (raw.quantity !== undefined && raw.quantity !== null && raw.quantity !== '') {
-      const quantity = Number(raw.quantity);
-      if (!Number.isSafeInteger(quantity) || quantity <= 0) throw badRequest('İade miktarı pozitif bir tam sayı olmalıdır', 'INVALID_QUANTITY');
-      out.quantity = quantity;
-    }
-    if (raw.weightGrams !== undefined && raw.weightGrams !== null && raw.weightGrams !== '') {
-      out.weightMg = parseDecimal(raw.weightGrams, SCALE.WEIGHT, { field: 'İade gramajı', allowZero: false, max: LIMITS.MAX_WEIGHT_MG });
-    }
-    return out;
-  });
-  return {
-    kind,
-    reason,
-    lines,
-    refunds: parsePayments(payload.refunds),
-    creditNoteNo: typeof payload.creditNoteNo === 'string' ? payload.creditNoteNo.trim().slice(0, 60) : undefined,
-  };
-}
-
-/**
- * Purchase return (iade alışı) against the original purchase lines, or a
- * supplier price adjustment (alacak dekontu) when the goods cannot or need
- * not go back.
- *
- * goods:
- *   - quantity (pieces) / weight (metal) ≤ purchased − already returned
- *   - the goods must physically be available (stock − transfer reservations);
- *     otherwise 409 INSUFFICIENT_STOCK_FOR_RETURN with the alternative
- *   - supplier credit = the line's remaining value × returned share (exact,
- *     the last unit takes the remainder: a full return credits the line exactly)
- *   - inventory leaves at its weighted-average cost; the difference between
- *     that cost and the supplier credit is booked to purchase_return_variance
- *   Dr ap:{supplier} credit | Cr inventory:{branch} cost | ± purchase_return_variance
- * price_adjustment:
- *   Dr ap:{supplier} | Cr purchase_price_adjustment   (no stock movement)
- * refunds (optional): money the supplier pays back, up to its credit on
- *   this purchase: Dr cash/bank | Cr ap:{supplier}
- */
 async function returnPurchase(ctx, id, payload, options = {}) {
   let command;
   try {
@@ -670,70 +534,6 @@ async function recordSupplierRefund(ctx, id, payload, options = {}) {
     await audit(session, ctx, 'purchase.supplier_refund', purchase, { after: { method: refunds[0].method, amountMinor: toSafeInteger(refunds[0].amountMinor) } });
     return purchase;
   });
-}
-
-function purchaseDto(purchase) {
-  const p = purchase.toObject ? purchase.toObject() : purchase;
-  const { net, paid: effectivePaid, due } = openFigures(p);
-  const returnedByLine = new Map((p.lineReturns || []).map((r) => [r.lineId, r]));
-  return {
-    _id: p._id,
-    supplierId: p.supplierId,
-    supplierName: p.supplierId && typeof p.supplierId === 'object' ? p.supplierId.name : undefined,
-    branch: p.branch,
-    invoiceNo: p.invoiceNo,
-    date: p.date,
-    status: p.status,
-    paymentStatus: p.paymentStatus,
-    total: money(p.totalMinor),
-    paid: money(p.paidMinor || 0),
-    returned: money(p.returnedMinor || 0),
-    refunded: money(p.refundedMinor || 0),
-    net: money(net),
-    netPaid: money(effectivePaid),
-    remaining: money(due > 0n ? due : 0n),
-    supplierCredit: money(due < 0n ? -due : 0n),
-    returnStatus: p.returnStatus || 'none',
-    lines: (p.lines || []).map((l) => ({
-      lineId: l.lineId,
-      itemType: l.itemType,
-      productId: l.productId,
-      productName: l.productName,
-      quantity: l.quantity,
-      metal: l.metal,
-      purity: l.purity,
-      weightGrams: l.weightMg ? toDisplayNumber(l.weightMg, 3) : undefined,
-      fineGrams: l.fineMg ? toDisplayNumber(l.fineMg, 3) : undefined,
-      unitCost: l.unitCostMinor !== undefined ? money(l.unitCostMinor) : undefined,
-      total: money(l.totalMinor),
-      returnedQuantity: returnedByLine.get(l.lineId)?.quantity || 0,
-      returnedWeightGrams: toDisplayNumber(BigInt(returnedByLine.get(l.lineId)?.weightMg || 0), 3),
-      returnedAmount: money(returnedByLine.get(l.lineId)?.amountMinor || 0),
-      adjustedAmount: money(returnedByLine.get(l.lineId)?.adjustedMinor || 0),
-      remainingValue: money(remainingLineValue(l, returnedByLine.get(l.lineId))),
-    })),
-    payments: (p.payments || []).map((pay) => ({ kind: pay.kind || 'payment', method: pay.method, amount: money(pay.amountMinor), at: pay.at })),
-    returns: (p.returns || []).map((r) => ({
-      returnId: r.returnId,
-      kind: r.kind,
-      amount: money(r.amountMinor),
-      cost: money(r.costMinor || 0),
-      variance: money(r.varianceMinor || 0),
-      refund: money(r.refundMinor || 0),
-      reason: r.reason,
-      creditNoteNo: r.creditNoteNo,
-      at: r.at,
-      lines: (r.lines || []).map((l) => ({
-        lineId: l.lineId,
-        quantity: l.quantity,
-        weightGrams: toDisplayNumber(BigInt(l.weightMg || 0), 3),
-        fineGrams: toDisplayNumber(BigInt(l.fineMg || 0), 3),
-        amount: money(l.amountMinor),
-        cost: l.costMinor === null || l.costMinor === undefined ? null : money(l.costMinor),
-      })),
-    })),
-    notes: p.notes,
-  };
 }
 
 module.exports = {

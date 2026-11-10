@@ -25,11 +25,7 @@ const StockTransfer = require('../models/StockTransfer');
 const AuditLog = require('../models/AuditLog');
 const LedgerEntry = require('../models/LedgerEntry');
 const { recordAudit } = require('../utils/audit');
-const {
-  parseDecimal, roundDiv, toSafeInteger, toDisplayNumber, DecimalError,
-} = require('../domain/decimal');
-const { SCALE, LIMITS, ROUNDING_MODE } = require('../domain/precision');
-const { resolvePurity, fineWeightMg, assertMetal } = require('../domain/metals');
+const { toSafeInteger, DecimalError } = require('../domain/decimal');
 const ledger = require('./finance/ledgerService');
 const inventory = require('./finance/inventoryService');
 const { assertBranch } = require('./finance/branchDirectory');
@@ -37,8 +33,13 @@ const {
   badRequest, notFound, conflict, forbidden, unprocessable, runInTransaction, parseNumericId,
 } = require('./finance/core');
 
+const {
+  text, parseTransferCommand, parseLineAmounts, outstandingOf, portionOf, addTo, isFullySettled,
+} = require('./transfers/transferLines');
+const { reconcile } = require('./transfers/transferReconciliation');
+const { transferDto } = require('./transfers/transferViews');
+
 const { ACCOUNTS, debit, credit } = ledger;
-const MAX_LINES = 100;
 const OPEN_FOR_RECEIPT = ['in_transit', 'partially_received'];
 // Catalogue attributes copied to the destination branch's copy of a product.
 const COPIED_FIELDS = ['name', 'weight', 'unit', 'price', 'currency', 'description', 'categoryId', 'materialId',
@@ -48,150 +49,6 @@ function wrap(error) {
   if (error instanceof DecimalError) return badRequest(error.message, error.code);
   return error;
 }
-
-const text = (value, max) => (typeof value === 'string' ? value.trim().slice(0, max) : undefined);
-
-/* ------------------------------------------------------------------ input */
-
-function parseTransferCommand(payload) {
-  if (!payload || typeof payload !== 'object' || Array.isArray(payload)) throw badRequest('Geçerli bir transfer bilgisi gönderilmelidir');
-  if (!Array.isArray(payload.lines) || !payload.lines.length) throw badRequest('Transferde en az bir satır olmalıdır');
-  if (payload.lines.length > MAX_LINES) throw badRequest(`Bir transferde en fazla ${MAX_LINES} satır olabilir`);
-  const seen = new Set();
-  const lines = payload.lines.map((raw, index) => {
-    const lineId = index + 1;
-    if (!raw || typeof raw !== 'object') throw badRequest(`${lineId}. satır geçersiz`);
-    if (raw.metal) {
-      const metal = assertMetal(raw.metal);
-      const purity = resolvePurity(raw);
-      const weightMg = parseDecimal(raw.weightGrams, SCALE.WEIGHT, { field: 'Gramaj', allowZero: false, max: LIMITS.MAX_WEIGHT_MG });
-      const key = `metal:${metal}:${purity}`;
-      if (seen.has(key)) throw badRequest('Aynı maden/ayar havuzu bir transferde yalnızca bir kez yer alabilir', 'DUPLICATE_TRANSFER_LINE');
-      seen.add(key);
-      return { lineId, itemType: 'metal', metal, purity, weightMg, fineMg: fineWeightMg(weightMg, purity) };
-    }
-    const productId = parseNumericId(raw.productId, 'ürün');
-    const quantity = Number(raw.quantity);
-    if (!Number.isSafeInteger(quantity) || quantity <= 0 || quantity > LIMITS.MAX_QUANTITY) {
-      throw badRequest('Transfer miktarı pozitif bir tam sayı olmalıdır', 'INVALID_QUANTITY');
-    }
-    const key = `product:${productId}`;
-    if (seen.has(key)) throw badRequest('Aynı ürün bir transferde yalnızca bir kez yer alabilir', 'DUPLICATE_TRANSFER_LINE');
-    seen.add(key);
-    const destinationProductId = raw.destinationProductId === undefined || raw.destinationProductId === null || raw.destinationProductId === ''
-      ? null : parseNumericId(raw.destinationProductId, 'hedef ürün');
-    return { lineId, itemType: 'product', productId, quantity, destinationProductId };
-  });
-  return {
-    sourceBranch: text(payload.sourceBranch, 120),
-    destinationBranch: text(payload.destinationBranch, 120),
-    lines,
-    notes: text(payload.notes, 1000),
-  };
-}
-
-/**
- * Receipt / resolution quantities: { lineId, quantity } for products,
- * { lineId, weightGrams } for metal. Missing amount = everything outstanding.
- */
-function parseLineAmounts(rawLines, transfer, { requireAmount }) {
-  if (!Array.isArray(rawLines) || !rawLines.length) throw badRequest('En az bir satır belirtilmelidir');
-  const seen = new Set();
-  return rawLines.map((raw) => {
-    const lineId = Number(raw?.lineId);
-    const line = transfer.lines.find((l) => l.lineId === lineId);
-    if (!line) throw badRequest(`Transfer satırı bulunamadı: ${raw?.lineId}`, 'TRANSFER_LINE_NOT_FOUND');
-    if (seen.has(lineId)) throw badRequest('Aynı satır bir istekte yalnızca bir kez yer alabilir', 'DUPLICATE_TRANSFER_LINE');
-    seen.add(lineId);
-    const out = outstandingOf(line);
-    let amount;
-    if (line.itemType === 'product') {
-      if (raw.quantity === undefined || raw.quantity === null || raw.quantity === '') {
-        if (requireAmount) throw badRequest('Teslim alınan miktar girilmelidir', 'INVALID_QUANTITY');
-        amount = out.quantity;
-      } else {
-        amount = Number(raw.quantity);
-        if (!Number.isSafeInteger(amount) || amount <= 0) throw badRequest('Miktar pozitif bir tam sayı olmalıdır', 'INVALID_QUANTITY');
-      }
-      if (amount > out.quantity) {
-        throw conflict(`${line.productName}: en fazla ${out.quantity} adet bekliyor (istenen ${amount})`, 'EXCEEDS_OUTSTANDING', {
-          lineId, outstanding: out.quantity, requested: amount,
-        });
-      }
-    } else {
-      if (raw.weightGrams === undefined || raw.weightGrams === null || raw.weightGrams === '') {
-        if (requireAmount) throw badRequest('Teslim alınan gramaj girilmelidir', 'INVALID_QUANTITY');
-        amount = out.weightMg;
-      } else {
-        amount = toSafeInteger(parseDecimal(raw.weightGrams, SCALE.WEIGHT, { field: 'Gramaj', allowZero: false, max: LIMITS.MAX_WEIGHT_MG }));
-      }
-      if (amount > out.weightMg) {
-        throw conflict(`${line.metal} ${line.purity / 10}‰: en fazla ${toDisplayNumber(BigInt(out.weightMg), 3)} gr bekliyor`, 'EXCEEDS_OUTSTANDING', {
-          lineId, outstandingWeightMg: out.weightMg, requestedWeightMg: amount,
-        });
-      }
-    }
-    if (amount <= 0) throw conflict('Bu satırda bekleyen miktar yok', 'NOTHING_OUTSTANDING', { lineId });
-    return { line, amount };
-  });
-}
-
-/* --------------------------------------------------------- line arithmetic */
-
-const settled = (line, field) => (line.received?.[field] || 0) + (line.returned?.[field] || 0) + (line.writtenOff?.[field] || 0);
-
-function outstandingOf(line) {
-  const d = line.dispatched || {};
-  return {
-    quantity: (d.quantity || 0) - settled(line, 'quantity'),
-    weightMg: (d.weightMg || 0) - settled(line, 'weightMg'),
-    fineMg: (d.fineMg || 0) - settled(line, 'fineMg'),
-  };
-}
-
-/** Cumulative share of `total` for `part` out of `whole` (whole → total exactly). */
-function share(total, part, whole) {
-  if (total === null || total === undefined) return null;
-  if (part >= whole) return BigInt(total);
-  return roundDiv(BigInt(total) * BigInt(part), BigInt(whole), ROUNDING_MODE);
-}
-
-/**
- * The next `amount` (pieces or mg) of a dispatched line: quantity, weight,
- * fine and cost, computed as the difference of cumulative shares so that
- * all portions together are exactly the dispatched figures.
- */
-function portionOf(line, amount) {
-  const d = line.dispatched;
-  if (line.itemType === 'product') {
-    const before = settled(line, 'quantity');
-    const cost = d.costMinor === null ? null : share(d.costMinor, before + amount, d.quantity) - share(d.costMinor, before, d.quantity);
-    return { quantity: amount, weightMg: 0, fineMg: 0, costMinor: cost };
-  }
-  const before = settled(line, 'weightMg');
-  const fine = share(d.fineMg, before + amount, d.weightMg) - share(d.fineMg, before, d.weightMg);
-  const cost = d.costMinor === null ? null : share(d.costMinor, before + amount, d.weightMg) - share(d.costMinor, before, d.weightMg);
-  return { quantity: 0, weightMg: amount, fineMg: toSafeInteger(fine), costMinor: cost };
-}
-
-function addTo(bucket, portion) {
-  const cost = portion.costMinor === null || bucket.costMinor === null
-    ? null
-    : toSafeInteger(BigInt(bucket.costMinor || 0) + portion.costMinor);
-  return {
-    quantity: (bucket.quantity || 0) + portion.quantity,
-    weightMg: (bucket.weightMg || 0) + portion.weightMg,
-    fineMg: (bucket.fineMg || 0) + portion.fineMg,
-    costMinor: cost,
-  };
-}
-
-const isFullySettled = (transfer) => transfer.lines.every((line) => {
-  const out = outstandingOf(line);
-  return out.quantity === 0 && out.weightMg === 0;
-});
-
-/* ------------------------------------------------------------- guards */
 
 function sourceCtx(ctx, transfer) {
   return { ...ctx, branch: transfer.sourceBranch };
@@ -698,139 +555,6 @@ async function resolveTransfer(ctx, id, payload = {}, options = {}) {
     await audit(session, ctx, `transfer.${resolution}`, transfer, { after: { status: transfer.status, lines: resolved, reason } });
     return transfer;
   }).catch((error) => { throw wrap(error); });
-}
-
-/* -------------------------------------------------------- reconciliation */
-
-/**
- * Transfer sub-ledger checks:
- *  - goods-in-transit account == Σ outstanding known cost of open transfers
- *  - every line conserves quantity, weight, fine content and cost
- *  - reserved stock == Σ approved (not yet dispatched) transfer lines
- */
-async function reconcile(businessId) {
-  const discrepancies = [];
-  const transfers = await StockTransfer.find({ businessId, status: { $in: ['approved', 'in_transit', 'partially_received', 'received'] } }).lean();
-  let expectedTransit = 0n;
-  const reservedByProduct = new Map();
-  const reservedByPool = new Map();
-  for (const t of transfers) {
-    for (const line of t.lines) {
-      if (t.status === 'approved') {
-        if (line.itemType === 'product') reservedByProduct.set(line.productId, (reservedByProduct.get(line.productId) || 0) + line.quantity);
-        else {
-          const key = MetalStock.idFor(businessId, t.sourceBranch, line.metal, line.purity);
-          const r = reservedByPool.get(key) || { weightMg: 0, fineMg: 0 };
-          reservedByPool.set(key, { weightMg: r.weightMg + line.weightMg, fineMg: r.fineMg + line.fineMg });
-        }
-        continue;
-      }
-      const d = line.dispatched || {};
-      for (const field of ['quantity', 'weightMg', 'fineMg']) {
-        if (settled(line, field) > (d[field] || 0)) {
-          discrepancies.push({ check: 'transfer_line_overrun', transferId: t._id, lineId: line.lineId, field, dispatched: d[field] || 0, settled: settled(line, field) });
-        }
-      }
-      if (d.costMinor !== null && d.costMinor !== undefined) {
-        const settledCost = ['received', 'returned', 'writtenOff'].reduce((s, k) => s + BigInt(line[k]?.costMinor || 0), 0n);
-        const outstanding = BigInt(d.costMinor) - settledCost;
-        if (outstanding < 0n) discrepancies.push({ check: 'transfer_cost_overrun', transferId: t._id, lineId: line.lineId });
-        if (t.status === 'received' && outstanding !== 0n) {
-          discrepancies.push({ check: 'transfer_cost_not_cleared', transferId: t._id, lineId: line.lineId, outstanding: Number(outstanding) });
-        }
-        expectedTransit += outstanding;
-      }
-    }
-  }
-  const transitBalance = await ledger.balanceOf(businessId, ACCOUNTS.inventoryInTransit, 'TRY');
-  if (transitBalance !== expectedTransit) {
-    discrepancies.push({ check: 'transit_balance', ledger: Number(transitBalance), transfers: Number(expectedTransit) });
-  }
-
-  const reservedProducts = await Product.find({ businessId, reservedStock: { $gt: 0 } }).select('_id name reservedStock').lean();
-  const seen = new Set();
-  for (const p of reservedProducts) {
-    seen.add(p._id);
-    if ((reservedByProduct.get(p._id) || 0) !== p.reservedStock) {
-      discrepancies.push({ check: 'reservation', productId: p._id, name: p.name, stored: p.reservedStock, transfers: reservedByProduct.get(p._id) || 0 });
-    }
-  }
-  for (const [productId, quantity] of reservedByProduct) {
-    if (!seen.has(productId)) discrepancies.push({ check: 'reservation', productId, stored: 0, transfers: quantity });
-  }
-  const pools = await MetalStock.find({ businessId, $or: [{ reservedWeightMg: { $gt: 0 } }, { reservedFineMg: { $gt: 0 } }] }).lean();
-  const seenPools = new Set();
-  for (const pool of pools) {
-    seenPools.add(pool._id);
-    const expected = reservedByPool.get(pool._id) || { weightMg: 0, fineMg: 0 };
-    if (expected.weightMg !== (pool.reservedWeightMg || 0) || expected.fineMg !== (pool.reservedFineMg || 0)) {
-      discrepancies.push({ check: 'metal_reservation', pool: pool._id, stored: { weightMg: pool.reservedWeightMg, fineMg: pool.reservedFineMg }, transfers: expected });
-    }
-  }
-  for (const [pool, expected] of reservedByPool) {
-    if (!seenPools.has(pool)) discrepancies.push({ check: 'metal_reservation', pool, stored: null, transfers: expected });
-  }
-
-  return {
-    ok: discrepancies.length === 0,
-    checkedAt: new Date().toISOString(),
-    transfersChecked: transfers.length,
-    inTransitCostTry: toDisplayNumber(expectedTransit, 2),
-    discrepancies,
-  };
-}
-
-/* ------------------------------------------------------------------ view */
-
-const grams = (mg) => (mg === null || mg === undefined ? null : toDisplayNumber(BigInt(mg), 3));
-const tl = (minor) => (minor === null || minor === undefined ? null : toDisplayNumber(BigInt(minor), 2));
-
-function quantitiesDto(q) {
-  if (!q) return { quantity: 0, weightGrams: 0, fineGrams: 0, cost: 0 };
-  return { quantity: q.quantity || 0, weightGrams: grams(q.weightMg || 0), fineGrams: grams(q.fineMg || 0), cost: tl(q.costMinor ?? null) };
-}
-
-function transferDto(transfer) {
-  const t = transfer.toObject ? transfer.toObject() : transfer;
-  const dispatched = !['draft', 'approved', 'cancelled', 'rejected'].includes(t.status);
-  return {
-    _id: t._id,
-    status: t.status,
-    sourceBranch: t.sourceBranch,
-    destinationBranch: t.destinationBranch,
-    notes: t.notes,
-    createdAt: t.createdAt,
-    createdBy: t.createdBy,
-    approvedAt: t.approvedAt,
-    approvedBy: t.approvedBy,
-    dispatchedAt: t.dispatchedAt,
-    completedAt: t.completedAt,
-    cancelledAt: t.cancelledAt,
-    rejectedAt: t.rejectedAt,
-    lines: (t.lines || []).map((l) => {
-      const out = dispatched ? outstandingOf(l) : null;
-      return {
-        lineId: l.lineId,
-        itemType: l.itemType,
-        productId: l.productId,
-        productName: l.productName,
-        destinationProductId: l.destinationProductId,
-        quantity: l.quantity,
-        metal: l.metal,
-        purity: l.purity,
-        weightGrams: l.itemType === 'metal' ? grams(l.weightMg) : undefined,
-        fineGrams: l.itemType === 'metal' ? grams(l.fineMg) : undefined,
-        dispatched: dispatched ? quantitiesDto(l.dispatched) : null,
-        received: quantitiesDto(l.received),
-        returned: quantitiesDto(l.returned),
-        writtenOff: quantitiesDto(l.writtenOff),
-        outstanding: out ? { quantity: out.quantity, weightGrams: grams(out.weightMg), fineGrams: grams(out.fineMg) } : null,
-      };
-    }),
-    events: (t.events || []).map((e) => ({
-      action: e.action, fromStatus: e.fromStatus, toStatus: e.toStatus, at: e.at, by: e.by, note: e.note, details: e.details,
-    })),
-  };
 }
 
 async function journalOf(ctx, transferId) {

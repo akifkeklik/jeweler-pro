@@ -101,4 +101,4 @@ export default defineComponent({
 });
 </script>
 
-<style scoped src="./sale-dialog.css"></style>
+<style scoped src="@/styles/dialog.css"></style>

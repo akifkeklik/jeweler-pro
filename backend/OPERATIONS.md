@@ -153,6 +153,7 @@ movements / inventory value were booked to a branch other than the owner
 | Stock, balances, transfers, POS | MongoDB transactions + conditional updates → safe across instances |
 | Auth rate limits (in-process) | per instance (precise first layer) |
 | Auth rate limits (shared) | `middleware/sharedRateLimit.js`: atomic MongoDB counters with TTL, on login / forgot / reset. On by default in production (`RATE_LIMIT_SHARED_STORE=mongo`), off elsewhere; fails closed (503) if the store is unreachable |
+| General API rate limit | `middleware/apiRateLimit.js` (`API_RATE_LIMIT_PER_MINUTE`, default 600 per client address). With the shared store it uses the same MongoDB counters (`MongoRateLimitStore`), so the budget holds across all instances; otherwise per process. Fails closed (503) like the auth limiters |
 | Market data cache / circuit breakers | per instance (each instance polls providers itself; mind provider quotas: N instances × fetch rate). Reviewed: a shared cache would need either a new dependency or a MongoDB lease; with the 30 s cache, ≤ 3 instances stay within the free providers' quotas, and every sale snapshots the exact quote it used, so instances never disagree inside one document. Revisit above 3 instances or with a metered feed |
 | Stock ownership claims | the first stock of a shared item claims it for one branch inside the transaction, guarded on `branch: ''` — concurrent claims from two branches resolve to exactly one owner (tested) |
 | Sessions / tokens | stateless JWT + refresh sessions in MongoDB |
@@ -186,7 +187,7 @@ All optional; secrets stay in environment variables, never in the code.
 | Variable | Default | Purpose |
 |---|---|---|
 | `MIGRATION_AUTO_APPLY` | unset | `true` lets production apply pending migrations at start-up |
-| `RATE_LIMIT_SHARED_STORE` | `mongo` in production, `off` otherwise | cluster-wide auth rate limiting |
+| `RATE_LIMIT_SHARED_STORE` | `mongo` in production, `off` otherwise | cluster-wide auth and general API rate limiting |
 | `LOG_FORMAT` | text | `json` for structured logs |
 | `REQUEST_LOG` | on | `off` disables per-request lines |
 | `MARKET_DATA_BREAKER_THRESHOLD` | 3 | consecutive failures before a provider's circuit opens |

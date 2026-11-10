@@ -12,12 +12,15 @@
  *   deployment that limits at the reverse proxy instead).
  * - Responses carry the standard RateLimit-* headers; a refusal is
  *   429 RATE_LIMITED with Retry-After.
- * - The store is per process (see SECURITY.md: multi-instance deployments
- *   must also limit at the proxy).
+ * - With the shared store (RATE_LIMIT_SHARED_STORE=mongo, the production
+ *   default) the counters live in MongoDB, so the budget holds across every
+ *   API instance; otherwise they are per process. An unreachable store fails
+ *   closed (503 RATE_LIMIT_STORE_UNAVAILABLE).
  */
 const { rateLimit } = require('express-rate-limit');
 const { rateLimitIdentity } = require('../utils/ipAddress');
 const { resolveEnvironment } = require('../config/environment');
+const { MongoRateLimitStore, sharedStoreEnabled } = require('./sharedRateLimit');
 
 const DEFAULT_PER_MINUTE = 600;
 
@@ -31,11 +34,15 @@ function limitFromEnv(env = process.env) {
   return Number.isSafeInteger(value) && value >= 0 ? value : DEFAULT_PER_MINUTE;
 }
 
-function createApiRateLimit({ limit = limitFromEnv(), windowMs = 60_000 } = {}) {
+function createApiRateLimit({ limit = limitFromEnv(), windowMs = 60_000, shared = sharedStoreEnabled() } = {}) {
   return rateLimit({
     windowMs,
     limit,
     skip: () => limit === 0,
+    // Default memory store when not shared (development, tests, single instance).
+    store: shared && limit > 0 ? new MongoRateLimitStore({ name: 'api' }) : undefined,
+    // Store errors propagate to the error handler as 503 (fail closed).
+    passOnStoreError: false,
     standardHeaders: 'draft-8',
     legacyHeaders: false,
     // rateLimitIdentity already groups IPv6 clients by /64 network.

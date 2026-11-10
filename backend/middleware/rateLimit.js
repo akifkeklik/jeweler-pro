@@ -32,10 +32,10 @@
  *
  * ─── Deployment guarantees ─────────────────────────────────────────────────
  * State is per process. With one API process the limits below are exact.
- * With N processes/replicas an attacker effectively gets up to N × limit and
- * counters reset on restart; such deployments must add a shared limit at the
- * reverse proxy / load balancer (or a shared store such as Redis, which is not
- * implemented). Start-up logs this warning in production.
+ * With N processes/replicas each process counts on its own, so the shared
+ * MongoDB layer (middleware/sharedRateLimit.js, on by default in production)
+ * caps login / forgot / reset and the general API limit cluster-wide.
+ * Start-up warns in production when that shared store is switched off.
  *
  * Client IP: req.ip, which honours Express "trust proxy" (see
  * config/runtimeConfig.js). X-Forwarded-For is never read directly.

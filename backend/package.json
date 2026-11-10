@@ -39,6 +39,6 @@
   },
   "devDependencies": {
     "cross-env": "^7.0.3",
-    "mongodb-memory-server": "^10.4.3"
+    "mongodb-memory-server": "^11.3.0"
   }
 }

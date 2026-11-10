@@ -95,3 +95,25 @@ describe('receipt', () => {
     expect(html).toContain('&lt;script&gt;');
   });
 });
+
+describe('product labels', async () => {
+  const { buildLabelHtml } = await import('@/services/labels');
+  const fmt = (v: number) => `${v.toFixed(2)} TL`;
+
+  it('prints name, price and barcode; gram items have no fixed price', () => {
+    const fixed = buildLabelHtml({ name: 'Yüzük <b>', barcode: '8690001', price: 1500 }, fmt);
+    expect(fixed.ok).toBe(true);
+    if (fixed.ok) {
+      expect(fixed.html).toContain('1500.00 TL');
+      expect(fixed.html).toContain('<svg');
+      expect(fixed.html).toContain('Yüzük &lt;b&gt;');
+    }
+    const gram = buildLabelHtml({ name: 'Bilezik', sku: 'BLZ-22', price: 0, pricingMode: 'gram' }, fmt);
+    expect(gram.ok && !gram.html.includes('0.00 TL')).toBe(true);
+  });
+
+  it('refuses a missing or non-ASCII code with the reason', () => {
+    expect(buildLabelHtml({ name: 'X' }, fmt)).toEqual({ ok: false, reason: 'no_code', code: '' });
+    expect(buildLabelHtml({ name: 'X', barcode: 'ÇAY' }, fmt)).toEqual({ ok: false, reason: 'invalid_code', code: 'ÇAY' });
+  });
+});

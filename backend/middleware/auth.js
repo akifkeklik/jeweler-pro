@@ -80,7 +80,7 @@ function verifyToken(token) {
 async function authenticate(req, res, next) {
   try {
     const authorization = req.headers.authorization || '';
-    const match = authorization.match(/^Bearer\s+(.+)$/i);
+    const match = authorization.match(/^Bearer ([^\s]+)$/i);
     const claims = match && verifyToken(match[1]);
     if (!claims) return res.status(401).json({ error: 'Oturum geçersiz veya süresi dolmuş', code: 'SESSION_INVALID' });
 

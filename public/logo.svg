@@ -1,0 +1,14 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" role="img" aria-label="Jeweler Pro">
+  <defs>
+    <linearGradient id="gold" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#F3D58A"/>
+      <stop offset="0.55" stop-color="#D4A64A"/>
+      <stop offset="1" stop-color="#A97A24"/>
+    </linearGradient>
+  </defs>
+  <rect width="512" height="512" rx="112" fill="url(#gold)"/>
+  <g fill="none" stroke="#14161B" stroke-width="22" stroke-linejoin="round" stroke-linecap="round">
+    <path d="M170 150h172l66 84-152 168-152-168z"/>
+    <path d="M104 234h304M210 150l-40 84 86 168 86-168-40-84"/>
+  </g>
+</svg>

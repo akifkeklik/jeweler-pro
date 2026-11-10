@@ -1,0 +1,840 @@
+/* ==========================================================================
+   JEWELER PRO — ENTERPRISE JEWELRY ERP DESIGN SYSTEM
+   World-class financial & precious metals trading desk aesthetics.
+   Tokens, Typography, Component Standards, Light / Dark Theming.
+   ========================================================================== */
+
+@import url('https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,400;0,9..40,500;0,9..40,600;0,9..40,700;1,9..40,400&family=JetBrains+Mono:wght@400;500;600;700&family=Manrope:wght@500;600;700;800&display=swap');
+
+/* Default Theme: Dark (Obsidian & Deep Slate Financial Terminal) */
+:root,
+[data-theme='dark'] {
+  --jp-theme: dark;
+
+  /* Canvas & Surfaces */
+  --jp-bg: #090d16;
+  --jp-surface: #0f1523;
+  --jp-surface-card: #131b2c;
+  --jp-surface-card-hover: #182236;
+  --jp-surface-muted: #1c273d;
+  --jp-surface-elevated: #212e47;
+
+  /* Luxury Gold Accent */
+  --jp-gold: #d4af37;
+  --jp-gold-light: #f59e0b;
+  --jp-gold-glow: rgba(212, 175, 55, 0.16);
+  --jp-gold-gradient: linear-gradient(135deg, #d4af37 0%, #b8860b 100%);
+  --jp-gold-subtle: rgba(212, 175, 55, 0.09);
+  --jp-gold-border: rgba(212, 175, 55, 0.28);
+
+  /* Primary Accent / Blue */
+  --jp-primary: #3b82f6;
+  --jp-primary-hover: #2563eb;
+  --jp-primary-glow: rgba(59, 130, 246, 0.18);
+  --jp-focus: rgba(59, 130, 246, 0.28);
+
+  /* Typography / Text Colors */
+  --jp-text: #f8fafc;
+  --jp-text-emphasis: #ffffff;
+  --jp-text-white: #ffffff;
+  --jp-text-muted: #94a3b8;
+  --jp-text-subtle: #64748b;
+  --jp-ink-100: #f8fafc;
+  --jp-ink-300: #cbd5e1;
+  --jp-ink-500: #94a3b8;
+
+  /* Borders & Shadows */
+  --jp-border: rgba(255, 255, 255, 0.08);
+  --jp-border-soft: rgba(255, 255, 255, 0.05);
+  --jp-border-light: rgba(255, 255, 255, 0.14);
+  --jp-radius-sm: 6px;
+  --jp-radius-control: 8px;
+  --jp-radius-md: 10px;
+  --jp-radius-surface: 12px;
+  --jp-radius-lg: 14px;
+  --jp-shadow-sm: 0 4px 12px rgba(0, 0, 0, 0.25);
+  --jp-shadow-md: 0 8px 24px rgba(0, 0, 0, 0.35);
+  --jp-shadow-control: 0 2px 6px rgba(0, 0, 0, 0.2);
+  --jp-shadow-surface: 0 8px 24px rgba(0, 0, 0, 0.3);
+
+  /* Financial Status Colors */
+  --jp-success: #10b981;
+  --jp-success-bg: rgba(16, 185, 129, 0.12);
+  --jp-success-border: rgba(16, 185, 129, 0.28);
+  --jp-warning: #f59e0b;
+  --jp-warning-bg: rgba(245, 158, 11, 0.12);
+  --jp-warning-border: rgba(245, 158, 11, 0.28);
+  --jp-danger: #ef4444;
+  --jp-danger-bg: rgba(239, 68, 68, 0.12);
+  --jp-danger-border: rgba(239, 68, 68, 0.28);
+  --jp-info: #06b6d4;
+  --jp-info-bg: rgba(6, 182, 212, 0.12);
+  --jp-info-border: rgba(6, 182, 212, 0.28);
+
+  /* Form and Input Elements */
+  --jp-input-bg: #101625;
+  --jp-input-border: rgba(255, 255, 255, 0.12);
+  --jp-input-text: #ffffff;
+  --jp-input-placeholder: #64748b;
+
+  /* Scrollbar */
+  --jp-scrollbar-thumb: rgba(255, 255, 255, 0.16);
+  --jp-scrollbar-hover: rgba(255, 255, 255, 0.3);
+}
+
+/* Light Theme: Executive Clean & High-Legibility Financial SaaS */
+[data-theme='light'] {
+  --jp-theme: light;
+
+  /* Canvas & Surfaces */
+  --jp-bg: #f3f5f8;
+  --jp-surface: #ffffff;
+  --jp-surface-card: #ffffff;
+  --jp-surface-card-hover: #f8fafc;
+  --jp-surface-muted: #eef2f6;
+  --jp-surface-elevated: #e2e8f0;
+
+  /* Luxury Gold Accent (High Contrast for Light Canvas) */
+  --jp-gold: #b48312;
+  --jp-gold-light: #d97706;
+  --jp-gold-glow: rgba(180, 131, 18, 0.15);
+  --jp-gold-gradient: linear-gradient(135deg, #d4af37 0%, #b8860b 100%);
+  --jp-gold-subtle: rgba(180, 131, 18, 0.1);
+  --jp-gold-border: rgba(180, 131, 18, 0.3);
+
+  /* Primary Executive Sapphire */
+  --jp-primary: #2563eb;
+  --jp-primary-hover: #1d4ed8;
+  --jp-primary-glow: rgba(37, 99, 235, 0.16);
+  --jp-focus: rgba(37, 99, 235, 0.25);
+
+  /* Typography / Text Colors */
+  --jp-text: #1e293b;
+  --jp-text-emphasis: #0f172a;
+  --jp-text-white: #0f172a; /* Maps .text-white to bold charcoal */
+  --jp-text-muted: #64748b;
+  --jp-text-subtle: #94a3b8;
+  --jp-ink-100: #0f172a;
+  --jp-ink-300: #334155;
+  --jp-ink-500: #64748b;
+
+  /* Borders & Shadows */
+  --jp-border: #e2e8f0;
+  --jp-border-soft: #edf2f7;
+  --jp-border-light: #cbd5e1;
+  --jp-shadow-sm: 0 1px 3px rgba(0, 0, 0, 0.05), 0 1px 2px rgba(0, 0, 0, 0.03);
+  --jp-shadow-md: 0 4px 14px rgba(0, 0, 0, 0.07);
+  --jp-shadow-control: 0 1px 2px rgba(0, 0, 0, 0.05);
+  --jp-shadow-surface: 0 8px 20px rgba(0, 0, 0, 0.06);
+
+  /* Financial Status Colors */
+  --jp-success: #059669;
+  --jp-success-bg: rgba(5, 150, 105, 0.1);
+  --jp-success-border: rgba(5, 150, 105, 0.28);
+  --jp-warning: #d97706;
+  --jp-warning-bg: rgba(217, 119, 6, 0.1);
+  --jp-warning-border: rgba(217, 119, 6, 0.28);
+  --jp-danger: #dc2626;
+  --jp-danger-bg: rgba(220, 38, 38, 0.1);
+  --jp-danger-border: rgba(220, 38, 38, 0.28);
+  --jp-info: #0284c7;
+  --jp-info-bg: rgba(2, 132, 199, 0.1);
+  --jp-info-border: rgba(2, 132, 199, 0.28);
+
+  /* Form and Input Elements */
+  --jp-input-bg: #ffffff;
+  --jp-input-border: #cbd5e1;
+  --jp-input-text: #0f172a;
+  --jp-input-placeholder: #94a3b8;
+
+  /* Scrollbar */
+  --jp-scrollbar-thumb: rgba(0, 0, 0, 0.18);
+  --jp-scrollbar-hover: rgba(0, 0, 0, 0.35);
+}
+
+/* ==========================================================================
+   MOTION SYSTEM
+   One timing scale and one set of easing curves for the whole application.
+   Components reference these tokens instead of literal durations, so the
+   reduced-motion mode can calm every transition from one place.
+   ========================================================================== */
+:root {
+  --jp-motion-instant: 80ms;
+  --jp-motion-fast: 140ms;
+  --jp-motion-base: 200ms;
+  --jp-motion-slow: 260ms;
+  --jp-motion-sidebar: 240ms;
+  --jp-ease-standard: cubic-bezier(0.2, 0, 0, 1);
+  --jp-ease-decelerate: cubic-bezier(0, 0, 0, 1);
+  --jp-ease-accelerate: cubic-bezier(0.3, 0, 1, 1);
+}
+
+/* Density */
+[data-density='compact'] {
+  --jp-radius-control: 6px;
+  --jp-radius-surface: 10px;
+}
+
+/*
+ * Reduced motion — applied when the user enables "Reduce motion" OR the
+ * operating system reports prefers-reduced-motion (src/theme/index.ts sets the
+ * class for both). Movement is removed; very short colour/opacity feedback is
+ * kept so state changes stay perceivable.
+ */
+html.jp-reduced-motion {
+  --jp-motion-instant: 0ms;
+  --jp-motion-fast: 60ms;
+  --jp-motion-base: 60ms;
+  --jp-motion-slow: 60ms;
+  --jp-motion-sidebar: 0ms;
+  scroll-behavior: auto !important;
+}
+
+html.jp-reduced-motion *,
+html.jp-reduced-motion *::before,
+html.jp-reduced-motion *::after {
+  animation-duration: 0.01ms !important;
+  animation-iteration-count: 1 !important;
+  animation-delay: 0ms !important;
+  transition-delay: 0ms !important;
+  scroll-behavior: auto !important;
+}
+
+/* Vuetify movement: drawers, layout, overlays, ripples. */
+html.jp-reduced-motion .v-navigation-drawer,
+html.jp-reduced-motion .v-main,
+html.jp-reduced-motion .v-app-bar,
+html.jp-reduced-motion .v-overlay__content,
+html.jp-reduced-motion .v-overlay__scrim {
+  transition-duration: 0ms !important;
+}
+
+html.jp-reduced-motion .v-ripple__container {
+  display: none !important;
+}
+
+html.jp-reduced-motion .jp-primary:hover,
+html.jp-reduced-motion .jp-card-hover:hover {
+  transform: none !important;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    scroll-behavior: auto !important;
+  }
+}
+
+/* Route transition: short fade with a 4px rise — opacity/transform only. */
+.jp-page-enter-active {
+  transition: opacity var(--jp-motion-base) var(--jp-ease-decelerate), transform var(--jp-motion-base) var(--jp-ease-decelerate);
+}
+.jp-page-leave-active {
+  transition: opacity var(--jp-motion-instant) var(--jp-ease-accelerate);
+}
+.jp-page-enter-from {
+  opacity: 0;
+  transform: translateY(4px);
+}
+.jp-page-leave-to {
+  opacity: 0;
+}
+
+/* Overlays: Vuetify dialogs, menus and tooltips use the same scale. */
+.v-overlay__scrim {
+  background: var(--jp-overlay-scrim) !important;
+  opacity: 1 !important;
+}
+.dialog-transition-enter-active,
+.fade-transition-enter-active,
+.scale-transition-enter-active {
+  transition-duration: var(--jp-motion-base) !important;
+  transition-timing-function: var(--jp-ease-decelerate) !important;
+}
+.dialog-transition-leave-active,
+.fade-transition-leave-active,
+.scale-transition-leave-active {
+  transition-duration: var(--jp-motion-fast) !important;
+  transition-timing-function: var(--jp-ease-accelerate) !important;
+}
+
+.v-tooltip > .v-overlay__content {
+  background: var(--jp-surface-elevated) !important;
+  color: var(--jp-text-emphasis) !important;
+  border: 1px solid var(--jp-border-light);
+  box-shadow: var(--jp-shadow-md);
+  font-size: 0.72rem !important;
+  font-weight: 600;
+  padding: 4px 8px !important;
+  border-radius: var(--jp-radius-sm) !important;
+}
+
+.v-menu > .v-overlay__content > .v-list,
+.v-menu > .v-overlay__content > .v-card {
+  background: var(--jp-surface-card) !important;
+  border: 1px solid var(--jp-border-light) !important;
+  box-shadow: var(--jp-shadow-md) !important;
+}
+
+:focus-visible {
+  outline-color: var(--jp-primary);
+}
+
+/* ==========================================================================
+   GLOBAL RESET & NATURAL ERP SCROLLING ARCHITECTURE (ZERO-SCROLL REMOVED)
+   ========================================================================== */
+
+*, *::before, *::after {
+  box-sizing: border-box;
+}
+
+html, body {
+  margin: 0;
+  padding: 0;
+  width: 100%;
+  min-height: 100vh;
+  overflow-x: hidden;
+  overflow-y: auto;
+  background-color: var(--jp-bg);
+  color: var(--jp-text);
+  font-family: 'DM Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  
+}
+
+#app {
+  width: 100%;
+  min-height: 100vh;
+  overflow-x: hidden;
+  display: flex;
+}
+
+/* Monospace Numbers, Currencies, Weights */
+.tabular,
+.financial-value,
+.stat-value,
+.unit-weight,
+.jp-mono {
+  font-family: 'JetBrains Mono', 'DM Sans', monospace;
+  font-variant-numeric: tabular-nums;
+  letter-spacing: -0.02em;
+}
+
+/* High-contrast Text Overrides for Light Theme */
+[data-theme='light'] .text-white {
+  color: var(--jp-text-emphasis) !important;
+}
+
+[data-theme='light'] .text-disabled {
+  color: var(--jp-text-subtle) !important;
+}
+
+/* ==========================================================================
+   LAYOUT ENGINEERING: ZERO-SCROLL CONTRACT & CONTAINERS
+   ========================================================================== */
+
+.jeweler-app {
+  width: 100%;
+  min-height: 100vh;
+  background: var(--jp-bg) !important;
+}
+
+.jeweler-main {
+  min-height: 100vh !important;
+  display: flex !important;
+  flex-direction: column !important;
+  padding-top: 52px !important; /* Topbar offset */
+  background: var(--jp-bg) !important;
+  overflow-y: auto !important;
+  overflow-x: hidden !important;
+}
+
+.page-container {
+  flex: 1 1 auto !important;
+  min-height: calc(100vh - 52px) !important;
+  overflow-y: auto !important;
+  overflow-x: hidden !important;
+  padding: 12px 18px 24px 18px !important;
+  display: flex !important;
+  flex-direction: column !important;
+  width: 100% !important;
+  max-width: 100% !important;
+}
+
+.jp-page-shell,
+.page-shell {
+  flex: 1 1 auto;
+  min-height: 100%;
+  display: flex;
+  flex-direction: column;
+  padding: 0 !important;
+  margin: 0 !important;
+  max-width: 100% !important;
+}
+
+/* Page Header */
+.jp-page-header,
+.page-heading {
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  min-height: 38px;
+  margin-bottom: 8px;
+}
+
+.page-heading-left {
+  display: flex;
+  align-items: baseline;
+  gap: 10px;
+  min-width: 0;
+}
+
+.jp-section-label {
+  color: var(--jp-gold);
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 1.2px;
+  text-transform: uppercase;
+}
+
+.page-title {
+  color: var(--jp-text-emphasis);
+  font-family: 'Manrope', sans-serif;
+  font-size: 1.18rem;
+  font-weight: 800;
+  letter-spacing: -0.02em;
+  line-height: 1.2;
+  margin: 0;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.header-actions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-shrink: 0;
+}
+
+/* ==========================================================================
+   ENTERPRISE CARD & SURFACE SYSTEM
+   ========================================================================== */
+
+.jp-surface,
+.jp-card,
+.v-card {
+  border: 1px solid var(--jp-border) !important;
+  border-radius: var(--jp-radius-surface) !important;
+  background: var(--jp-surface-card) !important;
+  color: var(--jp-text) !important;
+  box-shadow: var(--jp-shadow-sm) !important;
+}
+
+.jp-card-hover {
+  transition: border-color var(--jp-motion-fast) var(--jp-ease-standard), box-shadow var(--jp-motion-fast) var(--jp-ease-standard);
+}
+.jp-card-hover:hover {
+  border-color: var(--jp-border-light) !important;
+  box-shadow: var(--jp-shadow-md) !important;
+}
+
+/* KPI Stat Cards Ribbon */
+.jp-stat-card {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 10px 14px;
+  border: 1px solid var(--jp-border);
+  border-radius: var(--jp-radius-md);
+  background: var(--jp-surface-card);
+  min-height: 62px;
+  box-shadow: var(--jp-shadow-sm);
+  transition: border-color var(--jp-motion-fast) var(--jp-ease-standard), box-shadow var(--jp-motion-fast) var(--jp-ease-standard);
+}
+.jp-stat-card:hover {
+  border-color: var(--jp-border-light);
+  box-shadow: var(--jp-shadow-md);
+}
+
+.jp-stat-icon-wrap {
+  width: 36px;
+  height: 36px;
+  display: grid;
+  place-items: center;
+  border-radius: var(--jp-radius-sm);
+  background: var(--jp-surface-muted);
+  border: 1px solid var(--jp-border);
+  flex-shrink: 0;
+}
+
+.jp-stat-content {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+}
+
+.jp-stat-label {
+  font-size: 0.70rem;
+  font-weight: 700;
+  color: var(--jp-text-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  line-height: 1.2;
+}
+
+.jp-stat-value {
+  font-family: 'JetBrains Mono', 'DM Sans', monospace;
+  font-size: 1.1rem;
+  font-weight: 700;
+  color: var(--jp-text-emphasis);
+  line-height: 1.2;
+  margin-top: 2px;
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+/* ==========================================================================
+   BUTTON SYSTEM
+   ========================================================================== */
+
+.jp-primary,
+.v-btn.jp-primary {
+  background: var(--jp-gold-gradient) !important;
+  color: var(--jp-on-primary) !important;
+  font-weight: 700 !important;
+  font-size: 0.8rem !important;
+  letter-spacing: 0.2px !important;
+  border: none !important;
+  border-radius: var(--jp-radius-control) !important;
+  box-shadow: 0 2px 8px var(--jp-gold-glow) !important;
+  text-transform: none !important;
+  transition: filter var(--jp-motion-fast) var(--jp-ease-standard), box-shadow var(--jp-motion-fast) var(--jp-ease-standard), transform var(--jp-motion-fast) var(--jp-ease-standard) !important;
+}
+.jp-primary:hover,
+.v-btn.jp-primary:hover {
+  box-shadow: 0 4px 14px var(--jp-focus) !important;
+  filter: brightness(1.06);
+  transform: translateY(-1px);
+}
+
+.jp-secondary,
+.v-btn.jp-secondary {
+  background: var(--jp-surface-muted) !important;
+  border: 1px solid var(--jp-border-light) !important;
+  color: var(--jp-text) !important;
+  font-weight: 600 !important;
+  font-size: 0.8rem !important;
+  border-radius: var(--jp-radius-control) !important;
+  text-transform: none !important;
+  box-shadow: none !important;
+  transition: background-color var(--jp-motion-fast) var(--jp-ease-standard), border-color var(--jp-motion-fast) var(--jp-ease-standard), color var(--jp-motion-fast) var(--jp-ease-standard), filter var(--jp-motion-fast) var(--jp-ease-standard) !important;
+}
+.jp-secondary:hover,
+.v-btn.jp-secondary:hover {
+  background: var(--jp-surface-card-hover) !important;
+  border-color: var(--jp-gold) !important;
+  color: var(--jp-text-emphasis) !important;
+}
+
+.jp-btn-danger,
+.v-btn.jp-btn-danger {
+  background: var(--jp-danger-bg) !important;
+  border: 1px solid var(--jp-danger-border) !important;
+  color: var(--jp-danger) !important;
+  font-weight: 600 !important;
+  font-size: 0.8rem !important;
+  border-radius: var(--jp-radius-control) !important;
+  text-transform: none !important;
+  transition: background-color var(--jp-motion-fast) var(--jp-ease-standard), border-color var(--jp-motion-fast) var(--jp-ease-standard), color var(--jp-motion-fast) var(--jp-ease-standard), filter var(--jp-motion-fast) var(--jp-ease-standard) !important;
+}
+.jp-btn-danger:hover,
+.v-btn.jp-btn-danger:hover {
+  filter: brightness(1.1);
+  box-shadow: 0 2px 10px var(--jp-danger-bg) !important;
+}
+
+.jp-btn-ghost,
+.v-btn.jp-btn-ghost {
+  background: transparent !important;
+  border: 1px solid transparent !important;
+  color: var(--jp-text-muted) !important;
+  font-weight: 600 !important;
+  font-size: 0.8rem !important;
+  border-radius: var(--jp-radius-control) !important;
+  text-transform: none !important;
+  transition: background-color var(--jp-motion-fast) var(--jp-ease-standard), color var(--jp-motion-fast) var(--jp-ease-standard) !important;
+}
+.jp-btn-ghost:hover,
+.v-btn.jp-btn-ghost:hover {
+  background: var(--jp-surface-muted) !important;
+  color: var(--jp-text-emphasis) !important;
+}
+
+/* ==========================================================================
+   BADGES & STATUS TAGS
+   ========================================================================== */
+
+.jp-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  padding: 2px 8px;
+  border-radius: 9999px;
+  font-size: 0.70rem;
+  font-weight: 600;
+  letter-spacing: 0.2px;
+  line-height: 1.4;
+  white-space: nowrap;
+}
+
+.jp-badge-success {
+  background: var(--jp-success-bg);
+  border: 1px solid var(--jp-success-border);
+  color: var(--jp-success);
+}
+
+.jp-badge-warning {
+  background: var(--jp-warning-bg);
+  border: 1px solid var(--jp-warning-border);
+  color: var(--jp-warning);
+}
+
+.jp-badge-danger {
+  background: var(--jp-danger-bg);
+  border: 1px solid var(--jp-danger-border);
+  color: var(--jp-danger);
+}
+
+.jp-badge-info {
+  background: var(--jp-info-bg);
+  border: 1px solid var(--jp-info-border);
+  color: var(--jp-info);
+}
+
+.jp-badge-gold {
+  background: var(--jp-gold-subtle);
+  border: 1px solid var(--jp-gold-border);
+  color: var(--jp-gold);
+}
+
+.jp-badge-neutral {
+  background: var(--jp-surface-muted);
+  border: 1px solid var(--jp-border);
+  color: var(--jp-text-muted);
+}
+
+/* Pulsing Live indicator dot */
+.live-dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: var(--jp-success);
+  box-shadow: 0 0 6px var(--jp-success);
+  display: inline-block;
+}
+
+/* ==========================================================================
+   ENTERPRISE DATA TABLES
+   ========================================================================== */
+
+.jp-enterprise-table,
+.v-data-table table,
+.v-table table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.8rem;
+  color: var(--jp-text);
+  background: transparent !important;
+}
+
+.jp-enterprise-table thead th,
+.v-data-table thead th,
+.v-table thead th {
+  background: var(--jp-surface-muted) !important;
+  color: var(--jp-text-muted) !important;
+  font-size: 0.72rem !important;
+  font-weight: 700 !important;
+  text-transform: uppercase !important;
+  letter-spacing: 0.5px !important;
+  border-bottom: 1px solid var(--jp-border) !important;
+  padding: 6px 12px !important;
+  height: 36px !important;
+  white-space: nowrap !important;
+  text-align: left;
+}
+
+.jp-enterprise-table tbody td,
+.v-data-table tbody td,
+.v-table tbody td {
+  font-size: 0.8rem !important;
+  border-bottom: 1px solid var(--jp-border-soft) !important;
+  padding: 5px 12px !important;
+  height: 38px !important;
+  color: var(--jp-text) !important;
+}
+
+.jp-enterprise-table tbody tr:hover,
+.v-data-table tbody tr:hover,
+.v-table tbody tr:hover {
+  background-color: var(--jp-surface-card-hover) !important;
+}
+
+.table-scroll-wrap {
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
+  overflow-x: auto;
+}
+
+/* ==========================================================================
+   FORMS, INPUTS, SELECTS & TEXTAREAS
+   ========================================================================== */
+
+input[type="text"],
+input[type="email"],
+input[type="password"],
+input[type="number"],
+input[type="tel"],
+input[type="search"],
+input[type="date"],
+select,
+textarea,
+.form-input-control,
+.form-select-control,
+.form-textarea-control,
+.form-input-full,
+.form-select-full,
+.form-textarea-full,
+.compact-select,
+.calc-input-full,
+.calc-select-full,
+.settings-select-full,
+.pwd-input,
+.login-input,
+.sales-search-field,
+.products-search-field,
+.customer-search-field {
+  background-color: var(--jp-input-bg) !important;
+  border: 1px solid var(--jp-input-border) !important;
+  color: var(--jp-input-text) !important;
+  border-radius: var(--jp-radius-control) !important;
+  font-family: inherit;
+  font-size: 0.82rem;
+  padding: 6px 10px;
+  outline: none;
+  transition: border-color var(--jp-motion-fast) var(--jp-ease-standard), box-shadow var(--jp-motion-fast) var(--jp-ease-standard);
+}
+
+input::placeholder,
+textarea::placeholder {
+  color: var(--jp-input-placeholder) !important;
+}
+
+input:focus,
+select:focus,
+textarea:focus {
+  border-color: var(--jp-primary) !important;
+  box-shadow: 0 0 0 3px var(--jp-focus) !important;
+}
+
+select option {
+  background: var(--jp-surface-card);
+  color: var(--jp-text);
+}
+
+.styled-checkbox {
+  accent-color: var(--jp-gold);
+  cursor: pointer;
+}
+
+/* ==========================================================================
+   DIALOGS, MODALS & TOAST NOTIFICATIONS
+   ========================================================================== */
+
+.v-dialog .v-card {
+  background: var(--jp-surface-card) !important;
+  border: 1px solid var(--jp-border-light) !important;
+  box-shadow: var(--jp-shadow-md) !important;
+  border-radius: var(--jp-radius-surface) !important;
+  color: var(--jp-text) !important;
+}
+
+.dialog-header {
+  color: var(--jp-text-emphasis) !important;
+  font-family: 'Manrope', sans-serif !important;
+  font-size: 0.95rem !important;
+  font-weight: 700 !important;
+  padding: 12px 16px !important;
+  border-bottom: 1px solid var(--jp-border) !important;
+  display: flex;
+  align-items: center;
+}
+
+.dialog-actions {
+  padding: 10px 16px !important;
+  border-top: 1px solid var(--jp-border) !important;
+}
+
+/* Empty States */
+.empty-table-state,
+.jp-empty-state {
+  text-align: center;
+  padding: 24px 16px;
+  color: var(--jp-text-muted);
+  font-size: 0.82rem;
+}
+
+/* ==========================================================================
+   SCROLLBAR STYLING
+   ========================================================================== */
+
+::-webkit-scrollbar {
+  width: 5px;
+  height: 5px;
+}
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+::-webkit-scrollbar-thumb {
+  background: var(--jp-scrollbar-thumb);
+  border-radius: 9999px;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: var(--jp-scrollbar-hover);
+}
+
+.jp-empty-icon {
+  color: var(--jp-text-subtle) !important;
+  opacity: 0.7;
+}
+
+/* Directional icons (arrows) mirror in right-to-left languages. */
+[dir='rtl'] .flip-rtl {
+  transform: scaleX(-1);
+}
+
+.badge-icon-ok,
+.state-icon-ok {
+  color: var(--jp-success) !important;
+}
+.badge-icon-warn {
+  color: var(--jp-warning) !important;
+}
+.state-icon-bad {
+  color: var(--jp-danger) !important;
+}
+
+/* Semantic tones for icon chips and accents (follow the active palette). */
+.tone-primary { color: var(--jp-primary) !important; }
+.tone-accent { color: var(--jp-secondary) !important; }
+.tone-info { color: var(--jp-info) !important; }
+.tone-success { color: var(--jp-success) !important; }
+.tone-warning { color: var(--jp-warning) !important; }
+.tone-danger { color: var(--jp-danger) !important; }

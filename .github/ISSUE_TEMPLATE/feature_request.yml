@@ -1,0 +1,20 @@
+name: Feature request
+description: A need from the shop floor
+labels: [enhancement]
+body:
+  - type: textarea
+    id: problem
+    attributes:
+      label: Which problem does it solve?
+      description: Describe the situation in the shop, not the solution.
+    validations:
+      required: true
+  - type: textarea
+    id: proposal
+    attributes:
+      label: Proposed solution
+  - type: textarea
+    id: legal
+    attributes:
+      label: Legal or accounting impact
+      description: VAT, invoices, MASAK, KVKK, bookkeeping. Who has to confirm it?

@@ -1,0 +1,39 @@
+<!DOCTYPE html>
+<html lang="tr">
+  <head>
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width,initial-scale=1.0">
+    <!-- Never leak URLs (e.g. password-reset tokens) to third-party hosts. -->
+    <meta name="referrer" content="same-origin">
+    <link rel="icon" href="/favicon.ico" sizes="32x32">
+    <link rel="icon" href="/logo.svg" type="image/svg+xml">
+    <link rel="apple-touch-icon" href="/icons/apple-touch-icon.png">
+    <meta name="theme-color" content="#14161B">
+    <meta name="description" content="Jeweler Pro: kuyumcu yönetim sistemi. Stok, satış, canlı altın fiyatları, cari hesap ve muhasebe.">
+    <title>Jeweler Pro</title>
+    <!-- Fonts and icons are bundled (src/main.ts): no third-party CDN, works offline. -->
+    <script>
+      (function() {
+        try {
+          var s = JSON.parse(localStorage.getItem('jeweler_settings') || '{}');
+          var mode = s.themeMode || 'dark';
+          var resolved = mode === 'system'
+            ? (window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light')
+            : mode;
+          document.documentElement.dataset.theme = resolved;
+          if (s.accent) document.documentElement.dataset.accent = s.accent;
+          if (s.density) document.documentElement.dataset.density = s.density;
+          if (s.language === 'ar') document.documentElement.dir = 'rtl';
+        } catch(e) {}
+      })();
+    </script>
+  </head>
+  <body>
+    <noscript>
+      <strong>Jeweler Pro JavaScript olmadan çalışmaz. Lütfen JavaScript'i etkinleştirin.</strong>
+    </noscript>
+    <div id="app"></div>
+    <script type="module" src="/src/main.ts"></script>
+  </body>
+</html>

@@ -1,0 +1,27 @@
+name: Bug report
+description: Something does not work as expected
+labels: [bug]
+body:
+  - type: textarea
+    id: what
+    attributes:
+      label: What happened?
+      description: Steps to reproduce, the expected result and the actual result.
+    validations:
+      required: true
+  - type: dropdown
+    id: area
+    attributes:
+      label: Area
+      options: [Sales / POS, Stock / products, Customers / accounts, Ledger / reports, Prices, Settings, Other]
+    validations:
+      required: true
+  - type: textarea
+    id: money
+    attributes:
+      label: Money or gold involved?
+      description: If amounts, weights or VAT are wrong, give the exact figures you expected and how you calculated them.
+  - type: input
+    id: version
+    attributes:
+      label: Version / commit

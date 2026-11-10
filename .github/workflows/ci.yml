@@ -1,0 +1,99 @@
+name: CI
+
+# Every push and every pull request runs every gate. A red gate blocks merge
+# (configure "required status checks" for main in the repository settings).
+on:
+  push:
+  pull_request:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+env:
+  NODE_VERSION: 24
+
+jobs:
+  quality:
+    name: Lint and type check
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: npm
+          cache-dependency-path: package-lock.json
+      - run: npm ci --no-audit --no-fund
+      - name: ESLint (frontend + backend)
+        run: npm run lint
+      - name: Type check (vue-tsc)
+        run: npm run typecheck
+      - name: Locale catalogs are up to date
+        run: node scripts/build-locales.mjs --check
+
+  frontend:
+    name: Frontend tests and build
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: npm
+          cache-dependency-path: package-lock.json
+      - run: npm ci --no-audit --no-fund
+      - name: Unit and component tests (vitest)
+        run: npm test
+      - name: Production build
+        run: npm run build
+
+  backend:
+    name: Backend tests (real MongoDB replica set)
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: npm
+          cache-dependency-path: backend/package-lock.json
+      - name: Install dependencies
+        working-directory: backend
+        run: npm ci --no-audit --no-fund
+      - name: Run tests
+        working-directory: backend
+        # scripts/runTests.js starts a throw-away replica set (mongodb-memory-server).
+        run: npm test
+
+  security:
+    name: Dependency audit
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+      - name: Frontend runtime dependencies (high and above)
+        run: npm audit --omit=dev --audit-level=high
+      - name: Backend runtime dependencies (high and above)
+        working-directory: backend
+        run: npm audit --omit=dev --audit-level=high
+
+  docker:
+    name: Docker images build
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - name: API image
+        run: docker build -t jeweler-pro-api:ci backend
+      - name: Web image
+        run: docker build -t jeweler-pro-web:ci .

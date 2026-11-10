@@ -1,0 +1,45 @@
+# Local development: `docker compose up -d mongo` (database only), or the
+# full stack with `docker compose --profile app up -d --build`.
+# The app profile needs backend/.env (copy backend/.env.example).
+services:
+  mongo:
+    image: mongo:7
+    container_name: jeweler-pro-mongo
+    restart: unless-stopped
+    command: ["mongod", "--replSet", "rs0", "--bind_ip_all"]
+    ports:
+      - "27017:27017"
+    volumes:
+      - jeweler_mongo_data:/data/db
+    healthcheck:
+      test: ["CMD-SHELL", "mongosh --quiet --eval 'try { rs.status().ok } catch (e) { rs.initiate({_id: \"rs0\", members: [{_id: 0, host: \"localhost:27017\"}] }).ok }'"]
+      interval: 5s
+      timeout: 10s
+      retries: 20
+
+  api:
+    profiles: ["app"]
+    build: ./backend
+    env_file: ./backend/.env
+    environment:
+      # Inside the compose network the database is reached by service name.
+      MONGO_URI: mongodb://mongo:27017/kuyumcu_pro_official?replicaSet=rs0&directConnection=true
+    ports:
+      - "5000:5000"
+    depends_on:
+      mongo:
+        condition: service_healthy
+
+  web:
+    profiles: ["app"]
+    build:
+      context: .
+      args:
+        VITE_API_URL: http://localhost:5000
+    ports:
+      - "8080:8080"
+    depends_on:
+      - api
+
+volumes:
+  jeweler_mongo_data:

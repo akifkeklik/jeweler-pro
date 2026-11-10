@@ -1,0 +1,45 @@
+import { defineMessages } from '../define';
+
+const P = (tr: string, en: string, de: string, fr: string, es: string, ru: string, ar: string, zh: string) => [tr, en, de, fr, es, ru, ar, zh] as const;
+
+/** Ledger / statement entry types returned by the API as `type` codes. */
+export default defineMessages({
+  entry: {
+    sale: P('Satış', 'Sale', 'Verkauf', 'Vente', 'Venta', 'Продажа', 'بيع', '销售'),
+    sale_cancel: P('Satış iptali', 'Sale cancellation', 'Verkaufsstorno', 'Annulation de vente', 'Cancelación de venta', 'Отмена продажи', 'إلغاء بيع', '销售取消'),
+    sale_payment: P('Satış tahsilatı', 'Sale payment', 'Verkaufszahlung', 'Paiement de vente', 'Cobro de venta', 'Оплата продажи', 'تحصيل بيع', '销售收款'),
+    sale_collection: P('Satış tahsilatı', 'Sale collection', 'Verkaufseinzug', 'Encaissement de vente', 'Cobro de venta', 'Поступление по продаже', 'تحصيل مبيعات', '销售收款'),
+    sale_refund: P('Satış iadesi (ödeme)', 'Sale refund', 'Verkaufserstattung', 'Remboursement de vente', 'Reembolso de venta', 'Возврат оплаты', 'استرداد بيع', '销售退款'),
+    sale_return: P('Satış iadesi', 'Sale return', 'Verkaufsretoure', 'Retour de vente', 'Devolución de venta', 'Возврат товара', 'مرتجع بيع', '销售退货'),
+    customer_payment: P('Cari tahsilat / ödeme', 'Account payment', 'Kontozahlung', 'Paiement sur compte', 'Pago en cuenta', 'Оплата по счёту', 'دفعة على الحساب', '往来收付款'),
+    customer_opening: P('Müşteri devir bakiyesi', 'Customer opening balance', 'Kunden-Eröffnungssaldo', 'Solde d’ouverture client', 'Saldo inicial del cliente', 'Начальное сальдо клиента', 'رصيد افتتاحي للعميل', '客户期初余额'),
+    supplier_opening: P('Tedarikçi devir bakiyesi', 'Supplier opening balance', 'Lieferanten-Eröffnungssaldo', 'Solde d’ouverture fournisseur', 'Saldo inicial del proveedor', 'Начальное сальдо поставщика', 'رصيد افتتاحي للمورد', '供应商期初余额'),
+    supplier_payment: P('Tedarikçi ödemesi', 'Supplier payment', 'Lieferantenzahlung', 'Paiement fournisseur', 'Pago a proveedor', 'Оплата поставщику', 'دفعة للمورد', '供应商付款'),
+    supplier_refund: P('Tedarikçi iadesi', 'Supplier refund', 'Lieferantenerstattung', 'Remboursement fournisseur', 'Reembolso del proveedor', 'Возврат от поставщика', 'استرداد من المورد', '供应商退款'),
+    purchase: P('Alış', 'Purchase', 'Einkauf', 'Achat', 'Compra', 'Закупка', 'شراء', '采购'),
+    purchase_cancel: P('Alış iptali', 'Purchase cancellation', 'Einkaufsstorno', 'Annulation d’achat', 'Cancelación de compra', 'Отмена закупки', 'إلغاء شراء', '采购取消'),
+    purchase_return: P('Alış iadesi', 'Purchase return', 'Einkaufsretoure', 'Retour d’achat', 'Devolución de compra', 'Возврат поставщику', 'مرتجع شراء', '采购退货'),
+    purchase_price_adjustment: P('Alış fiyat farkı', 'Purchase price adjustment', 'Einkaufspreiskorrektur', 'Ajustement de prix d’achat', 'Ajuste de precio de compra', 'Корректировка цены закупки', 'تسوية سعر الشراء', '采购价格调整'),
+    scrap_purchase: P('Hurda altın alımı', 'Scrap gold purchase', 'Altgoldankauf', 'Achat d’or de récupération', 'Compra de oro usado', 'Покупка лома золота', 'شراء ذهب كسر', '旧金回收'),
+    gold_collection: P('Altın tahsilatı', 'Gold collection', 'Goldeinzug', 'Encaissement en or', 'Cobro en oro', 'Поступление золотом', 'تحصيل ذهب', '黄金收款'),
+    gold_payment: P('Altın ödemesi', 'Gold payment', 'Goldzahlung', 'Paiement en or', 'Pago en oro', 'Оплата золотом', 'دفعة ذهب', '黄金付款'),
+    opening_migration: P('Devreden cari bakiye (aktarım)', 'Carried-forward balance (migration)', 'Übertragener Saldo (Migration)', 'Solde reporté (migration)', 'Saldo arrastrado (migración)', 'Перенесённое сальдо (миграция)', 'رصيد مُرحَّل (ترحيل)', '结转余额（迁移）'),
+    cash_opening: P('Kasa açılışı', 'Cash opening', 'Kassenanfangsbestand', 'Ouverture de caisse', 'Apertura de caja', 'Открытие кассы', 'افتتاح الصندوق', '现金期初'),
+    cash_count_difference: P('Kasa sayım farkı', 'Cash count difference', 'Kassendifferenz', 'Écart de caisse', 'Diferencia de arqueo', 'Расхождение кассы', 'فرق جرد الصندوق', '现金盘点差异'),
+    gold_count_difference: P('Altın sayım farkı', 'Gold count difference', 'Golddifferenz', 'Écart d’inventaire or', 'Diferencia de recuento de oro', 'Расхождение по золоту', 'فرق جرد الذهب', '黄金盘点差异'),
+    inventory_adjustment: P('Stok düzeltmesi', 'Stock adjustment', 'Bestandskorrektur', 'Ajustement de stock', 'Ajuste de stock', 'Корректировка остатка', 'تسوية المخزون', '库存调整'),
+    inventory_opening: P('Stok açılışı', 'Opening stock', 'Anfangsbestand', 'Stock d’ouverture', 'Stock inicial', 'Начальный остаток', 'مخزون افتتاحي', '期初库存'),
+    inventory_revaluation: P('Stok değerleme', 'Stock revaluation', 'Neubewertung', 'Réévaluation du stock', 'Revalorización', 'Переоценка запасов', 'إعادة تقييم المخزون', '库存重估'),
+    inventory_ownership_reclass: P('Stok sahipliği aktarımı', 'Stock ownership transfer', 'Bestandsumbuchung', 'Reclassement de propriété', 'Reclasificación de titularidad', 'Перевод принадлежности', 'إعادة تصنيف ملكية المخزون', '库存归属调整'),
+    pos_commission: P('POS komisyonu', 'POS fee', 'POS-Gebühr', 'Commission TPE', 'Comisión TPV', 'Комиссия POS', 'عمولة نقطة البيع', 'POS 手续费'),
+    pos_commission_reversal: P('POS komisyon iptali', 'POS fee reversal', 'POS-Gebührenstorno', 'Annulation de commission', 'Anulación de comisión', 'Сторно комиссии POS', 'عكس العمولة', 'POS 手续费冲销'),
+    pos_settlement: P('POS hesap kesimi', 'POS settlement', 'POS-Abrechnung', 'Règlement TPE', 'Liquidación TPV', 'Зачисление POS', 'تسوية نقطة البيع', 'POS 结算'),
+    pos_settlement_reversal: P('POS hesap kesimi iptali', 'POS settlement reversal', 'POS-Abrechnungsstorno', 'Annulation de règlement', 'Anulación de liquidación', 'Сторно зачисления', 'عكس التسوية', 'POS 结算冲销'),
+    transfer_dispatch: P('Transfer sevki', 'Transfer dispatch', 'Transferversand', 'Expédition de transfert', 'Envío de traspaso', 'Отправка перемещения', 'شحن تحويل', '调拨发出'),
+    transfer_receipt: P('Transfer kabulü', 'Transfer receipt', 'Transfereingang', 'Réception de transfert', 'Recepción de traspaso', 'Приём перемещения', 'استلام تحويل', '调拨签收'),
+    transfer_return: P('Transfer kaynağa iadesi', 'Transfer returned to source', 'Transferrückgabe an Quelle', 'Retour de transfert à l’origine', 'Traspaso devuelto al origen', 'Возврат перемещения отправителю', 'إرجاع تحويل إلى المصدر', '调拨退回原门店'),
+    transfer_loss: P('Transfer kaybı / fire', 'Transfer loss (write-off)', 'Transferverlust (Abschreibung)', 'Perte sur transfert', 'Pérdida en traspaso (baja)', 'Потеря при перемещении (списание)', 'فقد في التحويل (شطب)', '调拨损耗（核销）'),
+    collection: P('Tahsilat', 'Collection', 'Einzahlung', 'Encaissement', 'Cobro', 'Поступление', 'تحصيل', '收款'),
+    expense: P('Gider', 'Expense', 'Ausgabe', 'Dépense', 'Gasto', 'Расход', 'مصروف', '支出'),
+  },
+});

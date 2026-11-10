@@ -64,39 +64,8 @@
       </div>
     </div>
 
-    <!-- Live Market Ticker Strip -->
-    <div class="market-ticker-card">
-      <div class="ticker-left" role="link" tabindex="0" @click="goToPage('/prices')" @keydown.enter="goToPage('/prices')">
-        <span class="live-dot"></span>
-        <span class="ticker-title">{{ $t('dashboard.ticker') }}</span>
-      </div>
-      <div class="ticker-scroll" tabindex="0" role="region" :aria-label="$t('dashboard.ticker')">
-        <div
-          v-for="quote in displayQuotes"
-          :key="quote.symbol"
-          class="ticker-item"
-          @click="goToPage('/prices')"
-        >
-          <span class="quote-name">{{ $instrument(quote.symbol, quote.type) }}</span>
-          <span class="quote-val alis" :title="$t('market.buyLabel')">{{ $t('market.buyShort') }}: {{ quote.buyFormatted }}</span>
-          <span class="quote-val satis" :title="$t('market.sellLabel')">{{ $t('market.sellShort') }}: {{ quote.sellFormatted }}</span>
-          <span class="jp-badge" :class="quote.status === 'live' ? 'jp-badge-success' : 'jp-badge-warning'">
-            {{ quote.status === 'live' ? $t('market.live') : $t('market.cached') }}
-          </span>
-        </div>
-        <span v-if="!displayQuotes.length" class="text-caption text-disabled">
-          {{ marketError || $t('dashboard.waitingMarket') }}
-        </span>
-      </div>
-      <v-btn
-        variant="text"
-        size="x-small"
-        class="ticker-link"
-        @click="goToPage('/prices')"
-      >
-        {{ $t('dashboard.allRates') }} <v-icon size="12" end class="flip-rtl">mdi-chevron-right</v-icon>
-      </v-btn>
-    </div>
+    <!-- Live market ticker (follows Settings → Market → auto-refresh) -->
+    <MarketTicker ref="ticker" />
 
     <!-- Main Cockpit: 2 Column Layout (Zero-Scroll Fitting) -->
     <div class="cockpit-grid">
@@ -226,20 +195,18 @@
 
 <script>
 import apiService from '@/services/api';
-import marketPriceService from '@/services/marketPriceService';
-import { createAutoRefresh } from '@/services/autoRefresh';
 import { lowStockReportPath } from '@/services/stockLevels';
 import { money, n, t } from '@/i18n';
+import MarketTicker from '@/components/dashboard/MarketTicker.vue';
 
 export default {
   name: 'DashboardPage',
+  components: { MarketTicker },
   data() {
     return {
       summary: null,
-      marketQuotes: [],
       recentSales: [],
       lowStockItems: [],
-      marketError: '',
       error: '',
       lastUpdated: null,
       loading: false,
@@ -285,31 +252,14 @@ export default {
         },
       ];
     },
-    displayQuotes() {
-      return this.marketQuotes.slice(0, 4).map((q) => ({
-        ...q,
-        buyFormatted: this.money(q.buy),
-        sellFormatted: this.money(q.sell),
-      }));
-    },
   },
   watch: {
-    // Settings → Market → auto-refresh interval (seconds; 0 = manual only).
-    '$store.state.settings.marketAutoRefresh'(seconds) {
-      if (this.autoRefresh) this.autoRefresh.setInterval(seconds);
-    },
     '$store.state.settings.lowStockThreshold'() {
       this.loadLowStock();
     },
   },
   mounted() {
     this.refreshDashboard();
-    // Only the market preview follows the market refresh setting.
-    this.autoRefresh = createAutoRefresh(() => this.loadMarketPreview(true));
-    this.autoRefresh.setInterval(this.$store.state.settings.marketAutoRefresh);
-  },
-  beforeUnmount() {
-    if (this.autoRefresh) this.autoRefresh.stop();
   },
   methods: {
     goToPage(path) {
@@ -321,7 +271,7 @@ export default {
       try {
         await Promise.allSettled([
           this.loadSummary(),
-          this.loadMarketPreview(),
+          this.$refs.ticker?.load(),
           this.loadRecentSales(),
           this.loadLowStock(),
         ]);
@@ -335,22 +285,6 @@ export default {
         this.summary = await apiService.get('/api/dashboard/summary');
       } catch (err) {
         this.error = err.message || t('dashboard.summaryFailed');
-      }
-    },
-    async loadMarketPreview(force = false) {
-      this.marketError = '';
-      try {
-        const state = await marketPriceService.loadPrices(force);
-        this.marketQuotes = (state.preferredQuotes || []).map((q) => ({
-          ...q,
-          status: q.isStale ? 'stale' : 'live',
-        }));
-        if (!this.marketQuotes.length && state.error) {
-          this.marketError = state.error;
-        }
-      } catch (err) {
-        this.marketQuotes = [];
-        this.marketError = t('dashboard.marketOffline');
       }
     },
     async loadRecentSales() {
@@ -412,81 +346,6 @@ export default {
   display: grid;
   grid-template-columns: repeat(4, 1fr);
   gap: 10px;
-  flex-shrink: 0;
-}
-
-/* Live Market Ticker */
-.market-ticker-card {
-  display: flex;
-  align-items: center;
-  gap: 12px;
-  padding: 6px 12px;
-  background: var(--jp-surface-card);
-  border: 1px solid var(--jp-border);
-  border-radius: var(--jp-radius-md);
-  flex-shrink: 0;
-  min-height: 38px;
-}
-
-.ticker-left {
-  display: flex;
-  align-items: center;
-  gap: 6px;
-  flex-shrink: 0;
-}
-
-.ticker-title {
-  font-size: 10px;
-  font-weight: 800;
-  letter-spacing: 0.8px;
-  color: var(--jp-gold);
-}
-
-.ticker-scroll {
-  display: flex;
-  align-items: center;
-  gap: 16px;
-  flex: 1;
-  overflow-x: auto;
-  white-space: nowrap;
-}
-
-.ticker-item {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  font-size: 11px;
-  cursor: pointer;
-  padding: 2px 6px;
-  border-radius: var(--jp-radius-sm);
-  background: var(--jp-border-soft);
-  transition: background var(--jp-motion-fast) var(--jp-ease-standard);
-}
-.ticker-item:hover {
-  background: var(--jp-border-soft);
-}
-
-.quote-name {
-  font-weight: 700;
-  color: var(--jp-text-emphasis);
-}
-
-.quote-val {
-  font-family: 'JetBrains Mono', monospace;
-  font-size: 10px;
-}
-.quote-val.alis {
-  color: var(--jp-text-muted);
-}
-.quote-val.satis {
-  color: var(--jp-success);
-}
-
-.ticker-link {
-  color: var(--jp-gold) !important;
-  font-size: 10px !important;
-  font-weight: 700 !important;
-  text-transform: none !important;
   flex-shrink: 0;
 }
 

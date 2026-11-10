@@ -14,6 +14,7 @@ const requestLogger = require("./middleware/requestLogger");
 const errorHandler = require("./middleware/errorHandler");
 const { authenticate } = require("./middleware/auth");
 const { requireSameBusiness } = require("./middleware/authorization");
+const { createApiRateLimit } = require("./middleware/apiRateLimit");
 const authRouter = require("./routes/auth");
 const usersRouter = require("./routes/users");
 const bootstrapAdmin = require("./scripts/bootstrapAdmin");
@@ -88,6 +89,8 @@ app.use(express.json({ limit: BODY_LIMIT }));
 app.use(cookieParser());
 app.use(requestLogger);
 
+// Outer bound for every API request (targeted limiters still apply inside).
+app.use("/api", createApiRateLimit());
 app.use("/api/auth", authRouter);
 app.use("/api", authenticate);
 // Requests that explicitly target another business (header, body or query)

@@ -7,6 +7,13 @@ behind it. Audit findings are referenced in brackets (H1, M1–M4, L1–L7).
 
 ## 1. Rate limiting and login protection (H1, M1, L6)
 
+**General API limit.** Every `/api` request is first counted by
+`middleware/apiRateLimit.js` (`express-rate-limit`): 600 requests per minute
+per client address by default (`API_RATE_LIMIT_PER_MINUTE`, 0 = off when the
+reverse proxy limits instead). A refusal is `429 RATE_LIMITED` with
+`Retry-After` and the standard `RateLimit` headers. The targeted limiters
+below still apply inside this bound.
+
 ### Limits
 
 | Endpoint | Dimension | Limit | Counts |

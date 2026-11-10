@@ -288,7 +288,7 @@ router.post('/logout', requireCsrfHeaderWhenCookie('jeweler_refresh_token'), asy
     }
   }
 
-  const match = String(req.headers.authorization || '').match(/^Bearer\s+(.+)$/i);
+  const match = String(req.headers.authorization || '').match(/^Bearer ([^\s]+)$/i);
   const claims = match ? verifyToken(match[1]) : null;
   if (claims?.sub) {
     if (claims.sid) {

@@ -42,7 +42,7 @@
     "vue": "^3.5.45",
     "vue-chartjs": "^5.3.2",
     "vue-router": "^4.6.4",
-    "vuetify": "^3.13.7",
+    "vuetify": "^4.3.2",
     "vuex": "^4.1.0"
   },
   "devDependencies": {

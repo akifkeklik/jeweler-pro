@@ -192,67 +192,6 @@
       </v-card>
     </v-dialog>
 
-    <!-- NEW PURCHASE -->
-    <v-dialog v-model="purchaseDialog" max-width="760px" persistent>
-      <v-card class="pa-2">
-        <v-card-title class="dialog-header"><v-icon size="18" color="primary" class="mr-2">mdi-package-variant-plus</v-icon>{{ $t('finance.yeniAlisStokGirisi') }}</v-card-title>
-        <v-card-text>
-          <div class="form-grid-2">
-            <div>
-              <label class="form-label" for="financepage-f6">{{ $t('finance.tedarikci2') }}</label>
-              <select id="financepage-f6" v-model="purchaseForm.supplierId" class="form-select-full">
-                <option value="" disabled>{{ $t('common.select') }}</option>
-                <option v-for="s in suppliers" :key="s._id" :value="s._id">{{ s.name }}</option>
-              </select>
-            </div>
-            <div><label class="form-label" for="financepage-f7">{{ $t('finance.faturaNo') }}</label><input id="financepage-f7" v-model.trim="purchaseForm.invoiceNo" type="text" maxlength="60" class="form-input-full" /></div>
-          </div>
-          <div class="purchase-lines mt-3">
-            <div v-for="(line, index) in purchaseForm.lines" :key="line.key" class="purchase-row">
-              <select v-model="line.kind" class="form-select-full">
-                <option value="product">{{ $t('common.product') }}</option>
-                <option value="metal">{{ $t('finance.hasHurdaMaden') }}</option>
-              </select>
-              <template v-if="line.kind === 'product'">
-                <select v-model="line.productId" class="form-select-full">
-                  <option value="" disabled>{{ $t('finance.urunSecin') }}</option>
-                  <option v-for="p in products" :key="p._id" :value="p._id">{{ $t('finance.p0StokP1', { p0: p.name, p1: p.stock }) }}</option>
-                </select>
-                <input v-model.number="line.quantity" type="number" min="1" :placeholder="$t('common.quantity')" class="form-input-full tabular text-right" />
-                <input v-model.trim="line.unitCost" type="text" inputmode="decimal" :placeholder="$t('finance.birimMaliyet')" class="form-input-full tabular text-right" />
-              </template>
-              <template v-else>
-                <select v-model.number="line.karat" class="form-select-full">
-                  <option v-for="o in purityOptions" :key="o.karat" :value="o.karat">{{ o.label }}</option>
-                </select>
-                <input v-model.trim="line.weightGrams" type="text" inputmode="decimal" :placeholder="$t('finance.gram')" class="form-input-full tabular text-right" />
-                <input v-model.trim="line.totalCost" type="text" inputmode="decimal" :placeholder="$t('finance.toplamTutar')" class="form-input-full tabular text-right" />
-              </template>
-              <v-btn icon size="x-small" variant="text" color="error" :disabled="purchaseForm.lines.length === 1" @click="purchaseForm.lines.splice(index, 1)"><v-icon size="15">mdi-close</v-icon></v-btn>
-            </div>
-            <v-btn size="x-small" variant="text" color="primary" @click="addPurchaseLine"><v-icon start size="14">mdi-plus</v-icon> {{ $t('finance.satirEkle') }}</v-btn>
-          </div>
-          <div class="form-grid-2 mt-3">
-            <div>
-              <label class="form-label" for="financepage-f8">{{ $t('finance.pesinOdemeYontemi') }}</label>
-              <select id="financepage-f8" v-model="purchaseForm.paymentMethod" class="form-select-full">
-                <option value="havale">{{ $t('finance.havaleEft') }}</option>
-                <option value="nakit">{{ $t('finance.nakit') }}</option>
-                <option value="kredi kartı">{{ $t('finance.krediKarti') }}</option>
-              </select>
-            </div>
-            <div><label class="form-label" for="financepage-f9">{{ $t('finance.pesinOdenenBossaTamamiTedarikci') }}</label><input id="financepage-f9" v-model.trim="purchaseForm.paymentAmount" type="text" inputmode="decimal" placeholder="0.00" class="form-input-full tabular" /></div>
-          </div>
-          <p class="text-caption text-disabled mt-2">{{ $t('finance.toplamVeStokEtkisiSunucuda') }}</p>
-        </v-card-text>
-        <v-card-actions class="dialog-actions">
-          <v-spacer></v-spacer>
-          <v-btn size="small" class="jp-secondary" :disabled="saving" @click="purchaseDialog = false">{{ $t('common.cancel') }}</v-btn>
-          <v-btn size="small" class="jp-primary" :loading="saving" :disabled="!purchaseForm.supplierId" @click="savePurchase">{{ $t('finance.alisiKaydet') }}</v-btn>
-        </v-card-actions>
-      </v-card>
-    </v-dialog>
-
     <!-- PAYMENT (purchase / supplier account) -->
     <v-dialog v-model="paymentDialog" max-width="420px" persistent>
       <v-card class="pa-2">
@@ -279,60 +218,8 @@
       </v-card>
     </v-dialog>
 
-    <!-- PURCHASE RETURN / PRICE ADJUSTMENT -->
-    <v-dialog v-model="returnDialog" max-width="760px" persistent>
-      <v-card v-if="returnTarget" class="pa-2">
-        <v-card-title class="dialog-header"><v-icon size="18" color="primary" class="mr-2">mdi-keyboard-return</v-icon>{{ $t('finance.alisP0IadeAlisFiyat', { p0: returnTarget._id }) }}</v-card-title>
-        <v-card-text>
-          <div class="form-grid-2">
-            <div>
-              <label class="form-label" for="financepage-f12">{{ $t('finance.tur') }}</label>
-              <select id="financepage-f12" v-model="returnForm.kind" class="form-select-full">
-                <option value="goods">{{ $t('finance.malIadesiStoktanCikar') }}</option>
-                <option value="price_adjustment">{{ $t('finance.fiyatFarkiAlacakDekontuStok') }}</option>
-              </select>
-            </div>
-            <div><label class="form-label" for="financepage-f13">{{ $t('finance.belgeNoIadeFaturasiDekont') }}</label><input id="financepage-f13" v-model.trim="returnForm.creditNoteNo" type="text" maxlength="60" class="form-input-full" /></div>
-          </div>
-          <div class="table-scroll-wrap mt-3" style="max-height: 240px;">
-            <table class="jp-enterprise-table">
-              <thead><tr><th>{{ $t('common.item') }}</th><th class="text-right">{{ $t('common.received') }}</th><th class="text-right">{{ $t('finance.iadeEdilen') }}</th><th class="text-right">{{ $t('finance.kalanDeger') }}</th><th class="text-right" style="width: 130px;">{{ returnForm.kind === 'goods' ? $t('finance.iadeMiktari') : $t('finance.farkTutariTl') }}</th></tr></thead>
-              <tbody>
-                <tr v-for="l in returnTarget.lines" :key="l.lineId">
-                  <td>{{ l.itemType === 'metal' ? `${l.metal} ${purityText(l.purity)}` : l.productName }}</td>
-                  <td class="text-right tabular">{{ l.itemType === 'metal' ? `${l.weightGrams} gr` : l.quantity }}</td>
-                  <td class="text-right tabular">{{ l.itemType === 'metal' ? `${l.returnedWeightGrams} gr` : l.returnedQuantity }}</td>
-                  <td class="text-right tabular">{{ money(l.remainingValue) }}</td>
-                  <td><input v-model.trim="returnForm.inputs[l.lineId]" :disabled="!(l.remainingValue > 0)" type="text" inputmode="decimal" :placeholder="returnForm.kind === 'goods' ? (l.itemType === 'metal' ? 'gr' : 'adet') : '0.00'" class="form-input-full tabular text-right" /></td>
-                </tr>
-              </tbody>
-            </table>
-          </div>
-          <div class="form-grid-2 mt-3">
-            <div><label class="form-label" for="financepage-f14">{{ $t('finance.gerekce') }}</label><input id="financepage-f14" v-model.trim="returnForm.reason" type="text" maxlength="300" class="form-input-full" /></div>
-            <div class="form-grid-2">
-              <div>
-                <label class="form-label" for="financepage-f15">{{ $t('finance.tedarikciGeriOdemesi') }}</label>
-                <select id="financepage-f15" v-model="returnForm.refundMethod" class="form-select-full">
-                  <option value="havale">{{ $t('finance.havaleEft') }}</option>
-                  <option value="nakit">{{ $t('finance.nakit') }}</option>
-                </select>
-              </div>
-              <div><label class="form-label" for="financepage-f16">{{ $t('finance.tutarOps') }}</label><input id="financepage-f16" v-model.trim="returnForm.refundAmount" type="text" inputmode="decimal" placeholder="0.00" class="form-input-full tabular" /></div>
-            </div>
-          </div>
-          <div v-if="returnHint" class="return-hint mt-2">{{ returnHint }}</div>
-          <p class="text-caption text-disabled mt-2">
-            {{ $t('finance.malIadesindeTedarikciAlacagiOrijinal') }}
-          </p>
-        </v-card-text>
-        <v-card-actions class="dialog-actions">
-          <v-spacer></v-spacer>
-          <v-btn size="small" class="jp-secondary" :disabled="saving" @click="returnDialog = false">{{ $t('common.cancel') }}</v-btn>
-          <v-btn size="small" class="jp-primary" :loading="saving" :disabled="!returnForm.reason || !returnPayload.lines.length" @click="submitReturn">{{ $t('common.save') }}</v-btn>
-        </v-card-actions>
-      </v-card>
-    </v-dialog>
+    <PurchaseDialog v-model="purchaseDialog" :suppliers="suppliers" :products="products" @saved="onPurchaseSaved" />
+    <PurchaseReturnDialog v-model="returnDialog" :purchase="returnTarget" @saved="loadTab" />
 
     <!-- SUPPLIER STATEMENT -->
     <v-dialog v-model="statementDialog" max-width="720px">
@@ -367,20 +254,19 @@ import { dateTime, t } from '@/i18n';
 import apiService from '@/services/api';
 import { hasPermission } from '@/services/authSession';
 import {
-  normalizeDecimalInput, isValidAmount, newIdempotencyKey, formatTry, formatGrams, purityLabel, errorMessage, errorCode, crossBranchTarget, PURITY_OPTIONS,
+  normalizeDecimalInput, isValidAmount, newIdempotencyKey, formatTry, formatGrams, purityLabel, errorMessage,
   translatedLabels,
 } from '@/services/finance';
 import { confirmAction } from '@/services/confirm';
-import { buildPurchaseReturn, errorDetails } from '@/services/operations';
+import PurchaseDialog from '@/components/finance/PurchaseDialog.vue';
+import PurchaseReturnDialog from '@/components/finance/PurchaseReturnDialog.vue';
 
 // Translated on every read (not at import), so labels follow language changes.
 const MOVEMENT_LABELS = translatedLabels('finance.movement');
 
-let seq = 0;
-const purchaseLine = () => ({ key: `pl${(seq += 1)}`, kind: 'product', productId: '', quantity: 1, unitCost: '', karat: 22, weightGrams: '', totalCost: '' });
-
 export default {
   name: 'FinancePage',
+  components: { PurchaseDialog, PurchaseReturnDialog },
   data() {
     return {
       activeTab: 'suppliers',
@@ -398,16 +284,12 @@ export default {
       supplierDialog: false,
       supplierForm: {},
       purchaseDialog: false,
-      purchaseForm: { supplierId: '', invoiceNo: '', lines: [purchaseLine()], paymentMethod: 'havale', paymentAmount: '', key: '' },
       paymentDialog: false,
       paymentForm: { titleKey: 'finance.odeme', titleParams: {}, max: 0, method: 'havale', amount: '', target: null, key: '' },
       statementDialog: false,
       statement: null,
       returnDialog: false,
       returnTarget: null,
-      returnForm: { kind: 'goods', inputs: {}, reason: '', creditNoteNo: '', refundMethod: 'havale', refundAmount: '', key: '' },
-      returnHint: '',
-      purityOptions: PURITY_OPTIONS,
     };
   },
   computed: {
@@ -433,10 +315,6 @@ export default {
         ...(this.reconciliation.transfers?.discrepancies || []),
         ...(this.reconciliation.pos?.discrepancies || []),
       ];
-    },
-    returnPayload() {
-      if (!this.returnTarget) return { lines: [] };
-      return buildPurchaseReturn(this.returnForm.kind, this.returnTarget.lines, this.returnForm.inputs, this.returnForm);
     },
   },
   mounted() {
@@ -502,42 +380,11 @@ export default {
       }
     },
     openPurchaseDialog() {
-      this.purchaseForm = { supplierId: this.suppliers[0]?._id || '', invoiceNo: '', lines: [purchaseLine()], paymentMethod: 'havale', paymentAmount: '', key: newIdempotencyKey('purchase') };
       this.purchaseDialog = true;
     },
-    addPurchaseLine() {
-      this.purchaseForm.lines.push(purchaseLine());
-    },
-    async savePurchase() {
-      const f = this.purchaseForm;
-      const lines = f.lines.map((l) => (l.kind === 'metal'
-        ? { metal: 'XAU', karat: l.karat, weightGrams: normalizeDecimalInput(l.weightGrams), totalCost: normalizeDecimalInput(l.totalCost) }
-        : { productId: Number(l.productId), quantity: Number(l.quantity) || 0, unitCost: normalizeDecimalInput(l.unitCost) }));
-      const payload = { supplierId: Number(f.supplierId), invoiceNo: f.invoiceNo || undefined, lines };
-      if (normalizeDecimalInput(f.paymentAmount)) payload.payments = [{ method: f.paymentMethod, amount: normalizeDecimalInput(f.paymentAmount) }];
-      this.saving = true;
-      try {
-        try {
-          await apiService.post('/api/purchases', payload, { headers: { 'Idempotency-Key': f.key } });
-        } catch (err) {
-          // Admin buying into another branch's stock: the branch must be confirmed explicitly.
-          const branch = crossBranchTarget(err);
-          if (!branch || !(await confirmAction({
-            message: t('finance.crossBranch', { branch }),
-            confirmLabel: t('sales.crossBranchConfirm', { branch }),
-            tone: 'warning',
-          }))) throw err;
-          await apiService.post('/api/purchases', { ...payload, branch }, { headers: { 'Idempotency-Key': f.key } });
-        }
-        this.purchaseDialog = false;
-        this.$store.dispatch('notifications/showSuccess', t('finance.alisKaydedildiStokVeTedarikci'));
-        this.activeTab = 'purchases';
-        await this.loadTab();
-      } catch (err) {
-        this.$store.dispatch('notifications/showError', t('finance.alisKaydedilemediP0', { p0: errorMessage(err) }));
-      } finally {
-        this.saving = false;
-      }
+    async onPurchaseSaved() {
+      this.activeTab = 'purchases';
+      await this.loadTab();
     },
     openPurchasePayment(p) {
       this.paymentForm = { titleKey: 'finance.alisP0Odemesi', titleParams: { p0: p._id }, max: p.remaining, method: 'havale', amount: p.remaining.toFixed(2), target: { kind: 'purchase', id: p._id }, key: newIdempotencyKey('ppay') };
@@ -603,30 +450,7 @@ export default {
     },
     openReturn(p) {
       this.returnTarget = p;
-      this.returnHint = '';
-      this.returnForm = { kind: 'goods', inputs: {}, reason: '', creditNoteNo: '', refundMethod: 'havale', refundAmount: '', key: newIdempotencyKey('preturn') };
       this.returnDialog = true;
-    },
-    async submitReturn() {
-      this.saving = true;
-      this.returnHint = '';
-      try {
-        await apiService.post(`/api/purchases/${this.returnTarget._id}/returns`, this.returnPayload, { headers: { 'Idempotency-Key': this.returnForm.key } });
-        this.returnDialog = false;
-        this.$store.dispatch('notifications/showSuccess', this.returnForm.kind === 'goods'
-          ? t('finance.iadeAlisKaydedildiStokVe')
-          : t('finance.fiyatFarkiKaydedildiTedarikciCarisi'));
-        await this.loadTab();
-      } catch (err) {
-        if (errorCode(err) === 'INSUFFICIENT_STOCK_FOR_RETURN') {
-          const d = errorDetails(err) || {};
-          this.returnHint = t('finance.insufficientForReturn', { available: d.available ?? d.availableWeightGrams ?? 0 });
-          this.returnForm.key = newIdempotencyKey('preturn');
-        }
-        this.$store.dispatch('notifications/showError', errorMessage(err));
-      } finally {
-        this.saving = false;
-      }
     },
     openRefund(p) {
       this.paymentForm = { titleKey: 'finance.alisP0TedarikciGeriOdemesi', titleParams: { p0: p._id }, max: p.supplierCredit, method: 'havale', amount: p.supplierCredit.toFixed(2), target: { kind: 'refund', id: p._id }, key: newIdempotencyKey('prefund') };
@@ -664,6 +488,8 @@ export default {
 };
 </script>
 
+<style scoped src="@/styles/finance-form.css"></style>
+
 <style scoped>
 .finance-page-shell {
   height: 100%;
@@ -697,31 +523,8 @@ export default {
 .books-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; flex-shrink: 0; }
 .books-box { background: var(--jp-surface-muted); border: 1px solid var(--jp-border); font-size: 12px; }
 .discrepancy-list { max-height: 120px; overflow: auto; color: var(--jp-danger); padding-left: 16px; }
-.dialog-header { display: flex; align-items: center; font-size: 14px; font-weight: 700; padding-bottom: 6px; border-bottom: 1px solid var(--jp-border); }
-.dialog-actions { border-top: 1px solid var(--jp-border); padding-top: 8px; }
-.form-row { display: flex; flex-direction: column; }
-.form-label { font-size: 10px; letter-spacing: 0.04em; text-transform: uppercase; color: var(--jp-text-subtle); margin-bottom: 4px; display: block; }
-.form-select-full,
-.form-input-full {
-  width: 100%;
-  height: 34px;
-  padding: 0 10px;
-  border: 1px solid var(--jp-border);
-  border-radius: var(--jp-radius-sm);
-  background: var(--jp-surface-muted);
-  color: var(--jp-text);
-  font-size: 12px;
-  outline: none;
-}
-.form-select-full:focus,
-.form-input-full:focus { border-color: var(--jp-gold); }
-.form-grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
-.purchase-lines { border: 1px solid var(--jp-border); border-radius: var(--jp-radius-sm); padding: 8px; background: var(--jp-surface-muted); }
-.return-hint { font-size: 12px; color: var(--jp-warning); }
 .text-success { color: var(--jp-success, var(--jp-success)); }
-.purchase-row { display: grid; grid-template-columns: 130px 1fr 80px 130px 28px; gap: 6px; align-items: center; margin-bottom: 6px; }
 @media (max-width: 720px) {
-  .books-grid, .form-grid-2 { grid-template-columns: 1fr; }
-  .purchase-row { grid-template-columns: 1fr 1fr; }
+  .books-grid { grid-template-columns: 1fr; }
 }
 </style>

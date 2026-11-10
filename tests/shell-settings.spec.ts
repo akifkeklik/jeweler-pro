@@ -81,7 +81,7 @@ describe('sidebar behaviour', () => {
 
   it('uses the shared motion tokens and a valid reduced-motion rule', () => {
     const css = fs.readFileSync(path.resolve(__dirname, '../src/styles/design-system.css'), 'utf8');
-    const app = fs.readFileSync(path.resolve(__dirname, '../src/App.vue'), 'utf8');
+    const app = fs.readFileSync(path.resolve(__dirname, '../src/styles/sidebar.css'), 'utf8');
     expect(css).toMatch(/--jp-motion-sidebar:\s*240ms/);
     expect(css).toMatch(/html\.jp-reduced-motion\s*\{[^}]*--jp-motion-sidebar:\s*0ms/);
     expect(css).toMatch(/@media \(prefers-reduced-motion: reduce\)\s*\{/);

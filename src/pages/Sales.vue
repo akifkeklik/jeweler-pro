@@ -582,8 +582,8 @@ export default {
     defaultProviderId() {
       return this.posProviders.length === 1 ? this.posProviders[0]._id : '';
     },
-    ...mapState('sales', ['sales', 'loading', 'error']),
-    ...mapState('customers', { customers: 'customers' }),
+    ...mapState('sales', { sales: 'items', loading: 'loading', error: 'error' }),
+    ...mapState('customers', { customers: 'items' }),
     salesData() {
       return this.sales || [];
     },
@@ -665,8 +665,8 @@ export default {
     clearTimeout(this.quoteTimer);
   },
   methods: {
-    ...mapActions('sales', ['fetchSales']),
-    ...mapActions('customers', { fetchCustomers: 'fetchCustomers' }),
+    ...mapActions('sales', { fetchSales: 'fetch' }),
+    ...mapActions('customers', { fetchCustomers: 'fetch' }),
     isValidAmount,
     money: formatTry,
     grams: formatGrams,

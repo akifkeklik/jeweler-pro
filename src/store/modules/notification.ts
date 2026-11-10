@@ -1,3 +1,4 @@
+import type { ActionContext } from 'vuex';
 /**
  * Central toast queue.
  *
@@ -44,6 +45,13 @@ interface State {
   notifications: Notification[];
 }
 
+/** Only the part of the root state this module reads. */
+interface RootState {
+  settings?: { toastDuration?: number };
+}
+
+type Ctx = ActionContext<State, RootState>;
+
 const state = (): State => ({
   notifications: [],
 });
@@ -77,14 +85,14 @@ function schedule(commit: (type: string, payload?: unknown) => void, id: string,
   }
 }
 
-function resolveDuration(rootState: any, type: ToastType, requested?: number): number {
+function resolveDuration(rootState: RootState, type: ToastType, requested?: number): number {
   if (typeof requested === 'number') return requested;
   const preferred = Number(rootState?.settings?.toastDuration) || DEFAULT_DURATION;
   return type === 'error' ? Math.max(preferred, ERROR_MIN_DURATION) : preferred;
 }
 
 const actions = {
-  showNotification({ commit, state: s, rootState }: any, payload: NotifyPayload) {
+  showNotification({ commit, state: s, rootState }: Ctx, payload: NotifyPayload) {
     const message = String(payload.message || '').trim();
     if (!message) return null;
     const duration = resolveDuration(rootState, payload.type, payload.duration);
@@ -114,37 +122,37 @@ const actions = {
     return notification.id;
   },
 
-  showSuccess({ dispatch }: any, message: string) {
+  showSuccess({ dispatch }: Ctx, message: string) {
     return dispatch('showNotification', { type: 'success', message });
   },
 
-  showError({ dispatch }: any, message: string) {
+  showError({ dispatch }: Ctx, message: string) {
     return dispatch('showNotification', { type: 'error', message });
   },
 
-  showWarning({ dispatch }: any, message: string) {
+  showWarning({ dispatch }: Ctx, message: string) {
     return dispatch('showNotification', { type: 'warning', message });
   },
 
-  showInfo({ dispatch }: any, message: string) {
+  showInfo({ dispatch }: Ctx, message: string) {
     return dispatch('showNotification', { type: 'info', message });
   },
 
   /** Pause auto-dismiss while the pointer/focus is on a toast. */
-  holdNotification(_ctx: any, id: string) {
+  holdNotification(_ctx: Ctx, id: string) {
     clearTimer(id);
   },
 
-  releaseNotification({ commit, state: s }: any, id: string) {
+  releaseNotification({ commit, state: s }: Ctx, id: string) {
     const item = (s as State).notifications.find((n) => n.id === id);
     if (item) schedule(commit, id, Math.min(item.duration, 2500));
   },
 
-  removeNotification({ commit }: any, id: string) {
+  removeNotification({ commit }: Ctx, id: string) {
     commit('REMOVE_NOTIFICATION', id);
   },
 
-  clearNotifications({ commit }: any) {
+  clearNotifications({ commit }: Ctx) {
     commit('CLEAR_NOTIFICATIONS');
   },
 };

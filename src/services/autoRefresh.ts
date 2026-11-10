@@ -17,9 +17,12 @@ export interface AutoRefresh {
   readonly seconds: number;
 }
 
+/** Opaque timer handle: a number in browsers, a Timeout object in Node. */
+type TimerHandle = ReturnType<typeof globalThis.setInterval>;
+
 interface Timers {
-  setInterval: (fn: () => void, ms: number) => unknown;
-  clearInterval: (id: any) => void;
+  setInterval: (fn: () => void, ms: number) => TimerHandle;
+  clearInterval: (id: TimerHandle) => void;
 }
 
 export function normalizeRefreshSeconds(value: unknown): number {
@@ -30,11 +33,11 @@ export function normalizeRefreshSeconds(value: unknown): number {
 export function createAutoRefresh(
   run: () => unknown | Promise<unknown>,
   {
-    timers = { setInterval: (fn, ms) => globalThis.setInterval(fn, ms), clearInterval: (id) => globalThis.clearInterval(id) } as Timers,
+    timers = { setInterval: (fn, ms) => globalThis.setInterval(fn, ms), clearInterval: (id) => globalThis.clearInterval(id) } satisfies Timers,
     isHidden = () => typeof document !== 'undefined' && document.visibilityState === 'hidden',
   }: { timers?: Timers; isHidden?: () => boolean } = {},
 ): AutoRefresh {
-  let handle: unknown = null;
+  let handle: TimerHandle | null = null;
   let active = 0;
   let running = false;
 

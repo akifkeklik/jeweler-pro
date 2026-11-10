@@ -81,8 +81,8 @@ describe('new routes are permission-guarded', () => {
   });
 
   it('declares the backend permission of each page', () => {
-    expect(routes.find((r) => r.path === '/transfers')?.meta?.permission).toBe('transfers:read');
-    expect(routes.find((r) => r.path === '/pos')?.meta?.permission).toBe('pos:read');
+    expect(routes.find((r: (typeof routes)[number]) => r.path === '/transfers')?.meta?.permission).toBe('transfers:read');
+    expect(routes.find((r: (typeof routes)[number]) => r.path === '/pos')?.meta?.permission).toBe('pos:read');
   });
 
   it('staff with transfers:read reach /transfers but not /pos', async () => {

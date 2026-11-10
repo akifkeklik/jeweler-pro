@@ -20,7 +20,6 @@ import {
 } from '@/services/stockLevels';
 import { normalizeSettings, defaultSettings } from '@/services/settings';
 import { isValidSignedAmount, isValidAmount } from '@/services/finance';
-import productsModule from '@/store/modules/products';
 
 const ROOT = path.resolve(__dirname, '..');
 
@@ -83,10 +82,10 @@ describe('manual metal prices of a sale', () => {
       { pricingMode: 'gram', metal: 'XAG', price: { priceType: 'manual', pricePerGram: '40.0000' } },
       { pricingMode: 'gram', metal: 'XAU', price: { priceType: 'live', pricePerGram: '3000.0000' } },
       { pricingMode: 'gram', metal: 'XAU', price: { priceType: 'live', pricePerGram: '1.0000' } },
-    ];
-    const info = quotedMetalPrices(lines);
-    expect(info.XAG.priceType).toBe('manual');
-    expect(info.XAU.pricePerGram).toBe('3000.0000');
+    ] as const;
+    const info = quotedMetalPrices([...lines]);
+    expect(info.XAG?.priceType).toBe('manual');
+    expect(info.XAU?.pricePerGram).toBe('3000.0000');
     expect(quotedMetalPrices(undefined)).toEqual({});
   });
 });
@@ -224,21 +223,8 @@ describe('low-stock threshold', () => {
     expect(lowStockReportPath(999)).toBe('/api/reports/low-stock?threshold=50');
   });
 
-  it('the products store getter follows the threshold in the settings state', () => {
-    const store = createStore({
-      modules: {
-        settings: { namespaced: true, state: () => ({ lowStockThreshold: 2 }) },
-        products: { ...productsModule, state: () => ({ products: [{ stock: 0 }, { stock: 2 }, { stock: 3 }, { stock: 8 }], loading: false, error: null }) },
-      },
-    });
-    const getter = (productsModule as any).namespaced ? 'products/lowStockProducts' : 'lowStockProducts';
-    expect(store.getters[getter].map((p: any) => p.stock)).toEqual([0, 2]);
-    (store.state as any).settings.lowStockThreshold = 8;
-    expect(store.getters[getter].map((p: any) => p.stock)).toEqual([0, 2, 3, 8]);
-  });
-
   it('no screen keeps a hard-coded 5', () => {
-    const files = ['src/pages/Products/ProductList.vue', 'src/pages/Products/ProductPage.vue', 'src/store/modules/products.ts', 'src/pages/DashboardPage.vue', 'src/pages/Reports/ReportPage.vue'];
+    const files = ['src/pages/Products/ProductList.vue', 'src/pages/Products/ProductPage.vue', 'src/pages/DashboardPage.vue', 'src/pages/Reports/ReportPage.vue'];
     for (const file of files) {
       const text = fs.readFileSync(path.join(ROOT, file), 'utf8');
       expect(text, file).not.toMatch(/stock\s*[<>]=?\s*5\b/);

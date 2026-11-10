@@ -22,7 +22,6 @@ export interface ScannableProduct {
 export interface CartLine {
   productId: number | '';
   quantity: number;
-  [key: string]: unknown;
 }
 
 export type ScanResult =
@@ -49,7 +48,7 @@ export function resolveScan(products: ScannableProduct[], rawCode: unknown): Sca
  * otherwise fills the first empty line, otherwise appends a new line.
  * Returns the index of the affected line. Never exceeds the known stock.
  */
-export function addScannedProduct(lines: CartLine[], product: ScannableProduct, makeLine: () => CartLine): { index: number; capped: boolean } {
+export function addScannedProduct<L extends CartLine>(lines: L[], product: ScannableProduct, makeLine: () => L): { index: number; capped: boolean } {
   const existing = lines.findIndex((l) => l.productId === product._id);
   if (existing >= 0) {
     const next = (Number(lines[existing].quantity) || 0) + 1;

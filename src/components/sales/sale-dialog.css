@@ -1,0 +1,98 @@
+/* Shared, scoped styles of the sale dialogs (imported with <style scoped src>). */
+.dialog-header {
+  font-family: 'Manrope', sans-serif;
+  font-size: 13px;
+  font-weight: 700;
+  display: flex;
+  align-items: center;
+  padding: 10px 14px;
+  border-bottom: 1px solid var(--jp-border);
+}
+.dialog-actions {
+  padding: 10px 14px;
+  border-top: 1px solid var(--jp-border);
+}
+.form-row {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+.form-label {
+  font-size: 10px;
+  font-weight: 700;
+  color: var(--jp-text-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.4px;
+}
+.form-select-full,
+.form-input-full {
+  width: 100%;
+  height: 36px;
+  padding: 0 10px;
+  border: 1px solid var(--jp-border);
+  border-radius: var(--jp-radius-sm);
+  background: var(--jp-surface-muted);
+  color: var(--jp-text-emphasis);
+  font-size: 12px;
+  outline: none;
+}
+.form-select-full:focus,
+.form-input-full:focus {
+  border-color: var(--jp-gold);
+}
+.form-grid-2 {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px;
+}
+.jp-enterprise-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 11px;
+}
+.jp-enterprise-table thead th {
+  background: var(--jp-surface-muted);
+  color: var(--jp-text-subtle);
+  font-size: 9px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.6px;
+  padding: 8px 10px;
+  border-bottom: 1px solid var(--jp-border);
+  white-space: nowrap;
+}
+.jp-enterprise-table tbody td {
+  padding: 7px 10px;
+  border-bottom: 1px solid var(--jp-border-soft);
+  color: var(--jp-text);
+  white-space: nowrap;
+}
+.receipt-grid {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  font-size: 12px;
+}
+.receipt-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding-bottom: 6px;
+  border-bottom: 1px solid var(--jp-border-soft);
+}
+.receipt-row .label {
+  color: var(--jp-text-muted);
+}
+.total-receipt-row {
+  padding-top: 8px;
+  border-top: 1px solid var(--jp-border-light);
+  font-size: 14px;
+}
+.text-warning {
+  color: var(--jp-warning);
+}
+@media (max-width: 600px) {
+  .form-grid-2 {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}

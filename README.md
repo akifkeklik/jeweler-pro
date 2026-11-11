@@ -8,6 +8,8 @@
 
 Sell by the piece or by the gram at live gold prices. Keep pieces and fine gold in one stock. Every sale is posted to a double-entry ledger in the same database transaction.
 
+[![Open in GitHub Codespaces](https://github.com/codespaces/badge.svg)](https://codespaces.new/akifkeklik/jeweler-pro?quickstart=1)
+
 [![CI](https://github.com/akifkeklik/jeweler-pro/actions/workflows/ci.yml/badge.svg)](https://github.com/akifkeklik/jeweler-pro/actions/workflows/ci.yml)
 [![License: MIT](https://img.shields.io/badge/license-MIT-c9a227.svg)](LICENSE)
 ![Node](https://img.shields.io/badge/node-%E2%89%A522.12-339933?logo=node.js&logoColor=white)
@@ -17,7 +19,7 @@ Sell by the piece or by the gram at live gold prices. Keep pieces and fine gold 
 ![MongoDB](https://img.shields.io/badge/MongoDB-7%20replica%20set-47A248?logo=mongodb&logoColor=white)
 ![Docker](https://img.shields.io/badge/Docker-ready-2496ED?logo=docker&logoColor=white)
 
-[Features](#features) · [Screenshots](#screenshots) · [Architecture](#architecture) · [Quick start](#quick-start) · [Engineering](#engineering-quality) · [Docs](#documentation) · [Roadmap](docs/ROADMAP.md)
+[Live demo](#live-demo) · [Features](#features) · [Screenshots](#screenshots) · [Architecture](#architecture) · [Quick start](#quick-start) · [Engineering](#engineering-quality) · [Docs](#documentation) · [Roadmap](docs/ROADMAP.md)
 
 <br />
 
@@ -112,6 +114,30 @@ flowchart LR
 | Testing | Node test runner + mongodb-memory-server, Vitest + Vue Test Utils, Playwright |
 | Tooling | ESLint, Prettier, vue-tsc, GitHub Actions, Dependabot, Docker |
 
+## Live demo
+
+**In the browser:** click **Open in GitHub Codespaces** above.
+- The codespace installs everything and starts the demo.
+- The app opens in a new tab after about 2–3 minutes on the first start.
+- It runs in your own GitHub account; the free Codespaces quota is enough.
+
+**On your machine** (Node.js 22.12+, no MongoDB or Docker needed):
+
+```bash
+npm ci && npm --prefix backend ci
+npm run demo                            # http://localhost:8080
+```
+
+Sign in with **`demo@jewelerpro.test`** / **`Demo-Jeweler-Pro-2026`**.
+
+The demo runs the real API on an in-memory MongoDB replica set and comes with:
+- a shop profile
+- gram-priced and fixed-price stock
+- customers with open balances
+- card, cash and transfer sales
+
+Every start is a fresh shop, and nothing is written to disk.
+
 ## Quick start
 
 ### With Docker (whole stack)
@@ -162,20 +188,21 @@ npm run dev                             # http://localhost:8080
 
 | Gate | What it checks |
 |---|---|
-| **637 automated tests** | 419 backend (real MongoDB replica set, HTTP end to end) and 218 frontend |
+| **700+ automated tests** | 430+ backend (real MongoDB replica set, HTTP end to end) and 270+ frontend unit tests, with coverage gates in CI (backend ≥ 93 % lines, 80 % branches, 90 % functions) |
+| **End-to-end QA in CI** | Playwright flows (sign-in, POS, finance, transfers, books reconcile) and a 555-check visual run: every page in eight languages, light and dark, RTL, phone layout and axe-core accessibility (no serious or critical WCAG 2.1 AA violations) |
 | **Tenant isolation** | `tenantGuard` rejects any business-data query without `businessId`. Cross-tenant HTTP tests |
 | **Financial correctness** | Hand-computed expected figures, reconciliation after every workflow, concurrency tests for overselling |
-| **API contract** | [`docs/openapi.json`](docs/openapi.json) covers all 115 operations. A test fails if code and contract drift |
-| **Static analysis** | ESLint (0 errors), `vue-tsc`, locale completeness in all 8 languages |
-| **Supply chain** | `npm audit` (no high-severity runtime advisories), Dependabot, versioned base images |
-| **Delivery** | Multi-stage, non-root Docker images with health checks, JSON logs in production, optional error webhook |
+| **API contract** | [`docs/openapi.json`](docs/openapi.json) covers every operation. A test fails if code and contract drift |
+| **Static analysis** | ESLint (0 errors, no file over 600 lines), strict `vue-tsc` (no `any`), locale completeness in all 8 languages |
+| **Supply chain** | `npm audit` (no high-severity runtime advisories), Dependabot, CodeQL, versioned base images |
+| **Delivery** | Protected `main`: squash-only PRs that merge only on green CI. Multi-stage, non-root Docker images with health checks, JSON logs in production, optional error webhook |
 
 ```bash
 npm run lint && npm run typecheck && npm test && npm run build   # frontend + lint for both
 npm --prefix backend test                                        # backend, throw-away replica set
 ```
 
-CI runs all of the above, plus the dependency audit and both Docker builds, on every push and pull request.
+CI runs all of the above on every push and pull request, plus the end-to-end and visual QA, the dependency audit, CodeQL and both Docker builds.
 
 ## Project structure
 

@@ -31,7 +31,8 @@
             </div>
             <div class="form-group">
               <label class="form-label" for="nu-branch">{{ $t('settings.users.assignedBranch') }}</label>
-              <input id="nu-branch" v-model.trim="form.branch" type="text" class="settings-input-full" :disabled="!isAdmin" :title="isAdmin ? '' : $t('settings.users.ownBranchOnly')" />
+              <input id="nu-branch" list="nu-branch-options" v-model.trim="form.branch" type="text" class="settings-input-full" :disabled="!isAdmin" :title="isAdmin ? '' : $t('settings.users.ownBranchOnly')" />
+              <datalist id="nu-branch-options"><option v-for="b in branches" :key="b.code" :value="b.name" /></datalist>
             </div>
           </div>
           <div class="form-group mb-3">
@@ -71,6 +72,7 @@ import {
   permissionLabel,
   roleLabel,
   withoutRolePermissions,
+  type BranchRecord,
   type UserMetadata,
 } from '@/services/settingsView';
 
@@ -82,6 +84,7 @@ export default defineComponent({
   props: {
     modelValue: { type: Boolean, default: false },
     metadata: { type: Object as PropType<UserMetadata | null>, default: null },
+    branches: { type: Array as PropType<BranchRecord[]>, default: () => [] },
   },
   emits: ['update:modelValue', 'saved'],
   data: () => ({ form: emptyForm(), error: '', saving: false, minLength: MIN_PASSWORD_LENGTH }),

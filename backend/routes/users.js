@@ -13,6 +13,7 @@ const {
   getEffectivePermissions,
 } = require('../middleware/authorization');
 const { recordAudit, classifyEmailError } = require('../utils/audit');
+const { resolveBranchCode } = require('../services/finance/branchDirectory');
 const { hashPassword, validatePasswordPolicy, sha256Hex, generateOpaqueToken } = require('../utils/passwords');
 const { toPublicUser } = require('../utils/userView');
 const { getAuthConfig } = require('../config/authConfig');
@@ -215,6 +216,10 @@ router.post('/', requirePermission('users:write'), asyncHandler(async (req, res)
 
   const duplicate = () => res.status(409).json({ error: 'Bu e-posta adresi ile kayıtlı bir kullanıcı zaten mevcut', code: 'EMAIL_IN_USE' });
   if (await User.exists({ email })) return duplicate();
+  // Admins may name a new branch; near-duplicates ("merkez ") resolve to the existing code.
+  const branch = isAdmin(req) && requestedBranch
+    ? await resolveBranchCode(req.user.businessId, requestedBranch)
+    : req.user.branch;
 
   // Hash outside the transaction: it is CPU-heavy and the transaction may retry.
   const passwordHash = await hashPassword(password);
@@ -230,7 +235,7 @@ router.post('/', requirePermission('users:write'), asyncHandler(async (req, res)
         name,
         passwordHash,
         role,
-        branch: isAdmin(req) ? (requestedBranch || req.user.branch) : req.user.branch,
+        branch,
         businessId: req.user.businessId,
         customPermissions,
         active: true,
@@ -266,6 +271,11 @@ router.put('/:id', requirePermission('users:write'), asyncHandler(async (req, re
     newPasswordHash = await hashPassword(body.password);
   }
 
+  // Resolved before the transaction: a new branch is registered (idempotent upsert).
+  const requestedBranchCode = body.branch !== undefined && isAdmin(req) && String(body.branch).trim()
+    ? await resolveBranchCode(req.user.businessId, body.branch)
+    : null;
+
   let outcome;
   try {
     outcome = await withBusinessAdminGuard(req.user.businessId, async (session) => {
@@ -296,7 +306,7 @@ router.put('/:id', requirePermission('users:write'), asyncHandler(async (req, re
       }
 
       if (body.branch !== undefined) {
-        const branch = String(body.branch).trim();
+        const branch = requestedBranchCode ?? String(body.branch).trim();
         if (branch !== target.branch) {
           if (self && !isAdmin(req)) reject(403, 'Kendi şubenizi değiştiremezsiniz');
           if (!isAdmin(req)) reject(403, 'Şube ataması için yönetici yetkisi gereklidir');

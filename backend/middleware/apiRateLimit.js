@@ -34,14 +34,16 @@ function limitFromEnv(env = process.env) {
   return Number.isSafeInteger(value) && value >= 0 ? value : DEFAULT_PER_MINUTE;
 }
 
-function createApiRateLimit({ limit = limitFromEnv(), windowMs = 60_000, shared = sharedStoreEnabled() } = {}) {
-  return rateLimit({
+function createApiRateLimit({
+  limit = limitFromEnv(), windowMs = 60_000, shared = sharedStoreEnabled(), store,
+} = {}) {
+  const limiter = rateLimit({
     windowMs,
     limit,
     skip: () => limit === 0,
     // Default memory store when not shared (development, tests, single instance).
-    store: shared && limit > 0 ? new MongoRateLimitStore({ name: 'api' }) : undefined,
-    // Store errors propagate to the error handler as 503 (fail closed).
+    store: store || (shared && limit > 0 ? new MongoRateLimitStore({ name: 'api' }) : undefined),
+    // Store errors reach the wrapper below (fail closed).
     passOnStoreError: false,
     standardHeaders: 'draft-8',
     legacyHeaders: false,
@@ -55,6 +57,16 @@ function createApiRateLimit({ limit = limitFromEnv(), windowMs = 60_000, shared 
       });
     },
   });
+  // The central error handler hides codes of 5xx errors; answer the limiter
+  // outage here so clients see RATE_LIMIT_STORE_UNAVAILABLE (as the auth limiters do).
+  return function apiRateLimit(req, res, next) {
+    return limiter(req, res, (error) => {
+      if (error?.code === 'RATE_LIMIT_STORE_UNAVAILABLE') {
+        return res.status(503).json({ error: error.message, code: error.code });
+      }
+      return next(error);
+    });
+  };
 }
 
 module.exports = { createApiRateLimit, limitFromEnv, DEFAULT_PER_MINUTE };

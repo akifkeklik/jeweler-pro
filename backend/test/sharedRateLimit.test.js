@@ -91,6 +91,28 @@ describe('Shared (multi-instance) rate limit', { skip: !uri && 'MONGO_URI not se
     await assert.rejects(store.increment('10.0.0.9'), (error) => error.statusCode === 503 && error.code === 'RATE_LIMIT_STORE_UNAVAILABLE');
   });
 
+  it('a store outage answers 503 RATE_LIMIT_STORE_UNAVAILABLE through the API limiter', async () => {
+    const app = express();
+    const store = new MongoRateLimitStore({ name: 'api-down-http', hitFn: async () => { throw new Error('connection refused'); } });
+    app.use(createApiRateLimit({ limit: 10, store }));
+    app.get('/x', (req, res) => res.json({ ok: true }));
+    app.use(errorHandler);
+    const server = await new Promise((resolve) => { const s = app.listen(0, '127.0.0.1', () => resolve(s)); });
+    try {
+      const res = await new Promise((resolve, reject) => {
+        http.get({ host: '127.0.0.1', port: server.address().port, path: '/x' }, (r) => {
+          let body = '';
+          r.on('data', (c) => { body += c; });
+          r.on('end', () => resolve({ status: r.statusCode, body: JSON.parse(body) }));
+        }).on('error', reject);
+      });
+      assert.equal(res.status, 503);
+      assert.equal(res.body.code, 'RATE_LIMIT_STORE_UNAVAILABLE');
+    } finally {
+      await new Promise((resolve) => server.close(resolve));
+    }
+  });
+
   it('decrement and resetKey act on the current window only', async () => {
     const store = new MongoRateLimitStore({ name: `d-${crypto.randomBytes(4).toString('hex')}` });
     store.init({ windowMs: 60_000 });

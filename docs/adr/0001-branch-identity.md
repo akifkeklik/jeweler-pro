@@ -30,6 +30,7 @@ Phase 1 removes consequences 1 and 2 without touching the books:
   - `name` is the editable display name.
 - **Renaming** (`PATCH /api/branches/:code`, admins, audited) changes only `name`, so a branch's history can no longer split.
 - **Assigning a branch to a user** normalises the input (trims, collapses whitespace, Unicode NFC) and matches it ignoring case (Turkish-aware) against existing codes **and** display names. "merkez " and "MERKEZ" resolve to the existing `Merkez`, and typing a branch's display name assigns its code.
+- **Concurrent creation:** branches created since the registry are `claimed`, and their normalised key is unique. Two concurrent requests with different spellings of a new branch therefore resolve to one code.
 - **New codes** may not contain `:` or `|`, the separators of account codes and composite ids. This mitigates consequence 3 for every new branch.
 - **`GET /api/branches`** returns `[{ code, name }]`. The Settings → Users tab lets admins rename branches and shows display names.
 

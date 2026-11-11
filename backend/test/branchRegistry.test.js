@@ -18,7 +18,7 @@ const Branch = require('../models/Branch');
 const AuditLog = require('../models/AuditLog');
 const { signToken } = require('../middleware/auth');
 const { hashPassword } = require('../utils/passwords');
-const { normalizeBranchName, branchKey } = require('../services/finance/branchDirectory');
+const { normalizeBranchName, branchKey, resolveBranchCode } = require('../services/finance/branchDirectory');
 const { createHarness, uid } = require('../testSupport/financeHarness');
 
 const PASSWORD = 'Branch-Registry-Pass-2026';
@@ -73,6 +73,14 @@ describe('Branch registry: stable codes, editable names', { skip: !uri && 'MONGO
     assert.equal(bad.status, 400);
     assert.equal(bad.body.code, 'INVALID_BRANCH_NAME');
     assert.equal(await User.countDocuments({ businessId: t.businessId, branch: 'Kasa:1' }), 0);
+  });
+
+  it('concurrent variants of a new branch resolve to one code (no split under a race)', async () => {
+    const t = await harness.tenant({ branches: ['Merkez'] });
+    const variants = ['Yeni Şube', 'yeni şube ', 'YENİ   ŞUBE', 'Yeni şube', ' yeni Şube'];
+    const codes = await Promise.all(variants.map((v) => resolveBranchCode(t.businessId, v)));
+    assert.equal(new Set(codes).size, 1, `codes: ${codes.join(', ')}`);
+    assert.equal(await Branch.countDocuments({ businessId: t.businessId, codeKey: branchKey('yeni şube') }), 1);
   });
 
   it('renaming changes only the display name: codes on users stay, the old and new names keep resolving', async () => {

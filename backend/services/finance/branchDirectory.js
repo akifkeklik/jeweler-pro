@@ -92,20 +92,33 @@ async function assertBranch(businessId, branch, label = 'Şube') {
  *     resolves to that branch's code;
  *   - otherwise a new branch is registered (no ":" or "|" allowed in codes).
  */
-async function resolveBranchCode(businessId, raw) {
-  const name = validName(raw);
-  await syncRegistry(businessId);
+async function findExisting(businessId, name) {
   const exact = await Branch.findOne({ _id: Branch.idFor(businessId, name), businessId }).lean();
   if (exact) return exact.code;
   const key = branchKey(name);
-  const matches = await Branch.find({ businessId, $or: [{ codeKey: key }, { nameKey: key }] }).sort({ createdAt: 1 }).lean();
-  if (matches.length) return matches[0].code;
+  const match = await Branch.findOne({ businessId, $or: [{ codeKey: key }, { nameKey: key }] }).sort({ createdAt: 1 }).lean();
+  return match ? match.code : null;
+}
+
+async function resolveBranchCode(businessId, raw) {
+  const name = validName(raw);
+  await syncRegistry(businessId);
+  const existing = await findExisting(businessId, name);
+  if (existing) return existing;
   if (RESERVED_CHARACTERS.test(name)) {
     throw badRequest('Şube adında ":" veya "|" kullanılamaz', 'INVALID_BRANCH_NAME');
   }
-  const entry = registryEntry(businessId, name);
-  await Branch.updateOne({ _id: entry._id, businessId }, { $setOnInsert: entry }, { upsert: true });
-  return name;
+  try {
+    // `claimed` makes codeKey unique: of two concurrent variants only one is created.
+    await Branch.create({ ...registryEntry(businessId, name), claimed: true });
+    return name;
+  } catch (error) {
+    if (error?.code !== 11000) throw error;
+    // Lost the race: use the branch the other request created.
+    const winner = await findExisting(businessId, name);
+    if (winner) return winner;
+    throw error;
+  }
 }
 
 /** Changes a branch's display name only; the code (and so all history) stays. */

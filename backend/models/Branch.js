@@ -10,9 +10,9 @@ const tenantGuard = require('./plugins/tenantGuard');
  * and `nameKey` are case- and whitespace-insensitive lookup keys used to
  * stop "Merkez" / "merkez " from becoming two branches.
  *
- * Not unique on the keys: legacy data may already contain two codes that only
- * differ in case, and both are referenced by the books. New branches and
- * renames are checked against both keys in branchDirectory.js.
+ * Legacy data may already contain two codes that only differ in case (both
+ * referenced by the books), so the keys are not unique in general; branches
+ * created since the registry are `claimed` and their codeKey is unique.
  */
 const branchSchema = new mongoose.Schema({
   _id: { type: String, required: true }, // `${businessId}|${code}`
@@ -21,11 +21,18 @@ const branchSchema = new mongoose.Schema({
   codeKey: { type: String, required: true, immutable: true },
   name: { type: String, required: true, trim: true, maxlength: 120 },
   nameKey: { type: String, required: true },
+  // Set on branches created through resolveBranchCode: their codeKey is unique
+  // (concurrent variants cannot both be created). Backfilled legacy entries
+  // stay unclaimed because legacy data may already hold case variants.
+  claimed: { type: Boolean },
   createdAt: { type: Date, default: Date.now, immutable: true },
   updatedAt: { type: Date, default: Date.now },
 }, { versionKey: false, collection: 'branches', strict: 'throw' });
 
-branchSchema.index({ businessId: 1, codeKey: 1 });
+branchSchema.index(
+  { businessId: 1, codeKey: 1 },
+  { unique: true, partialFilterExpression: { claimed: true }, name: 'claimed_code_key' },
+);
 branchSchema.index({ businessId: 1, nameKey: 1 });
 branchSchema.statics.idFor = (businessId, code) => `${businessId}|${code}`;
 

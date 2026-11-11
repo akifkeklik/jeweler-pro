@@ -101,6 +101,31 @@ describe('Branch registry: stable codes, editable names', { skip: !uri && 'MONGO
     assert.ok(audit, 'rename is audited');
   });
 
+  it('two concurrent renames to the same name: exactly one wins, the other gets 409', async () => {
+    const t = await harness.tenant({ branches: ['Merkez', 'Kadıköy', 'Bakırköy'] });
+    const results = await Promise.all([
+      t.admin.patch(`/api/branches/${encodeURIComponent('Kadıköy')}`, { name: 'Anadolu Yakası' }),
+      t.admin.patch(`/api/branches/${encodeURIComponent('Bakırköy')}`, { name: '  anadolu   yakası ' }),
+    ]);
+    assert.deepEqual(results.map((r) => r.status).sort(), [200, 409]);
+    assert.equal(results.find((r) => r.status === 409).body.code, 'BRANCH_NAME_IN_USE');
+    assert.equal(await Branch.countDocuments({ businessId: t.businessId, nameKey: branchKey('Anadolu Yakası') }), 1);
+  });
+
+  it('a rename and a new branch with the same name cannot both succeed', async () => {
+    const t = await harness.tenant({ branches: ['Merkez'] });
+    const [renamed, created] = await Promise.allSettled([
+      t.admin.patch('/api/branches/Merkez', { name: 'Galata' }),
+      resolveBranchCode(t.businessId, 'galata'),
+    ]);
+    const renameOk = renamed.status === 'fulfilled' && renamed.value.status === 200;
+    assert.equal(created.status, 'fulfilled');
+    // Either the rename won (the new assignment resolves to Merkez) or the new branch won (the rename was refused).
+    assert.equal(created.value, renameOk ? 'Merkez' : 'galata');
+    const holders = await Branch.countDocuments({ businessId: t.businessId, $or: [{ codeKey: 'galata' }, { nameKey: 'galata' }] });
+    assert.equal(holders, 1);
+  });
+
   it('a rename may not take another branch\'s code or name; only admins rename', async () => {
     const t = await harness.tenant({ branches: ['Merkez', 'Kadıköy'] });
     const clash = await t.admin.patch('/api/branches/Merkez', { name: '  kadıköy ' });

@@ -109,8 +109,9 @@ async function resolveBranchCode(businessId, raw) {
     throw badRequest('Şube adında ":" veya "|" kullanılamaz', 'INVALID_BRANCH_NAME');
   }
   try {
-    // `claimed` makes codeKey unique: of two concurrent variants only one is created.
-    await Branch.create({ ...registryEntry(businessId, name), claimed: true });
+    // Reserving the key is atomic (unique index): of two concurrent variants only one is created.
+    const entry = registryEntry(businessId, name);
+    await Branch.create({ ...entry, claims: [entry.codeKey] });
     return name;
   } catch (error) {
     if (error?.code !== 11000) throw error;
@@ -125,19 +126,27 @@ async function resolveBranchCode(businessId, raw) {
 async function renameBranch(businessId, code, rawName) {
   const name = validName(rawName);
   await syncRegistry(businessId);
-  const branch = await Branch.findOne({ _id: Branch.idFor(businessId, String(code)), businessId });
+  const branch = await Branch.findOne({ _id: Branch.idFor(businessId, String(code)), businessId }).lean();
   if (!branch) throw notFound('Şube bulunamadı', 'BRANCH_NOT_FOUND');
   const key = branchKey(name);
+  const inUse = () => conflict('Bu ad başka bir şube tarafından kullanılıyor', 'BRANCH_NAME_IN_USE');
+  // Legacy (unreserved) branches are checked here; reserved keys by the unique index below.
   const clash = await Branch.exists({
     businessId, _id: { $ne: branch._id }, $or: [{ codeKey: key }, { nameKey: key }],
   });
-  if (clash) throw conflict('Bu ad başka bir şube tarafından kullanılıyor', 'BRANCH_NAME_IN_USE');
-  const before = { name: branch.name };
-  branch.name = name;
-  branch.nameKey = key;
-  branch.updatedAt = new Date();
-  await branch.save();
-  return { branch: { code: branch.code, name: branch.name }, before };
+  if (clash) throw inUse();
+  // Keep the code reservation of a branch created through the registry, drop the old name's.
+  const claims = [...new Set([...(branch.claims || []).filter((k) => k === branch.codeKey), key])];
+  try {
+    await Branch.updateOne(
+      { _id: branch._id, businessId },
+      { $set: { name, nameKey: key, claims, updatedAt: new Date() } },
+    );
+  } catch (error) {
+    if (error?.code === 11000) throw inUse(); // a concurrent rename or creation took the name
+    throw error;
+  }
+  return { branch: { code: branch.code, name }, before: { name: branch.name } };
 }
 
 module.exports = {

@@ -11,8 +11,11 @@ const tenantGuard = require('./plugins/tenantGuard');
  * stop "Merkez" / "merkez " from becoming two branches.
  *
  * Legacy data may already contain two codes that only differ in case (both
- * referenced by the books), so the keys are not unique in general; branches
- * created since the registry are `claimed` and their codeKey is unique.
+ * referenced by the books), so the keys are not unique in general. `claims`
+ * holds the keys a branch has reserved since the registry exists: the code
+ * key of a branch created through it and its current display-name key. A
+ * unique multikey index makes every reservation atomic, so concurrent
+ * creations and renames can never leave two branches answering to one name.
  */
 const branchSchema = new mongoose.Schema({
   _id: { type: String, required: true }, // `${businessId}|${code}`
@@ -21,17 +24,17 @@ const branchSchema = new mongoose.Schema({
   codeKey: { type: String, required: true, immutable: true },
   name: { type: String, required: true, trim: true, maxlength: 120 },
   nameKey: { type: String, required: true },
-  // Set on branches created through resolveBranchCode: their codeKey is unique
-  // (concurrent variants cannot both be created). Backfilled legacy entries
-  // stay unclaimed because legacy data may already hold case variants.
-  claimed: { type: Boolean },
+  // Reserved keys (unique across the business). Absent on backfilled legacy
+  // entries until they are renamed.
+  claims: { type: [String], default: undefined },
   createdAt: { type: Date, default: Date.now, immutable: true },
   updatedAt: { type: Date, default: Date.now },
 }, { versionKey: false, collection: 'branches', strict: 'throw' });
 
+branchSchema.index({ businessId: 1, codeKey: 1 });
 branchSchema.index(
-  { businessId: 1, codeKey: 1 },
-  { unique: true, partialFilterExpression: { claimed: true }, name: 'claimed_code_key' },
+  { businessId: 1, claims: 1 },
+  { unique: true, partialFilterExpression: { claims: { $exists: true } }, name: 'reserved_keys' },
 );
 branchSchema.index({ businessId: 1, nameKey: 1 });
 branchSchema.statics.idFor = (businessId, code) => `${businessId}|${code}`;

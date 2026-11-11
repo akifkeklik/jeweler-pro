@@ -16,7 +16,7 @@ What is intentionally not finished yet, and why. Each item is planned as its own
 
 | Item | Why it is not done yet |
 |---|---|
-| Branch identity: stable ids instead of display names | Rewrites ledger account codes, so it needs a rehearsal on real data first ([ADR 0001](adr/0001-branch-identity.md)) |
+| Branch identity phase 2: id-based ledger account codes | Phase 1 is done: a registry with stable codes and editable names. Phase 2 rewrites ledger account codes, so it needs a rehearsal on real data first ([ADR 0001](adr/0001-branch-identity.md)) |
 | Move the remaining hand-written request validation to zod | The existing validation is tested; migrate one route group at a time |
 | ESLint 10 | Blocked by a plugin peer dependency |
 

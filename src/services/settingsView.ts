@@ -38,6 +38,9 @@ export interface UserMetadata {
   assignablePermissions: string[];
 }
 
+/** A branch: `code` is stored on every record and never changes; `name` is for display. */
+export interface BranchRecord { code: string; name: string }
+
 export interface ManagedUser {
   id: string;
   name?: string;

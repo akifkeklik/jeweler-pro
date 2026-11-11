@@ -41,6 +41,7 @@ function createHarness({ app, signToken, User, hashPassword, password = 'Finance
     get: (p, headers) => request('GET', p, { token, headers }),
     post: (p, body, headers) => request('POST', p, { token, body, headers }),
     put: (p, body, headers) => request('PUT', p, { token, body, headers }),
+    patch: (p, body, headers) => request('PATCH', p, { token, body, headers }),
     del: (p, headers) => request('DELETE', p, { token, headers }),
   });
 

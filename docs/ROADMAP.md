@@ -17,10 +17,7 @@ What is intentionally not finished yet, and why. Each item is planned as its own
 | Item | Why it is not done yet |
 |---|---|
 | Branch identity phase 2: id-based ledger account codes | Phase 1 is done: a registry with stable codes and editable names. Phase 2 rewrites ledger account codes, so it needs a rehearsal on real data first ([ADR 0001](adr/0001-branch-identity.md)) |
-| Split the large pages (Sales, Settings, Customers, Reports) into components | One page per PR, verified with the visual QA run (`tests/e2e/visual-qa-phase2.mjs`) |
 | Move the remaining hand-written request validation to zod | The existing validation is tested; migrate one route group at a time |
-| `strict: true` TypeScript | Gradual: new files first, then one module at a time |
-| Distributed rate limiting (Redis) for multi-instance deployments | Only needed beyond one API instance ([OPERATIONS.md](../backend/OPERATIONS.md)) |
 | ESLint 10 | Blocked by a plugin peer dependency |
 
 ## Product

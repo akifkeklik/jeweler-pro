@@ -10,8 +10,9 @@ behind it. Audit findings are referenced in brackets (H1, M1–M4, L1–L7).
 **General API limit.** Every `/api` request is first counted by
 `middleware/apiRateLimit.js` (`express-rate-limit`): 600 requests per minute
 per client address by default (`API_RATE_LIMIT_PER_MINUTE`, 0 = off when the
-reverse proxy limits instead). A refusal is `429 RATE_LIMITED` with
-`Retry-After` and the standard `RateLimit` headers. The targeted limiters
+reverse proxy limits instead). In production the counters are shared by all
+API instances (see "Single instance vs. multiple instances"). A refusal is
+`429 RATE_LIMITED` with `Retry-After` and the standard `RateLimit` headers. The targeted limiters
 below still apply inside this bound.
 
 ### Limits
@@ -75,11 +76,15 @@ below still apply inside this bound.
 ### Single instance vs. multiple instances
 
 - **One API process:** the limits above are exact.
-- **N processes or replicas:** each process counts on its own. An attacker
-  gets up to N × limit, and counters reset on every restart or deploy.
-  Horizontally scaled deployments **must** add an equivalent limit at the
-  reverse proxy or load balancer, or implement a shared store such as Redis
-  (not implemented). Production start-up logs a warning about this.
+- **N processes or replicas:** the in-process limiters count per process,
+  so a second, shared layer (`middleware/sharedRateLimit.js`) keeps atomic
+  MongoDB counters with a TTL. It caps login, forgot-password and
+  reset-password, and backs the general API limit (`MongoRateLimitStore`), so
+  those budgets hold across every instance and survive restarts. It is on by
+  default in production (`RATE_LIMIT_SHARED_STORE=mongo`) and fails closed
+  (503) if the store is unreachable. With `RATE_LIMIT_SHARED_STORE=off`,
+  production start-up warns, and an equivalent limit must be set at the
+  reverse proxy or load balancer.
 - `TRUST_PROXY` must describe the real proxy chain (see `.env.example`).
   Otherwise every client shares the proxy's IP, or clients can choose their
   own IP.

@@ -7,6 +7,9 @@
  * cannot exceed it and counters survive restarts. Window documents expire
  * through a TTL index.
  *
+ * The same counters back the general API limit (middleware/apiRateLimit.js)
+ * through MongoRateLimitStore, an express-rate-limit store.
+ *
  * Enabled with RATE_LIMIT_SHARED_STORE=mongo (default in production),
  * disabled with "off" (default in development / test). If the store cannot
  * be reached the request is refused (503): authentication endpoints depend
@@ -33,10 +36,13 @@ function sharedStoreEnabled(env = process.env) {
 
 const digest = (text) => crypto.createHash('sha256').update(String(text)).digest('base64url').slice(0, 32);
 
+const windowStartOf = (windowMs, now) => Math.floor(now / windowMs) * windowMs;
+const counterId = (name, key, windowStart) => `${name}|${digest(key)}|${windowStart}`;
+
 /** Atomically counts one hit; → { count, resetAt }. */
 async function hit(name, key, windowMs, now = Date.now()) {
-  const windowStart = Math.floor(now / windowMs) * windowMs;
-  const _id = `${name}|${digest(key)}|${windowStart}`;
+  const windowStart = windowStartOf(windowMs, now);
+  const _id = counterId(name, key, windowStart);
   const doc = await RateLimitCounter.findOneAndUpdate(
     { _id },
     { $inc: { count: 1 }, $setOnInsert: { expiresAt: new Date(windowStart + windowMs * 2) } },
@@ -67,4 +73,51 @@ function createSharedRateLimit({
   };
 }
 
-module.exports = { createSharedRateLimit, sharedStoreEnabled, hit, RateLimitCounter };
+function storeUnavailable(name, error) {
+  console.error(`[rate-limit:${name}] paylaşılan sayaç erişilemedi:`, error.message);
+  const unavailable = new Error('Hizmet geçici olarak kullanılamıyor');
+  unavailable.statusCode = 503;
+  unavailable.code = 'RATE_LIMIT_STORE_UNAVAILABLE';
+  return unavailable;
+}
+
+/**
+ * express-rate-limit store over the shared MongoDB counters: every API
+ * instance increments the same fixed-window counter, so the configured
+ * budget holds across the cluster. Errors fail closed (503).
+ */
+class MongoRateLimitStore {
+  constructor({ name, hitFn = hit } = {}) {
+    if (!name) throw new Error('MongoRateLimitStore needs a name');
+    this.name = name;
+    this.prefix = name;
+    this.localKeys = false;
+    this.hitFn = hitFn;
+  }
+
+  init(options) {
+    this.windowMs = options.windowMs;
+  }
+
+  async increment(key) {
+    try {
+      const { count, resetAt } = await this.hitFn(this.name, key, this.windowMs);
+      return { totalHits: count, resetTime: new Date(resetAt) };
+    } catch (error) {
+      throw storeUnavailable(this.name, error);
+    }
+  }
+
+  async decrement(key) {
+    const _id = counterId(this.name, key, windowStartOf(this.windowMs, Date.now()));
+    await RateLimitCounter.updateOne({ _id, count: { $gt: 0 } }, { $inc: { count: -1 } });
+  }
+
+  async resetKey(key) {
+    await RateLimitCounter.deleteOne({ _id: counterId(this.name, key, windowStartOf(this.windowMs, Date.now())) });
+  }
+}
+
+module.exports = {
+  createSharedRateLimit, sharedStoreEnabled, hit, RateLimitCounter, MongoRateLimitStore,
+};

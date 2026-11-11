@@ -37,7 +37,19 @@ export default defineConfig({
   resolve: {
     alias: { '@': path.resolve(__dirname, 'src') },
   },
-  server: { port: 8080, strictPort: true },
+  server: {
+    port: 8080,
+    strictPort: true,
+    // `npm run demo` (and Codespaces) serves the API through this origin, so
+    // cookies and CSRF checks see a single site. Off unless DEV_API_PROXY is set.
+    ...(process.env.DEV_API_PROXY
+      ? {
+          proxy: { '/api': process.env.DEV_API_PROXY, '/health': process.env.DEV_API_PROXY },
+          // Codespaces forwards the port under *.app.github.dev.
+          allowedHosts: ['.app.github.dev'],
+        }
+      : {}),
+  },
   preview: { port: 8080, strictPort: true },
   build: {
     sourcemap: true,

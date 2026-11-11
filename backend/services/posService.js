@@ -20,17 +20,14 @@
  * receivable, commission unknown): their card captures are recorded as
  * unconfigured items, and the commission becomes visible at settlement.
  */
-const mongoose = require('mongoose');
 const PosProvider = require('../models/PosProvider');
 const PosTransaction = require('../models/PosTransaction');
 const PosSettlement = require('../models/PosSettlement');
 const AuditLog = require('../models/AuditLog');
 const { recordAudit } = require('../utils/audit');
-const { parseDecimal, toSafeInteger, toDisplayNumber, DecimalError } = require('../domain/decimal');
+const { parseDecimal, toSafeInteger } = require('../domain/decimal');
 const { SCALE, LIMITS } = require('../domain/precision');
-const {
-  parseRatePercent, formatRatePpm, computeCommission, refundCommissionShare, CommissionError,
-} = require('../domain/commission');
+const { formatRatePpm, computeCommission, refundCommissionShare } = require('../domain/commission');
 const ledger = require('./finance/ledgerService');
 const { assertBranch } = require('./finance/branchDirectory');
 const {
@@ -39,158 +36,11 @@ const {
 
 const { ACCOUNTS, paymentAccount, debit, credit } = ledger;
 const CARD = 'kredi kartı';
-const DAY_MS = 24 * 60 * 60 * 1000;
-const money = (minor) => toDisplayNumber(BigInt(minor), SCALE.MONEY);
-
-function wrap(error) {
-  if (error instanceof DecimalError) return badRequest(error.message, error.code);
-  if (error instanceof CommissionError) return unprocessable(error.message, error.code);
-  return error;
-}
-
-function objectId(value, label) {
-  if (typeof value !== 'string' || !mongoose.Types.ObjectId.isValid(value) || String(new mongoose.Types.ObjectId(value)) !== value) {
-    throw badRequest(`Geçerli bir ${label} seçilmelidir`, 'INVALID_ID');
-  }
-  return new mongoose.Types.ObjectId(value);
-}
-
-/** Card data must never be stored: reject anything that looks like a card number (PAN). */
-function safeReferenceText(value, field) {
-  if (value === undefined || value === null || value === '') return undefined;
-  if (typeof value !== 'string') throw badRequest(`${field} metin olmalıdır`);
-  const text = value.trim().slice(0, 40);
-  if (/\d{12,19}/.test(text.replace(/[\s-]/g, ''))) {
-    throw badRequest(`${field} kart numarası içeremez; yalnızca terminal / provizyon kodunu girin`, 'CARD_DATA_REJECTED');
-  }
-  return text;
-}
-
-/* ------------------------------------------------------------ providers */
-
-function parseRules(raw) {
-  if (!Array.isArray(raw) || !raw.length) throw badRequest('En az bir taksit/komisyon kuralı girilmelidir', 'POS_RULES_REQUIRED');
-  if (raw.length > 36) throw badRequest('En fazla 36 kural tanımlanabilir');
-  const seen = new Set();
-  return raw.map((r) => {
-    const installments = Number(r?.installments ?? 1);
-    if (!Number.isSafeInteger(installments) || installments < 1 || installments > 36) throw badRequest('Taksit sayısı 1-36 arasında olmalıdır');
-    if (seen.has(installments)) throw badRequest(`${installments} taksit için birden fazla kural var`, 'DUPLICATE_POS_RULE');
-    seen.add(installments);
-    const ratePpm = parseRatePercent(r?.ratePercent ?? '0');
-    const fixedFeeMinor = parseDecimal(r?.fixedFee ?? '0', SCALE.MONEY, { field: 'Sabit işlem ücreti', max: 100000000n });
-    const valorDays = Number(r?.valorDays ?? 1);
-    if (!Number.isSafeInteger(valorDays) || valorDays < 0 || valorDays > 400) throw badRequest('Valör günü 0-400 arasında olmalıdır');
-    return { installments, ratePpm: toSafeInteger(ratePpm), fixedFeeMinor: toSafeInteger(fixedFeeMinor), valorDays };
-  }).sort((a, b) => a.installments - b.installments);
-}
-
-async function parseBranches(ctx, raw) {
-  if (raw === undefined || raw === null) return [];
-  if (!Array.isArray(raw)) throw badRequest('branches bir dizi olmalıdır');
-  const out = [];
-  for (const b of raw) {
-    out.push(await assertBranch(ctx.businessId, b));
-  }
-  return [...new Set(out)];
-}
-
-function providerDto(p) {
-  const rule = (r) => ({
-    installments: r.installments, ratePercent: formatRatePpm(r.ratePpm), fixedFee: money(r.fixedFeeMinor), valorDays: r.valorDays,
-  });
-  return {
-    _id: p._id,
-    code: p.code,
-    name: p.name,
-    branches: p.branches,
-    active: p.active,
-    refundCommissionPolicy: p.refundCommissionPolicy,
-    version: p.version,
-    validFrom: p.validFrom,
-    rules: (p.rules || []).map(rule),
-    history: (p.history || []).map((h) => ({
-      version: h.version, validFrom: h.validFrom, validTo: h.validTo, refundCommissionPolicy: h.refundCommissionPolicy, rules: h.rules.map(rule),
-    })),
-  };
-}
-
-async function createProvider(ctx, body) {
-  if (!body || typeof body !== 'object') throw badRequest('Geçerli bir POS tanımı gönderilmelidir');
-  const code = typeof body.code === 'string' ? body.code.trim().toUpperCase() : '';
-  if (!/^[A-Z0-9_-]{2,40}$/.test(code)) throw badRequest('Kod 2-40 karakter, harf/rakam/-/_ olmalıdır', 'INVALID_CODE');
-  const name = typeof body.name === 'string' ? body.name.trim().slice(0, 120) : '';
-  if (!name) throw badRequest('POS / banka adı girilmelidir');
-  let rules;
-  try {
-    rules = parseRules(body.rules);
-  } catch (error) {
-    throw wrap(error);
-  }
-  const policy = body.refundCommissionPolicy || 'retained';
-  if (!['retained', 'reversed'].includes(policy)) throw badRequest('İade komisyon politikası retained veya reversed olmalıdır');
-  const branches = await parseBranches(ctx, body.branches);
-  try {
-    const provider = await PosProvider.create({
-      businessId: ctx.businessId, code, name, branches, rules, refundCommissionPolicy: policy, createdBy: ctx.userId || null, validFrom: new Date(),
-    });
-    if (ctx.userId) {
-      await recordAudit({
-        AuditLog, actorUserId: ctx.userId, action: 'pos.provider_created', resourceType: 'PosProvider', resourceId: String(provider._id),
-        correlationId: ctx.correlationId, after: { code, name, rules },
-      });
-    }
-    return provider;
-  } catch (error) {
-    if (error?.code === 11000) throw conflict('Bu kodla bir POS sağlayıcısı zaten var', 'DUPLICATE');
-    throw error;
-  }
-}
-
-/** Changing rules or policy creates a new version; the old one moves to history. */
-async function updateProvider(ctx, id, body) {
-  const _id = objectId(id, 'POS sağlayıcısı');
-  const provider = await PosProvider.findOne({ _id, businessId: ctx.businessId });
-  if (!provider) throw notFound('POS sağlayıcısı bulunamadı', 'POS_PROVIDER_NOT_FOUND');
-  const before = providerDto(provider);
-  if (typeof body?.name === 'string' && body.name.trim()) provider.name = body.name.trim().slice(0, 120);
-  if (typeof body?.active === 'boolean') provider.active = body.active;
-  if (body?.branches !== undefined) provider.branches = await parseBranches(ctx, body.branches);
-  const policy = body?.refundCommissionPolicy;
-  if (policy !== undefined && !['retained', 'reversed'].includes(policy)) throw badRequest('İade komisyon politikası retained veya reversed olmalıdır');
-  let rules = null;
-  if (body?.rules !== undefined) {
-    try {
-      rules = parseRules(body.rules);
-    } catch (error) {
-      throw wrap(error);
-    }
-  }
-  const rulesChanged = rules && JSON.stringify(rules) !== JSON.stringify(provider.rules.map((r) => ({
-    installments: r.installments, ratePpm: r.ratePpm, fixedFeeMinor: r.fixedFeeMinor, valorDays: r.valorDays,
-  })));
-  const policyChanged = policy !== undefined && policy !== provider.refundCommissionPolicy;
-  if (rulesChanged || policyChanged) {
-    const now = new Date();
-    provider.history.push({
-      version: provider.version, rules: provider.rules, refundCommissionPolicy: provider.refundCommissionPolicy,
-      validFrom: provider.validFrom || provider.createdAt, validTo: now, changedBy: ctx.userId || null,
-    });
-    if (rulesChanged) provider.rules = rules;
-    if (policyChanged) provider.refundCommissionPolicy = policy;
-    provider.version += 1;
-    provider.validFrom = now;
-  }
-  await provider.save();
-  if (ctx.userId) {
-    await recordAudit({
-      AuditLog, actorUserId: ctx.userId, action: 'pos.provider_updated', resourceType: 'PosProvider', resourceId: String(provider._id),
-      correlationId: ctx.correlationId, before, after: providerDto(provider),
-    });
-  }
-  return provider;
-}
-
+const {
+  DAY_MS, money, openAmount, wrap, objectId, safeReferenceText,
+} = require('./pos/posCommon');
+const { createProvider, updateProvider, providerDto } = require('./pos/posProviders');
+const { transactionDto, settlementDto } = require('./pos/posViews');
 /* -------------------------------------------------------------- capture */
 
 /** Optional `pos` block of a card payment: { providerId, installments, terminalId, authCode }. */
@@ -432,8 +282,6 @@ async function paymentsOf(session, ctx, reference, { journalEntryId } = {}) {
 
 /* ----------------------------------------------------------- settlement */
 
-const openAmount = (t) => BigInt(t.netMinor) - BigInt(t.settledMinor || 0);
-
 function statusFor(net, settled) {
   if (settled === 0n) return 'open';
   return settled === net ? 'settled' : 'partially_settled';
@@ -649,56 +497,6 @@ async function reverseSettlement(ctx, id, payload = {}) {
 
 /* --------------------------------------------------------------- views */
 
-function transactionDto(t) {
-  return {
-    _id: t._id,
-    branch: t.branch,
-    providerId: t.providerId,
-    providerCode: t.providerCode,
-    kind: t.kind,
-    source: t.source,
-    reference: t.reference,
-    installments: t.installments,
-    commissionConfigured: Boolean(t.commissionSnapshot?.configured),
-    ratePercent: t.commissionSnapshot?.configured ? formatRatePpm(t.commissionSnapshot.ratePpm) : null,
-    fixedFee: t.commissionSnapshot?.configured ? money(t.commissionSnapshot.fixedFeeMinor || 0) : null,
-    ruleVersion: t.commissionSnapshot?.ruleVersion ?? null,
-    gross: money(t.grossMinor),
-    commission: money(t.commissionMinor),
-    net: money(t.netMinor),
-    settled: money(t.settledMinor || 0),
-    open: money(openAmount(t)),
-    status: t.status,
-    capturedAt: t.capturedAt,
-    expectedSettlementDate: t.expectedSettlementDate,
-    overdue: t.status !== 'settled' && t.expectedSettlementDate && new Date(t.expectedSettlementDate).getTime() < Date.now() - DAY_MS,
-    terminalId: t.terminalId,
-    authCode: t.authCode,
-  };
-}
-
-function settlementDto(s) {
-  return {
-    _id: s._id,
-    branch: s.branch,
-    providerId: s.providerId,
-    settlementDate: s.settlementDate,
-    bankReference: s.bankReference,
-    expected: money(s.expectedMinor),
-    deposited: money(s.depositedMinor),
-    difference: money(s.differenceMinor || 0),
-    differenceResolution: s.differenceResolution,
-    status: s.status,
-    items: s.allocations.length,
-    allocations: s.allocations.map((a) => ({ posTransactionId: a.posTransactionId, amount: money(a.amountMinor) })),
-    reversedAt: s.reversedAt,
-    reversalReason: s.reversalReason,
-    notes: s.notes,
-    createdAt: s.createdAt,
-  };
-}
-
-/** Open receivable per provider and branch. */
 async function summary(ctx, branchFilter = {}) {
   const rows = await PosTransaction.aggregate([
     { $match: { businessId: ctx.businessId, ...branchFilter } },

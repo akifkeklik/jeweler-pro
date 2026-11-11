@@ -12,312 +12,34 @@ const ProductModel = require('../models/Product');
 const CustomerModel = require('../models/Customer');
 const { recordAudit } = require('../utils/audit');
 const {
-  parseDecimal, toSafeInteger, toDisplayNumber, format, roundDiv, DecimalError,
+  parseDecimal, toSafeInteger, toDisplayNumber, format, roundDiv,
 } = require('../domain/decimal');
-const { SCALE, LIMITS } = require('../domain/precision');
-const { priceGramUnit, priceLine, computeDiscount, allocateProportionally } = require('../domain/pricing');
-const { ROUNDING_MODE } = require('../domain/precision');
+const { SCALE, ROUNDING_MODE } = require('../domain/precision');
 const ledger = require('./finance/ledgerService');
 const inventory = require('./finance/inventoryService');
 const pos = require('./posService');
-const { resolveMetalPrices, snapshotOf } = require('./finance/metalPricing');
-const { METALS } = require('../domain/metals');
+const { resolveMetalPrices } = require('./finance/metalPricing');
 const { assertBranch } = require('./finance/branchDirectory');
-const { resolveVatClass, lineVat, returnedVat } = require('../domain/vat');
+const { resolveVatClass, lineVat } = require('../domain/vat');
 const { loadProfile } = require('./businessProfileService');
 const {
   DomainError, badRequest, notFound, conflict, unprocessable, systemContext, runInTransaction, parseNumericId,
 } = require('./finance/core');
 
 const { ACCOUNTS, paymentAccount, debit, credit } = ledger;
-const SALE_PAYMENT_METHODS = ['nakit', 'kredi kartı', 'havale'];
-const REFUND_METHODS = [...SALE_PAYMENT_METHODS, 'cari'];
-const MAX_LINES = 100;
+const {
+  SALE_PAYMENT_METHODS, money, asDomainError, parseAmount, parseSaleCommand, priceSaleLine, totalsOf,
+} = require('./sales/saleCommand');
+const {
+  lineDto, quoteDto, financialView, paymentStatusOf, primaryMethod, visibleTo,
+} = require('./sales/saleViews');
+const { createSaleReturn } = require('./sales/saleReturn');
 
 function httpError(message, statusCode, code) {
   const error = new Error(message);
   error.statusCode = statusCode;
   if (code) error.code = code;
   return error;
-}
-
-const money = (minor) => toDisplayNumber(minor, SCALE.MONEY);
-
-function asDomainError(error) {
-  if (error instanceof DecimalError) return badRequest(error.message, error.code);
-  return error;
-}
-
-/* ------------------------------------------------------------------ input */
-
-function parseAmount(value, field) {
-  return parseDecimal(value, SCALE.MONEY, { field, allowZero: false, max: LIMITS.MAX_MONEY_MINOR });
-}
-
-function parseDiscount(raw, field) {
-  if (raw === undefined || raw === null || raw === '') return null;
-  if (typeof raw !== 'object' || Array.isArray(raw)) throw badRequest(`${field} { type, value } biçiminde olmalıdır`);
-  const type = raw.type || 'amount';
-  if (!['percent', 'amount'].includes(type)) throw badRequest(`${field} türü percent veya amount olmalıdır`);
-  if (raw.value === undefined || raw.value === null || raw.value === '') return null;
-  // Validate eagerly (value format); the amount itself is computed against the line.
-  parseDecimal(raw.value, type === 'percent' ? SCALE.PERCENT : SCALE.MONEY, { field, max: type === 'percent' ? 10000n : LIMITS.MAX_MONEY_MINOR });
-  return { type, value: raw.value };
-}
-
-/**
- * manualPrices: { [metal code]: TRY per fine gram }, e.g. { XAU: '3200', XAG: '41.5' }.
- * Each gram-priced line uses the manual price of ITS product's metal; a key
- * that is not a known metal is an error (a misspelt or wrong key would
- * otherwise be ignored silently and the sale refused for a missing quote).
- * The value itself is validated when the price is resolved (metalPricing).
- */
-function parseManualPrices(raw) {
-  if (raw === undefined || raw === null) return {};
-  if (typeof raw !== 'object' || Array.isArray(raw)) throw badRequest('manualPrices { XAU, XAG } biçiminde olmalıdır', 'INVALID_MANUAL_PRICE');
-  const out = {};
-  for (const [metal, value] of Object.entries(raw)) {
-    if (!Object.prototype.hasOwnProperty.call(METALS, metal)) {
-      throw badRequest(`Geçersiz maden kodu: ${metal} (XAU veya XAG olmalıdır)`, 'INVALID_METAL');
-    }
-    if (value !== undefined && value !== null && value !== '') out[metal] = value;
-  }
-  return out;
-}
-
-/**
- * Normalises a create-sale payload (new multi-line shape or the legacy
- * single-product shape) into a validated command.
- */
-function parseSaleCommand(payload) {
-  if (!payload || typeof payload !== 'object' || Array.isArray(payload)) {
-    throw badRequest('Geçerli bir satış bilgisi gönderilmelidir');
-  }
-  const customerId = Number(payload.customerId);
-  if (!Number.isSafeInteger(customerId) || customerId <= 0) throw badRequest('Geçerli bir müşteri seçilmelidir');
-
-  if (payload.date !== undefined && payload.date !== null && payload.date !== '') {
-    // The posting date is always the server time; an invalid client value is still an error.
-    if (Number.isNaN(new Date(payload.date).getTime())) throw badRequest('Geçersiz satış tarihi');
-  }
-
-  const legacy = !Array.isArray(payload.lines);
-  let rawLines;
-  if (legacy) {
-    rawLines = [{ productId: payload.productId, quantity: payload.quantity ?? 1 }];
-  } else {
-    rawLines = payload.lines;
-    if (!rawLines.length) throw badRequest('Satışta en az bir ürün satırı olmalıdır');
-    if (rawLines.length > MAX_LINES) throw badRequest(`Bir satışta en fazla ${MAX_LINES} satır olabilir`);
-  }
-
-  const lines = rawLines.map((raw, index) => {
-    if (!raw || typeof raw !== 'object') throw badRequest(`${index + 1}. satır geçersiz`);
-    const productId = Number(raw.productId);
-    if (!Number.isSafeInteger(productId) || productId <= 0) throw badRequest('Geçerli bir ürün seçilmelidir');
-    const quantity = Number(raw.quantity ?? 1);
-    if (!Number.isSafeInteger(quantity) || quantity <= 0 || quantity > LIMITS.MAX_QUANTITY) {
-      throw badRequest('Satış miktarı pozitif bir tam sayı olmalıdır');
-    }
-    const weightMg = raw.weightGrams === undefined || raw.weightGrams === null || raw.weightGrams === ''
-      ? null
-      : parseDecimal(raw.weightGrams, SCALE.WEIGHT, { field: 'Gramaj', allowZero: false, max: LIMITS.MAX_WEIGHT_MG });
-    return { lineId: index + 1, productId, quantity, weightMg, discount: parseDiscount(raw.discount, 'Satır indirimi') };
-  });
-
-  // payments:
-  //   explicit array           → exactly those payments (may be partial or empty)
-  //   absent + paymentMethod   → the whole sale paid with that method ('cari' = on account)
-  //   absent, legacy shape     → paid in full in cash (historic contract)
-  //   absent, multi-line shape → on account (unpaid)
-  let payments;
-  let fullPaymentMethod = null;
-  if (Array.isArray(payload.payments)) {
-    payments = payload.payments.map((p) => {
-      if (!p || !SALE_PAYMENT_METHODS.includes(p.method)) throw badRequest('Geçersiz ödeme yöntemi');
-      // `pos` (card only): { providerId, installments, terminalId, authCode } for commission accounting.
-      return { method: p.method, amountMinor: parseAmount(p.amount, 'Ödeme tutarı'), pos: p.method === 'kredi kartı' ? p.pos : undefined };
-    });
-    if (payments.length > 10) throw badRequest('Bir satışta en fazla 10 ödeme satırı olabilir');
-  } else if (payload.payments !== undefined && payload.payments !== null) {
-    throw badRequest('payments bir dizi olmalıdır');
-  } else {
-    const method = payload.paymentMethod ?? (legacy ? 'nakit' : 'cari');
-    if (method === 'cari') {
-      payments = [];
-    } else if (SALE_PAYMENT_METHODS.includes(method)) {
-      payments = 'full';
-      fullPaymentMethod = method;
-    } else {
-      throw badRequest('Geçersiz ödeme yöntemi');
-    }
-  }
-
-  return {
-    customerId,
-    lines,
-    discount: parseDiscount(payload.discount, 'Satış indirimi'),
-    payments,
-    fullPaymentMethod,
-    fullPaymentPos: fullPaymentMethod === 'kredi kartı' ? payload.pos : undefined,
-    manualPrices: parseManualPrices(payload.manualPrices),
-    notes: typeof payload.notes === 'string' ? payload.notes.trim().slice(0, 1000) : undefined,
-  };
-}
-
-/* ---------------------------------------------------------------- pricing */
-
-function storedMoney(value, field) {
-  if (value === null || value === undefined || !Number.isFinite(Number(value)) || Number(value) < 0) {
-    throw unprocessable(`${field} geçerli değil`, 'PRICE_NOT_DEFINED');
-  }
-  return parseDecimal(Number(value), SCALE.MONEY, { field, round: true });
-}
-
-/** Prices one line against a (session-loaded) product. */
-function priceSaleLine(product, line, prices) {
-  const base = {
-    lineId: line.lineId,
-    productId: product._id,
-    productName: product.name,
-    pricingMode: product.pricingMode || 'fixed',
-    quantity: line.quantity,
-  };
-  if (base.pricingMode === 'gram') {
-    if (!product.metal || !product.purity) {
-      throw unprocessable(`${product.name}: gram fiyatlı ürün için maden ve saflık tanımlanmalıdır`, 'PRODUCT_PRICING_INCOMPLETE');
-    }
-    const weightMg = line.weightMg ?? (product.weight
-      ? parseDecimal(product.weight, SCALE.WEIGHT, { field: 'Ürün gramajı', round: true })
-      : null);
-    if (!weightMg || weightMg <= 0n) throw unprocessable(`${product.name}: gramaj tanımlı değil`, 'PRODUCT_PRICING_INCOMPLETE');
-    const quote = prices[product.metal];
-    if (!quote) throw conflict('Gram fiyatı çözümlenemedi', 'MARKET_PRICE_UNAVAILABLE');
-    const laborType = product.laborType || 'none';
-    const laborScale = laborType === 'milyem' ? SCALE.MILYEM : SCALE.MONEY;
-    const laborValue = laborType === 'none' ? 0n : parseDecimal(product.laborValue || 0, laborScale, { field: 'İşçilik', round: true });
-    const unit = priceGramUnit({ weightMg, purity: BigInt(product.purity), pricePerGram: quote.pricePerGram, laborType, laborValue });
-    const amounts = priceLine({ unitPriceMinor: unit.unitPriceMinor, quantity: line.quantity, discount: line.discount });
-    return {
-      ...base,
-      metal: product.metal,
-      purity: product.purity,
-      weightMgPerUnit: weightMg,
-      fineMg: unit.fineMg * BigInt(line.quantity),
-      laborType,
-      laborValue: format(laborValue, laborScale),
-      price: snapshotOf(quote),
-      unitPriceMinor: unit.unitPriceMinor,
-      metalValueMinor: unit.metalValueMinor,
-      laborMinor: unit.laborMinor,
-      ...amounts,
-    };
-  }
-  const unitPriceMinor = storedMoney(product.price, 'Ürünün satış fiyatı');
-  return { ...base, unitPriceMinor, ...priceLine({ unitPriceMinor, quantity: line.quantity, discount: line.discount }) };
-}
-
-/** Applies the sale-level discount and computes totals. */
-function totalsOf(pricedLines, saleDiscount) {
-  const lineTotals = pricedLines.map((l) => l.totalMinor);
-  const subtotal = lineTotals.reduce((s, v) => s + v, 0n);
-  const saleDiscountMinor = computeDiscount(subtotal, saleDiscount);
-  const parts = allocateProportionally(saleDiscountMinor, lineTotals);
-  const lines = pricedLines.map((l, i) => ({
-    ...l,
-    lineDiscountMinor: l.discountMinor,
-    saleDiscountMinor: parts[i],
-    totalMinor: l.totalMinor - parts[i],
-  }));
-  const total = lines.reduce((s, l) => s + l.totalMinor, 0n);
-  const grossDiscount = lines.reduce((s, l) => s + l.lineDiscountMinor + l.saleDiscountMinor, 0n);
-  return { lines, subtotalMinor: lines.reduce((s, l) => s + l.grossMinor, 0n), discountMinor: grossDiscount, totalMinor: total };
-}
-
-/* ------------------------------------------------------------------- DTOs */
-
-function lineDto(line) {
-  return {
-    lineId: line.lineId,
-    productId: line.productId,
-    productName: line.productName,
-    pricingMode: line.pricingMode,
-    quantity: line.quantity,
-    returnedQuantity: line.returnedQuantity || 0,
-    metal: line.metal,
-    purity: line.purity,
-    weightGramsPerUnit: line.weightMgPerUnit !== undefined && line.weightMgPerUnit !== null ? toDisplayNumber(line.weightMgPerUnit, 3) : undefined,
-    fineGrams: line.fineMg !== undefined && line.fineMg !== null ? toDisplayNumber(line.fineMg, 3) : undefined,
-    laborType: line.laborType,
-    laborValue: line.laborValue,
-    price: line.price,
-    unitPrice: money(line.unitPriceMinor),
-    metalValue: line.metalValueMinor !== undefined && line.metalValueMinor !== null ? money(line.metalValueMinor) : undefined,
-    labor: line.laborMinor !== undefined && line.laborMinor !== null ? money(line.laborMinor) : undefined,
-    gross: money(line.grossMinor),
-    lineDiscount: money(line.lineDiscountMinor ?? line.discountMinor ?? 0n),
-    saleDiscount: money(line.saleDiscountMinor ?? 0n),
-    total: money(line.totalMinor),
-    vat: line.vat ? {
-      vatClass: line.vat.vatClass,
-      rate: line.vat.rateBp / 100,
-      basis: line.vat.basis,
-      taxableGross: money(line.vat.taxableGrossMinor),
-      vat: money(line.vat.vatMinor),
-    } : undefined,
-  };
-}
-
-function quoteDto(totals, payments) {
-  const paid = payments.reduce((s, p) => s + p.amountMinor, 0n);
-  return {
-    lines: totals.lines.map(lineDto),
-    subtotal: money(totals.subtotalMinor),
-    discount: money(totals.discountMinor),
-    total: money(totals.totalMinor),
-    paid: money(paid),
-    balanceDue: money(totals.totalMinor - paid),
-  };
-}
-
-/** Financial view of a stored sale (legacy sales derive it from legacy fields). */
-function financialView(sale) {
-  const s = sale.toObject ? sale.toObject() : sale;
-  if (s.totalMinor === undefined || s.totalMinor === null) {
-    return { journaled: false, total: s.totalPrice, paid: s.status === 'cancelled' ? 0 : s.totalPrice, balanceDue: 0, returned: 0, paymentStatus: s.status === 'cancelled' ? 'refunded' : 'paid' };
-  }
-  return {
-    journaled: Boolean(s.journalEntryId) || s.totalMinor === 0,
-    total: money(s.totalMinor),
-    subtotal: money(s.subtotalMinor ?? s.totalMinor),
-    discount: money(s.discountMinor ?? 0),
-    paid: money(s.paidMinor ?? 0),
-    returned: money(s.returnedMinor ?? 0),
-    balanceDue: money(s.balanceDueMinor ?? 0),
-    paymentStatus: s.paymentStatus,
-    // KDV contained in the total (null = VAT was not enabled for this sale).
-    vat: s.vatMinor === undefined || s.vatMinor === null ? null : money(s.vatMinor),
-    identified: Boolean(s.identification),
-  };
-}
-
-/* ---------------------------------------------------------------- service */
-
-function paymentStatusOf(netMinor, paidMinor) {
-  if (netMinor <= 0n && paidMinor <= 0n) return 'paid';
-  if (paidMinor <= 0n) return 'unpaid';
-  if (paidMinor >= netMinor) return 'paid';
-  return 'partial';
-}
-
-function primaryMethod(payments) {
-  if (!payments.length) return 'cari';
-  return [...payments].sort((a, b) => (b.amountMinor > a.amountMinor ? 1 : b.amountMinor < a.amountMinor ? -1 : 0))[0].method;
-}
-
-/** Non-admins only see sales of their own branch (legacy sales without a branch stay visible). */
-function visibleTo(ctx, sale) {
-  return ctx.isAdmin || !sale.branch || sale.branch === ctx.branch;
 }
 
 function createSalesService({
@@ -718,151 +440,6 @@ function createSalesService({
   }
 
   /**
-   * Partial or full return of sold items.
-   * payload: { lines: [{ lineId, quantity }], refundMethod, reason }
-   */
-  async function returnSale(id, payload, ctxIn, options = {}) {
-    const ctx = contextFor(ctxIn);
-    if (!payload || !Array.isArray(payload.lines) || !payload.lines.length) throw badRequest('İade edilecek satırlar belirtilmelidir');
-    const refundMethod = payload.refundMethod || 'cari';
-    if (!REFUND_METHODS.includes(refundMethod)) throw badRequest('Geçersiz iade yöntemi');
-    const requested = payload.lines.map((l) => {
-      const lineId = Number(l?.lineId);
-      const quantity = Number(l?.quantity);
-      if (!Number.isSafeInteger(lineId) || !Number.isSafeInteger(quantity) || quantity <= 0) throw badRequest('İade satırı geçersiz');
-      return { lineId, quantity };
-    });
-    if (new Set(requested.map((r) => r.lineId)).size !== requested.length) throw badRequest('Aynı satır birden fazla kez iade edilemez');
-
-    const preview = await Sale.findOne({ _id: parseNumericId(id, 'satış'), businessId: ctx.businessId }).select('customerId branch vatMinor').lean();
-    if (!preview || !visibleTo(ctx, preview)) throw notFound('Satış bulunamadı', 'SALE_NOT_FOUND');
-    // Returned goods go back into the stock (and inventory account) of the
-    // sale's branch — the branch that issued them — never the caller's branch.
-    const branch = preview.branch || ctx.branch;
-    const sctx = Object.freeze({ ...ctx, branch });
-    await ledger.prepareAccounts(ctx.businessId, [
-      { account: ACCOUNTS.receivable(preview.customerId), unit: 'TRY' },
-      { account: ACCOUNTS.salesReturns, unit: 'TRY' },
-      { account: ACCOUNTS.cogs, unit: 'TRY' },
-      { account: ACCOUNTS.inventory(branch), unit: 'TRY' },
-      ...(preview.vatMinor > 0 ? [{ account: ACCOUNTS.vatPayable, unit: 'TRY' }] : []),
-      ...(refundMethod !== 'cari' ? [{ account: paymentAccount(branch, refundMethod), unit: 'TRY' }] : []),
-      ...(refundMethod === 'kredi kartı' ? pos.refundAccounts(branch) : []),
-    ]);
-
-    try {
-      return await tx(async (session) => {
-        const sale = await loadSaleForUpdate(session, ctx, id);
-        assertJournaled(sale);
-        if ((sale.branch || ctx.branch) !== branch) throw conflict('Satışın şubesi bu işlem sırasında değişti', 'SALE_CHANGED');
-        if (!['completed', 'partially_returned'].includes(sale.status)) throw conflict('Bu satış iade edilemez durumda', 'SALE_NOT_RETURNABLE');
-        const reference = { kind: 'Sale', id: String(sale._id) };
-        const returnId = (sale.returns?.length || 0) + 1;
-
-        let amountTotal = 0n;
-        let costTotal = 0n;
-        let vatReturned = 0n;
-        const returnLines = [];
-        for (const req of requested) {
-          const line = sale.lines.find((l) => l.lineId === req.lineId);
-          if (!line) throw badRequest(`Satır bulunamadı: ${req.lineId}`, 'SALE_LINE_NOT_FOUND');
-          const already = line.returnedQuantity || 0;
-          if (already + req.quantity > line.quantity) {
-            throw conflict(`${line.productName}: en fazla ${line.quantity - already} adet iade edilebilir`, 'RETURN_EXCEEDS_SOLD');
-          }
-          // Cumulative proportional amounts: returning every unit refunds the line total exactly.
-          const portion = (total, n) => roundDiv(BigInt(total) * BigInt(n), BigInt(line.quantity), ROUNDING_MODE);
-          const amount = portion(line.totalMinor, already + req.quantity) - portion(line.totalMinor, already);
-          const cost = line.costMinor === null || line.costMinor === undefined
-            ? null
-            : portion(line.costMinor, already + req.quantity) - portion(line.costMinor, already);
-
-          const product = await inventory.loadProduct(session, ctx, line.productId, { allowArchived: true });
-          await inventory.moveProduct(session, sctx, {
-            product, quantity: req.quantity, movementType: 'sale_return', costMinor: cost, reference, reason: payload.reason, branch,
-          });
-          // KDV of the returned units is reversed proportionally (cumulative,
-          // so returning every unit reverses the line's KDV exactly).
-          const vat = line.vat?.vatMinor ? returnedVat(line.vat.vatMinor, line.quantity, already, req.quantity) : 0n;
-          line.returnedQuantity = already + req.quantity;
-          amountTotal += amount;
-          vatReturned += vat;
-          if (cost !== null) costTotal += cost;
-          returnLines.push({
-            lineId: line.lineId,
-            quantity: req.quantity,
-            amountMinor: toSafeInteger(amount),
-            costMinor: cost === null ? null : toSafeInteger(cost),
-            vatMinor: line.vat ? toSafeInteger(vat) : undefined,
-          });
-        }
-
-        const entry = await ledger.postEntry(session, sctx, {
-          entryType: 'sale_return',
-          reference,
-          branch,
-          description: `Satış #${sale._id} iadesi`,
-          lines: [
-            debit(ACCOUNTS.salesReturns, 'TRY', amountTotal - vatReturned),
-            ...(vatReturned > 0n ? [debit(ACCOUNTS.vatPayable, 'TRY', vatReturned)] : []),
-            credit(ACCOUNTS.receivable(sale.customerId), 'TRY', amountTotal, { customerId: sale.customerId }),
-            debit(ACCOUNTS.inventory(branch), 'TRY', costTotal),
-            credit(ACCOUNTS.cogs, 'TRY', costTotal),
-          ],
-        });
-
-        const returnedMinor = BigInt(sale.returnedMinor || 0) + amountTotal;
-        const netMinor = BigInt(sale.totalMinor) - returnedMinor;
-        let paidMinor = BigInt(sale.paidMinor || 0);
-        // Money already paid beyond the new net value is refunded (or stays as account credit).
-        let refundMinor = 0n;
-        if (refundMethod !== 'cari' && paidMinor > netMinor) {
-          refundMinor = paidMinor - netMinor;
-          if (refundMinor > amountTotal) refundMinor = amountTotal;
-          const refundEntry = await ledger.postEntry(session, sctx, {
-            entryType: 'sale_refund',
-            reference,
-            branch,
-            description: `Satış #${sale._id} iade ödemesi`,
-            lines: [
-              debit(ACCOUNTS.receivable(sale.customerId), 'TRY', refundMinor, { customerId: sale.customerId }),
-              credit(paymentAccount(branch, refundMethod), 'TRY', refundMinor),
-            ],
-          });
-          paidMinor -= refundMinor;
-          sale.payments.push({ kind: 'refund', method: refundMethod, amountMinor: toSafeInteger(refundMinor), source: 'return', journalEntryId: refundEntry._id, createdBy: ctx.userId || null });
-          if (refundMethod === 'kredi kartı') {
-            await pos.recordRefund(session, sctx, {
-              branch, grossMinor: refundMinor, originals: await pos.paymentsOf(session, ctx, reference), reference, source: 'sale_return', journalEntryId: refundEntry._id,
-            });
-          }
-        }
-
-        sale.returns.push({
-          returnId, lines: returnLines, amountMinor: toSafeInteger(amountTotal), refundMinor: toSafeInteger(refundMinor),
-          refundMethod, reason: payload.reason, journalEntryId: entry._id, createdBy: ctx.userId || null,
-        });
-        sale.returnedMinor = toSafeInteger(returnedMinor);
-        sale.paidMinor = toSafeInteger(paidMinor);
-        sale.balanceDueMinor = toSafeInteger(netMinor > paidMinor ? netMinor - paidMinor : 0n);
-        sale.paymentStatus = netMinor <= 0n && paidMinor <= 0n ? 'refunded' : paymentStatusOf(netMinor, paidMinor);
-        const fullyReturned = sale.lines.every((l) => (l.returnedQuantity || 0) >= l.quantity);
-        sale.status = fullyReturned ? 'returned' : 'partially_returned';
-        sale.markModified('lines');
-        await sale.save({ session });
-
-        if (options.idempotency) await options.idempotency.remember(session, { resourceType: 'Sale', resourceId: sale._id, statusCode: 200 });
-        await audit(session, ctx, 'sale.returned', sale, {
-          after: { returnId, amountMinor: toSafeInteger(amountTotal), refundMinor: toSafeInteger(refundMinor), refundMethod, lines: returnLines },
-        });
-        return { sale, returnId };
-      });
-    } catch (error) {
-      throw asDomainError(error);
-    }
-  }
-
-  /**
    * Cancels (voids) a sale: stock is restored at the original cost, the sale
    * entry is reversed and payments taken at the sale / against the sale are
    * refunded through the same method. Collections allocated from the
@@ -1046,6 +623,8 @@ function createSalesService({
       throw asDomainError(error);
     }
   }
+
+  const returnSale = createSaleReturn({ Sale, tx, contextFor, loadSaleForUpdate, assertJournaled, audit });
 
   return { quoteSale, createSale, recordPayment, returnSale, cancelSale, updateSale };
 }

@@ -45,6 +45,7 @@ const purchasesRouter = require("./routes/purchases");
 const inventoryRouter = require("./routes/inventory");
 const ledgerRouter = require("./routes/ledger");
 const transfersRouter = require("./routes/transfers");
+const branchesRouter = require("./routes/branches");
 const posRouter = require("./routes/pos");
 const businessProfileRouter = require("./routes/businessProfile");
 
@@ -112,6 +113,7 @@ app.use("/api/purchases", purchasesRouter);
 app.use("/api/inventory", inventoryRouter);
 app.use("/api/ledger", ledgerRouter);
 app.use("/api/transfers", transfersRouter);
+app.use("/api/branches", branchesRouter);
 app.use("/api/pos", posRouter);
 app.use("/api/business-profile", businessProfileRouter);
 

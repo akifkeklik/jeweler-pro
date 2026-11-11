@@ -58,6 +58,45 @@
       </div>
     </div>
 
+    <div v-if="isAdmin && branches.length" class="permissions-card mt-4" data-testid="branch-registry">
+      <span class="setting-title">{{ $t('settings.users.branches') }}</span>
+      <p class="setting-hint mb-2">{{ $t('settings.users.branchesHint') }}</p>
+      <div class="table-wrap">
+        <table class="jp-enterprise-table">
+          <thead>
+            <tr>
+              <th>{{ $t('settings.users.branchCode') }}</th>
+              <th>{{ $t('settings.users.branchDisplayName') }}</th>
+              <th class="col-actions"></th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr v-for="b in branches" :key="b.code">
+              <td class="perm-id">{{ b.code }}</td>
+              <td>
+                <input
+                  v-model="drafts[b.code]"
+                  type="text"
+                  maxlength="120"
+                  class="settings-input-full"
+                  :aria-label="`${$t('settings.users.branchDisplayName')}: ${b.code}`"
+                />
+              </td>
+              <td class="text-right">
+                <v-btn
+                  size="x-small"
+                  variant="text"
+                  :loading="savingBranch === b.code"
+                  :disabled="!drafts[b.code] || drafts[b.code].trim() === b.name"
+                  @click="saveBranchName(b)"
+                >{{ $t('settings.users.branchSave') }}</v-btn>
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
     <div v-if="$can('users:read')" class="user-management-card mt-4" data-testid="user-management">
       <div class="card-head">
         <div>
@@ -101,7 +140,7 @@
                   {{ roleLabel(u.role) }}
                 </span>
               </td>
-              <td class="cell-sub">{{ u.branch || '—' }}</td>
+              <td class="cell-sub" :title="u.branch || ''">{{ branchName(u.branch) }}</td>
               <td>
                 <div v-if="u.customPermissions && u.customPermissions.length" class="badge-wrap">
                   <span v-for="cp in u.customPermissions.slice(0, 2)" :key="cp" class="jp-badge jp-badge-neutral" :title="cp">{{ permissionLabel(cp) }}</span>
@@ -196,8 +235,8 @@
       </div>
     </div>
 
-    <UserCreateDialog v-model="dialogs.create" :metadata="metadata" @saved="fetchUsers" />
-    <UserEditDialog v-model="dialogs.edit" :user="editTarget" :metadata="metadata" @saved="fetchUsers" />
+    <UserCreateDialog v-model="dialogs.create" :metadata="metadata" :branches="branches" @saved="onUserSaved" />
+    <UserEditDialog v-model="dialogs.edit" :user="editTarget" :metadata="metadata" :branches="branches" @saved="onUserSaved" />
   </div>
 </template>
 
@@ -213,6 +252,7 @@ import {
   roleLabel,
   sessionTypeLabel,
   userInitials,
+  type BranchRecord,
   type ManagedUser,
   type PermissionInfo,
   type UserMetadata,
@@ -240,6 +280,9 @@ export default defineComponent({
     loadingAudit: false,
     editTarget: null as ManagedUser | null,
     dialogs: { create: false, edit: false },
+    branches: [] as BranchRecord[],
+    drafts: {} as Record<string, string>,
+    savingBranch: '',
   }),
   computed: {
     me(): CurrentUser {
@@ -251,9 +294,13 @@ export default defineComponent({
     sessionType(): string {
       return sessionTypeLabel(authState);
     },
+    isAdmin(): boolean {
+      return this.me.role === 'admin';
+    },
   },
   mounted() {
     this.fetchPermissionCatalog();
+    this.fetchBranches();
     if (hasPermission('users:read')) {
       this.fetchMetadata();
       this.fetchUsers();
@@ -265,6 +312,35 @@ export default defineComponent({
     userInitials,
     permissionLabel(id: string, fallback?: string) {
       return permissionLabel(id, fallback, this.metadata?.permissions || this.permissionCatalog);
+    },
+    /** Display name of a branch code (the code itself until the registry has loaded). */
+    branchName(code?: string) {
+      if (!code) return '—';
+      return this.branches.find((b) => b.code === code)?.name || code;
+    },
+    async fetchBranches() {
+      try {
+        const res = await apiService.get<{ branches?: BranchRecord[] }>('/api/branches');
+        this.branches = res?.branches || [];
+        this.drafts = Object.fromEntries(this.branches.map((b) => [b.code, b.name]));
+      } catch {
+        this.branches = [];
+      }
+    },
+    async saveBranchName(branch: BranchRecord) {
+      this.savingBranch = branch.code;
+      try {
+        await apiService.patch(`/api/branches/${encodeURIComponent(branch.code)}`, { name: this.drafts[branch.code] });
+        this.$store.dispatch('notifications/showSuccess', t('settings.users.branchRenamed'));
+        await this.fetchBranches();
+      } catch (err) {
+        this.notifyError(err);
+      } finally {
+        this.savingBranch = '';
+      }
+    },
+    async onUserSaved() {
+      await Promise.all([this.fetchUsers(), this.fetchBranches()]);
     },
     canManage(u: ManagedUser) {
       return canManageUser(this.me, u);

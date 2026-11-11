@@ -24,6 +24,7 @@
     "prebuild": "node scripts/build-locales.mjs --check",
     "build": "vite build",
     "preview": "vite preview",
+    "demo": "node scripts/demo.mjs",
     "typecheck": "vue-tsc --noEmit -p tsconfig.json",
     "test": "vitest run",
     "test:coverage": "vitest run --coverage",

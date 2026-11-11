@@ -122,31 +122,8 @@
 
     <!-- Analytics Cockpit: Chart (48%) + Detailed Breakdown (52%) -->
     <div class="reports-split-grid">
-      <!-- Left: sales trend chart (Chart.js, the app's single chart library) -->
-      <div class="chart-panel-card jp-card">
-        <div class="panel-header">
-          <div class="panel-title-wrap">
-            <v-icon size="16" color="primary" class="mr-1">mdi-finance</v-icon>
-            <span class="panel-title">{{ $t('reports.p0SatisTrendiGrafigi', { p0: periodLabel }) }}</span>
-          </div>
-          <span class="text-caption text-disabled tabular">
-            {{ $t('reports.p0IslemKaydi', { p0: activeOrders.length }) }}
-          </span>
-        </div>
-
-        <div class="chart-container">
-          <Bar
-            v-if="chartData.datasets[0].data.length"
-            :data="chartData"
-            :options="chartOptions"
-            :aria-label="chartSummary"
-          />
-          <div v-else class="empty-chart-state">
-            <v-icon size="36" class="mb-2 jp-empty-icon">mdi-chart-bar</v-icon>
-            <div class="text-caption text-disabled">{{ $t('reports.buDonemIcinGrafikVerisi') }}</div>
-          </div>
-        </div>
-      </div>
+      <!-- Left: sales trend chart -->
+      <SalesTrendChart :orders="activeOrders" :period-label="periodLabel" />
 
       <!-- Right: Tabbed Breakdown Tables Card -->
       <div class="tables-panel-card jp-card">
@@ -184,7 +161,7 @@
               type="button"
               class="tab-btn"
               :class="{ active: activeTab === 'closing' }"
-              @click="openClosingTab"
+              @click="activeTab = 'closing'"
             >
               <v-icon size="13" class="mr-1">mdi-lock-clock</v-icon>
               {{ $t('reports.gunlukKapanisZRaporu') }}
@@ -255,7 +232,7 @@
         </div>
 
         <!-- Table View: Low Stock -->
-        <div v-else class="table-scroll-area">
+        <div v-else-if="activeTab === 'low'" class="table-scroll-area">
           <table class="jp-enterprise-table">
             <thead>
               <tr>
@@ -285,133 +262,8 @@
           </table>
         </div>
 
-        <!-- Table View: Daily Closing & Cash Reconciliation -->
-        <div v-if="activeTab === 'closing'" class="table-scroll-area pa-3">
-          <div class="d-flex justify-space-between align-center mb-3">
-            <div>
-              <h3 class="font-weight-bold text-white">{{ $t('reports.gunlukKasaAltinKapanisi') }}</h3>
-              <small class="text-disabled">{{ $t('reports.tarihP0', { p0: dailySummary.date || $t('reports.bugun') }) }}</small>
-            </div>
-            <span
-              class="jp-badge"
-              :class="dailySummary.closing?.isClosed ? 'jp-badge-success' : 'jp-badge-warning'"
-            >
-              {{ dailySummary.closing?.isClosed ? $t('reports.gunlukKapanisYapildiKilitli') : $t('reports.gunSonuKapanisiBekleniyor') }}
-            </span>
-          </div>
-
-          <!-- Summary Metric Grid -->
-          <div class="closing-summary-grid mb-3">
-            <div class="pa-2 rounded" style="background: var(--jp-surface-muted);">
-              <small class="text-disabled">{{ $t('reports.gunIciSatisCirosu') }}</small>
-              <div class="tabular font-weight-bold text-success">{{ tl(dailySummary.totalSalesTry || 0) }}</div>
-              <small class="text-disabled">{{ $t('reports.p0AdetSatis', { p0: dailySummary.salesCount || 0 }) }}</small>
-            </div>
-            <div class="pa-2 rounded" style="background: var(--jp-surface-muted);">
-              <small class="text-disabled">{{ $t('reports.nakitKasaSatisi') }}</small>
-              <div class="tabular font-weight-bold text-white">{{ tl(dailySummary.cashSalesTry || 0) }}</div>
-              <small class="text-disabled">POS: {{ tl(dailySummary.posSalesTry || 0) }}</small>
-            </div>
-            <div class="pa-2 rounded" style="background: var(--jp-surface-muted);">
-              <small class="text-disabled">{{ $t('reports.tahsilatlar') }}</small>
-              <div class="tabular font-weight-bold text-success">+{{ tl(dailySummary.collectionsTry || 0) }}</div>
-              <small class="text-disabled">{{ $t('reports.musteriOdemeleri') }}</small>
-            </div>
-            <div class="pa-2 rounded" style="background: var(--jp-surface-muted);">
-              <small class="text-disabled">{{ $t('reports.odemelerGiderler') }}</small>
-              <div class="tabular font-weight-bold text-danger">-{{ tl(dailySummary.paymentsTry || 0) }}</div>
-              <small class="text-disabled">{{ $t('reports.kasaCikislari') }}</small>
-            </div>
-          </div>
-
-          <!-- Kasa Mutabakat Formu -->
-          <div class="pa-3 rounded mb-3" style="background: var(--jp-surface-card); border: 1px solid var(--jp-border);">
-            <div class="d-flex justify-space-between align-center mb-2">
-              <span class="font-weight-bold text-white">{{ $t('reports.sistemHesaplananKasaNakitTutari') }}</span>
-              <strong class="tabular font-weight-bold text-warning text-h6">{{ tl(dailySummary.calculatedCash || 0) }}</strong>
-            </div>
-            <div class="text-caption text-disabled">
-              {{ $t('reports.devredenKasaP0BugunkuNakit', { p0: tl(dailySummary.openingCashTry || 0), p1: tl(dailySummary.cashInTry || 0), p2: tl(dailySummary.cashOutTry || 0), p3: dailySummary.branch || '—' }) }}
-            </div>
-
-            <div class="d-flex gap-3 align-center mt-3">
-              <div class="flex-1">
-                <label class="form-label" for="reportpage-f1">{{ $t('reports.fiiliSayilanKasaNakit') }}</label>
-                <input id="reportpage-f1"
-                  v-model.number="closingForm.closingCashActual"
-                  type="number"
-                  step="0.01"
-                  :disabled="dayClosed"
-                  class="settings-input-full tabular"
-                  :placeholder="$t('reports.kasadaSayilanGercekTutar')"
-                />
-              </div>
-              <div class="flex-1">
-                <label class="form-label" for="reportpage-f2">{{ $t('reports.fiiliSayilanHasAltinGram') }}</label>
-                <input id="reportpage-f2"
-                  v-model.number="closingForm.closingGoldActual"
-                  type="number"
-                  step="0.001"
-                  :disabled="dayClosed"
-                  class="settings-input-full tabular"
-                  :placeholder="$t('reports.kasadaSayilanAltinGrami')"
-                />
-              </div>
-            </div>
-
-            <div class="d-flex justify-space-between align-center mt-3 pt-2" style="border-top: 1px solid var(--jp-border);">
-              <span class="text-caption text-disabled">{{ $t('reports.hesaplananKasaFarki') }}</span>
-              <strong
-                class="tabular font-weight-bold"
-                :class="cashDifference >= 0 ? 'text-success' : 'text-danger'"
-              >
-                {{ cashDifference >= 0 ? '+' : '' }}{{ tl(cashDifference) }}
-                {{ cashDifference === 0 ? $t('reports.kasaTamMutabik') : (cashDifference > 0 ? $t('reports.kasaFazlasi') : $t('reports.kasaEksigi')) }}
-              </strong>
-            </div>
-
-            <div class="d-flex justify-space-between align-center mt-1">
-              <span class="text-caption text-disabled">{{ $t('reports.hesaplananHasAltinFarki') }}</span>
-              <strong v-if="goldCounted" class="tabular font-weight-bold" :class="goldDifference >= 0 ? 'text-success' : 'text-danger'">
-                {{ $t('reports.p0P1GrP2', { p0: goldDifference > 0 ? '+' : '', p1: $weight(goldDifference, 3), p2: goldDifference === 0 ? $t('reports.altinKasasiMutabik') : (goldDifference > 0 ? $t('reports.altinFazlasi') : $t('reports.altinEksigi')) }) }}
-              </strong>
-              <span v-else class="text-caption text-disabled">{{ $t('reports.altinSayilmadiFarkIslenmezAltin') }}</span>
-            </div>
-            <div class="text-caption text-disabled mt-1">
-              {{ $t('reports.kapanistaNakitVeSayildiysaAltin') }}
-            </div>
-
-            <div class="mt-3">
-              <label class="form-label" for="reportpage-f3">{{ $t('reports.kapanisMutabakatNotu') }}</label>
-              <input id="reportpage-f3"
-                v-model.trim="closingForm.notes"
-                type="text"
-                :placeholder="$t('reports.ornAksamKasaSayimiEksiksiz')"
-                class="settings-input-full"
-              />
-            </div>
-
-            <div class="d-flex justify-end mt-3">
-              <span v-if="!$can('cash:closing')" class="text-caption text-disabled align-self-center mr-2">
-                {{ $t('reports.gunSonuKapanisiIcinCash') }}
-              </span>
-              <span v-if="dayClosed" class="text-caption text-disabled align-self-center mr-2">
-                {{ $t('reports.bugununKasasiKilitliBuSubede') }}
-              </span>
-              <v-btn
-                v-if="$can('cash:closing')"
-                size="small"
-                class="jp-primary"
-                :loading="savingClosing"
-                :disabled="dayClosed"
-                @click="submitDailyClosing"
-              >
-                <v-icon start size="14">mdi-lock-check</v-icon>
-                {{ $t('reports.gunlukKapanisiOnaylaVeKilitle') }}
-              </v-btn>
-            </div>
-          </div>
-        </div>
+        <!-- Daily closing & Z report (loads when the tab opens) -->
+        <DailyClosingPanel v-else />
 
         <!-- Summary Strip at bottom of table -->
         <div class="table-summary-strip">
@@ -428,18 +280,15 @@
 
 <script>
 import { dateTime, money, t } from '@/i18n';
-import { themeState } from '@/theme';
-import { Bar } from "vue-chartjs";
-import { Chart as ChartJS, BarElement, CategoryScale, LinearScale, Tooltip } from "chart.js";
-
-ChartJS.register(BarElement, CategoryScale, LinearScale, Tooltip);
+import SalesTrendChart from '@/components/reports/SalesTrendChart.vue';
+import DailyClosingPanel from '@/components/reports/DailyClosingPanel.vue';
 import apiService from "@/services/api";
 import { periodTrend } from "@/services/periodFilters";
 import { lowStockReportPath } from "@/services/stockLevels";
 
 export default {
   name: "ReportPage",
-  components: { Bar },
+  components: { SalesTrendChart, DailyClosingPanel },
   data() {
     return {
       selectedPeriod: "monthly",
@@ -453,25 +302,6 @@ export default {
       customers: [],
       loading: false,
       error: "",
-      dailySummary: {
-        date: '',
-        salesCount: 0,
-        totalSalesTry: 0,
-        cashSalesTry: 0,
-        posSalesTry: 0,
-        transferSalesTry: 0,
-        collectionsTry: 0,
-        paymentsTry: 0,
-        calculatedCash: 0,
-        calculatedGold: 0,
-        closing: null,
-      },
-      closingForm: {
-        closingCashActual: 0,
-        closingGoldActual: 0,
-        notes: '',
-      },
-      savingClosing: false,
     };
   },
   computed: {
@@ -510,76 +340,6 @@ export default {
         // Unknown cost → unknown profit: hide rather than mislabel as a new period.
         kar: kar === null || prevKar === null ? undefined : periodTrend(kar, prevKar),
         adet: periodTrend(this.currentPeriodAdet, prev.reduce((sum, o) => sum + (o.quantity || 0), 0)),
-      };
-    },
-    cashDifference() {
-      // Display only (the server computes the posted difference exactly).
-      const actual = Math.round((Number(this.closingForm.closingCashActual) || 0) * 100);
-      const calc = Math.round((Number(this.dailySummary.calculatedCash) || 0) * 100);
-      return (actual - calc) / 100;
-    },
-    goldCounted() {
-      const v = this.closingForm.closingGoldActual;
-      return v !== '' && v !== null && v !== undefined && Number.isFinite(Number(v));
-    },
-    goldDifference() {
-      // Display only (milligram exact); the server posts the difference to gold_over_short.
-      if (!this.goldCounted) return 0;
-      const actual = Math.round(Number(this.closingForm.closingGoldActual) * 1000);
-      const calc = Math.round((Number(this.dailySummary.calculatedGold) || 0) * 1000);
-      return (actual - calc) / 1000;
-    },
-    dayClosed() {
-      return Boolean(this.dailySummary.closing?.isClosed);
-    },
-    chartLabels() {
-      return this.activeOrders.slice(0, 8).map((o) => {
-        const prod = o.productName || t('reports.chartSale');
-        return prod.length > 12 ? prod.substring(0, 12) + "…" : prod;
-      });
-    },
-    /** Text alternative of the chart for screen readers. */
-    chartSummary() {
-      const items = this.chartLabels.map((label, i) => `${label}: ${money(this.chartData.datasets[0].data[i])}`);
-      return `${t('reports.p0SatisTrendiGrafigi', { p0: this.periodLabel })}. ${items.join(', ')}`;
-    },
-    chartData() {
-      const data = this.activeOrders.slice(0, 8).map((o) => Number(o.netTotal ?? o.totalPrice ?? 0) || 0);
-      return {
-        labels: this.chartLabels,
-        datasets: [{
-          label: t('reports.chartSeries'),
-          data,
-          backgroundColor: themeState.chart[0] || '#c9a227',
-          borderRadius: 4,
-          maxBarThickness: 48,
-        }],
-      };
-    },
-    chartOptions() {
-      // Colours come from the active palette; animation follows reduced motion.
-      const isDark = themeState.mode === 'dark';
-      const base = themeState.tokens?.base;
-      const axis = base ? base.textMuted : (isDark ? '#a6a49f' : '#5d5950');
-      const line = base ? base.border : (isDark ? '#2a2c32' : '#e1ddd4');
-      const formatAmount = (val) => money(Number(val) || 0, 'TRY', { maximumFractionDigits: 0, minimumFractionDigits: 0 });
-
-      return {
-        responsive: true,
-        maintainAspectRatio: false,
-        animation: themeState.reducedMotion ? false : { duration: 280 },
-        plugins: {
-          legend: { display: false },
-          tooltip: { callbacks: { label: (ctx) => money(Number(ctx.parsed.y) || 0) } },
-        },
-        scales: {
-          x: { ticks: { color: axis, font: { size: 10 } }, grid: { display: false }, border: { color: line } },
-          y: {
-            ticks: { color: axis, font: { size: 10 }, callback: formatAmount },
-            grid: { color: line },
-            border: { dash: [3, 3], color: line },
-          },
-        },
       };
     },
   },
@@ -634,46 +394,6 @@ export default {
         this.error = err.message || t('reports.loadFailed');
       } finally {
         this.loading = false;
-      }
-    },
-    async openClosingTab() {
-      this.activeTab = 'closing';
-      await this.fetchDailySummary();
-    },
-    async fetchDailySummary() {
-      try {
-        const data = await apiService.get('/api/cash/daily-summary');
-        this.dailySummary = data || {};
-        if (data?.closing?.isClosed) {
-          this.closingForm.closingCashActual = data.closing.closingCashActual;
-          this.closingForm.closingGoldActual = data.closing.closingGoldActual;
-          this.closingForm.notes = data.closing.notes;
-        } else {
-          this.closingForm.closingCashActual = data.calculatedCash || 0;
-          this.closingForm.closingGoldActual = data.calculatedGold || 0;
-        }
-      } catch (err) {
-        console.warn('Daily summary fetch warning:', err);
-      }
-    },
-    async submitDailyClosing() {
-      this.savingClosing = true;
-      try {
-        const saved = await apiService.post('/api/cash/daily-closing', {
-          // Exact decimal text (shortest round-trip form of the typed number).
-          closingCashActual: String(this.closingForm.closingCashActual ?? ''),
-          // An empty gold field means "gold not counted": omit it so no
-          // gold difference is posted (sending 0 would write off the till).
-          ...(this.goldCounted ? { closingGoldActual: String(this.closingForm.closingGoldActual) } : {}),
-          notes: this.closingForm.notes,
-        });
-        this.dailySummary.closing = saved;
-        await this.fetchDailySummary();
-        this.$store.dispatch('notifications/showSuccess', t('reports.gunlukKapanisVeZRaporu'));
-      } catch (err) {
-        this.$store.dispatch('notifications/showError', t('reports.kapanisKaydedilemediP0', { p0: err.message }));
-      } finally {
-        this.savingClosing = false;
       }
     },
   },
@@ -747,12 +467,6 @@ export default {
 .trend-down { color: var(--jp-danger); }
 .trend-neutral { color: var(--jp-text-subtle); }
 
-.closing-summary-grid {
-  display: grid;
-  grid-template-columns: repeat(4, 1fr);
-  gap: 10px;
-}
-
 /* Analytics Split Grid */
 .reports-split-grid {
   display: grid;
@@ -762,51 +476,6 @@ export default {
   flex: 1;
   min-height: 0;
   overflow: hidden;
-}
-
-/* Chart Panel */
-.chart-panel-card {
-  display: flex;
-  flex-direction: column;
-  min-height: 0;
-  overflow: hidden;
-  padding: 8px 12px;
-}
-
-.panel-header {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  padding-bottom: 8px;
-  border-bottom: 1px solid var(--jp-border);
-  flex-shrink: 0;
-}
-
-.panel-title-wrap {
-  display: flex;
-  align-items: center;
-}
-
-.panel-title {
-  font-family: 'Manrope', sans-serif;
-  font-size: 11px;
-  font-weight: 700;
-  color: var(--jp-text-emphasis);
-}
-
-.chart-container {
-  flex: 1;
-  min-height: 0;
-  position: relative;
-  margin-top: 6px;
-}
-
-.empty-chart-state {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  height: 100%;
 }
 
 /* Tables Panel */

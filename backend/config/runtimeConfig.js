@@ -14,6 +14,7 @@ const { SUPPORTED_ENVIRONMENTS, resolveEnvironment } = require('./environment');
 const { canonicalizeOrigin, parseOriginList } = require('./origins');
 const { isLoopbackHostname } = require('../utils/ipAddress');
 const { MIN_MAX_ENTRIES, MAX_MAX_ENTRIES } = require('../middleware/rateLimit');
+const { sharedStoreEnabled } = require('../middleware/sharedRateLimit');
 const { MIN_TELEMETRY_RETENTION_DAYS, MAX_TELEMETRY_RETENTION_DAYS } = require('../utils/audit');
 
 const SAMESITE_VALUES = ['strict', 'lax', 'none'];
@@ -204,8 +205,8 @@ function validateRuntimeConfig(env = process.env) {
     }
   }
 
-  if (production) {
-    warnings.push('Rate limit sayaçları süreç belleğinde tutulur; birden fazla API örneği çalıştırılıyorsa reverse proxy / paylaşımlı store ile de rate limit uygulayın');
+  if (production && !sharedStoreEnabled(env)) {
+    warnings.push('RATE_LIMIT_SHARED_STORE=off: rate limit sayaçları süreç belleğinde tutulur; birden fazla API örneği çalıştırılıyorsa reverse proxy ile de rate limit uygulayın');
   }
 
   return { environment, production, errors, warnings, trustProxy };

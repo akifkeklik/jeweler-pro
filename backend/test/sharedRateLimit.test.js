@@ -6,7 +6,13 @@ const { describe, it, before, after } = require('node:test');
 const assert = require('node:assert/strict');
 const crypto = require('node:crypto');
 const mongoose = require('mongoose');
-const { createSharedRateLimit, sharedStoreEnabled, RateLimitCounter } = require('../middleware/sharedRateLimit');
+const http = require('node:http');
+const express = require('express');
+const {
+  createSharedRateLimit, sharedStoreEnabled, RateLimitCounter, MongoRateLimitStore,
+} = require('../middleware/sharedRateLimit');
+const { createApiRateLimit } = require('../middleware/apiRateLimit');
+const errorHandler = require('../middleware/errorHandler');
 
 const uri = process.env.MONGO_URI;
 
@@ -46,5 +52,75 @@ describe('Shared (multi-instance) rate limit', { skip: !uri && 'MONGO_URI not se
     assert.equal((await call(instanceA, '10.0.0.2')).status, 200, 'other keys unaffected');
     const doc = await RateLimitCounter.findOne({ _id: new RegExp(`^${name}\\|`) }).lean();
     assert.ok(doc.expiresAt > new Date(), 'window documents expire via TTL');
+  });
+
+  it('the general API limit is one budget across API instances', async () => {
+    // Two express apps = two API processes, both limited to 3 requests a minute.
+    const start = async () => {
+      const app = express();
+      app.use(createApiRateLimit({ limit: 3, shared: true }));
+      app.get('/x', (req, res) => res.json({ ok: true }));
+      app.use(errorHandler);
+      return new Promise((resolve) => { const s = app.listen(0, '127.0.0.1', () => resolve(s)); });
+    };
+    const get = (server) => new Promise((resolve, reject) => {
+      http.get({ host: '127.0.0.1', port: server.address().port, path: '/x' }, (res) => {
+        let body = '';
+        res.on('data', (c) => { body += c; });
+        res.on('end', () => resolve({ status: res.statusCode, headers: res.headers, body }));
+      }).on('error', reject);
+    });
+    await RateLimitCounter.deleteMany({ _id: /^api\|/ });
+    const [a, b] = [await start(), await start()];
+    try {
+      const statuses = [];
+      for (const server of [a, b, a, b, a]) statuses.push((await get(server)).status);
+      assert.deepEqual(statuses, [200, 200, 200, 429, 429]);
+      const refused = await get(b);
+      assert.equal(JSON.parse(refused.body).code, 'RATE_LIMITED');
+      assert.ok(refused.headers['retry-after']);
+    } finally {
+      await Promise.all([a, b].map((s) => new Promise((resolve) => s.close(resolve))));
+      await RateLimitCounter.deleteMany({ _id: /^api\|/ });
+    }
+  });
+
+  it('the API store fails closed (503) when the counters cannot be reached', async () => {
+    const store = new MongoRateLimitStore({ name: 'api-down', hitFn: async () => { throw new Error('connection refused'); } });
+    store.init({ windowMs: 60_000 });
+    await assert.rejects(store.increment('10.0.0.9'), (error) => error.statusCode === 503 && error.code === 'RATE_LIMIT_STORE_UNAVAILABLE');
+  });
+
+  it('a store outage answers 503 RATE_LIMIT_STORE_UNAVAILABLE through the API limiter', async () => {
+    const app = express();
+    const store = new MongoRateLimitStore({ name: 'api-down-http', hitFn: async () => { throw new Error('connection refused'); } });
+    app.use(createApiRateLimit({ limit: 10, store }));
+    app.get('/x', (req, res) => res.json({ ok: true }));
+    app.use(errorHandler);
+    const server = await new Promise((resolve) => { const s = app.listen(0, '127.0.0.1', () => resolve(s)); });
+    try {
+      const res = await new Promise((resolve, reject) => {
+        http.get({ host: '127.0.0.1', port: server.address().port, path: '/x' }, (r) => {
+          let body = '';
+          r.on('data', (c) => { body += c; });
+          r.on('end', () => resolve({ status: r.statusCode, body: JSON.parse(body) }));
+        }).on('error', reject);
+      });
+      assert.equal(res.status, 503);
+      assert.equal(res.body.code, 'RATE_LIMIT_STORE_UNAVAILABLE');
+    } finally {
+      await new Promise((resolve) => server.close(resolve));
+    }
+  });
+
+  it('decrement and resetKey act on the current window only', async () => {
+    const store = new MongoRateLimitStore({ name: `d-${crypto.randomBytes(4).toString('hex')}` });
+    store.init({ windowMs: 60_000 });
+    await store.increment('k');
+    await store.increment('k');
+    await store.decrement('k');
+    assert.equal((await store.increment('k')).totalHits, 2);
+    await store.resetKey('k');
+    assert.equal((await store.increment('k')).totalHits, 1);
   });
 });

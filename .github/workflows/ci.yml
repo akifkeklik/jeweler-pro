@@ -103,7 +103,17 @@ jobs:
       - run: npm ci --no-audit --no-fund
         working-directory: backend
       - name: Install Chromium
-        run: npx playwright install --with-deps chromium
+        # An apt mirror or DNS outage on the runner must not block every PR:
+        # retry with system packages (bounded), then fall back to the browser
+        # only. The runner image already ships Chromium's core libraries.
+        run: |
+          for attempt in 1 2 3; do
+            timeout 300 npx playwright install --with-deps chromium && exit 0
+            echo "::warning::Chromium install with system packages failed (attempt $attempt)"
+            sleep 20
+          done
+          echo "::warning::apt unavailable, installing Chromium without system packages"
+          npx playwright install chromium
       - name: Auth and POS scenarios (Playwright, real API and database)
         run: npm run test:e2e
       - name: Transfer, settlement and purchase-return scenarios

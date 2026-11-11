@@ -1,0 +1,20 @@
+{
+  // One-click live demo in GitHub Codespaces: installs both packages, then
+  // `npm run demo` starts an in-memory MongoDB replica set, the API and the
+  // web app with demo data, and opens the forwarded app URL.
+  "name": "Jeweler Pro demo",
+  "image": "mcr.microsoft.com/devcontainers/javascript-node:1-24-bookworm",
+  "hostRequirements": { "cpus": 2, "memory": "4gb" },
+  "postCreateCommand": "npm ci && npm --prefix backend ci",
+  "postAttachCommand": { "demo": "npm run demo" },
+  "forwardPorts": [8080],
+  "portsAttributes": {
+    "8080": { "label": "Jeweler Pro", "onAutoForward": "openBrowser" },
+    "5000": { "label": "API (internal)", "onAutoForward": "silent" }
+  },
+  "customizations": {
+    "vscode": {
+      "extensions": ["Vue.volar", "dbaeumer.vscode-eslint"]
+    }
+  }
+}

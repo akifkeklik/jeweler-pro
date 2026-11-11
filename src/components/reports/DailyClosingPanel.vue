@@ -202,7 +202,10 @@ export default defineComponent({
     async submit() {
       this.saving = true;
       try {
-        await apiService.post('/api/cash/daily-closing', closingPayload(this.form));
+        const saved = await apiService.post<Closing>('/api/cash/daily-closing', closingPayload(this.form));
+        // Lock the form from the server's answer first: if the refresh below
+        // fails, the day must still show as closed.
+        this.summary = { ...this.summary, closing: saved };
         await this.load();
         this.$store.dispatch('notifications/showSuccess', t('reports.gunlukKapanisVeZRaporu'));
       } catch (err) {

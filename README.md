@@ -8,7 +8,8 @@
 
 Sell by the piece or by the gram at live gold prices. Keep pieces and fine gold in one stock. Every sale is posted to a double-entry ledger in the same database transaction.
 
-**[▶ Live: jeweler-pro.vercel.app](https://jeweler-pro.vercel.app)**
+**[▶ Try it live: jeweler-pro.vercel.app](https://jeweler-pro.vercel.app)**  
+Demo login: `demo@jewelerpro.test` / `Demo-Jeweler-Pro-2026` (branch manager role, sample data)
 
 [![Open in GitHub Codespaces](https://github.com/codespaces/badge.svg)](https://codespaces.new/akifkeklik/jeweler-pro?quickstart=1)
 
@@ -118,7 +119,7 @@ flowchart LR
 
 ## Live demo
 
-**Hosted:** [jeweler-pro.vercel.app](https://jeweler-pro.vercel.app). The API runs on a free instance that sleeps after 15 minutes without traffic, so the first request after a pause can take about a minute.
+**Hosted:** [jeweler-pro.vercel.app](https://jeweler-pro.vercel.app), signed in as **`demo@jewelerpro.test`** / **`Demo-Jeweler-Pro-2026`**. The demo account has the *branch manager* role: it can use sales, stock, cash, reports and the ledger, but cannot manage users. The data is shared sample data and may be reset at any time. The API runs on a free instance that sleeps after 15 minutes without traffic, so the first request after a pause can take about a minute.
 
 **In your own Codespace:** click **Open in GitHub Codespaces** above.
 - The codespace installs everything and starts the demo.

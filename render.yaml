@@ -1,0 +1,33 @@
+# Render Blueprint: Jeweler Pro API (the web app is served by Vercel, see vercel.json).
+# The SPA reaches the API through Vercel rewrites, so the browser sees one origin.
+services:
+  - type: web
+    name: jeweler-pro-api
+    runtime: docker
+    plan: free
+    region: frankfurt
+    rootDir: backend
+    dockerfilePath: ./Dockerfile
+    dockerContext: .
+    healthCheckPath: /health/ready
+    autoDeploy: true
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: MONGO_URI
+        sync: false
+      - key: JWT_SECRET
+        generateValue: true
+      - key: CORS_ORIGIN
+        value: https://jeweler-pro.vercel.app
+      - key: APP_URL
+        value: https://jeweler-pro.vercel.app
+      # Vercel edge + Render load balancer
+      - key: TRUST_PROXY
+        value: "2"
+      - key: REPORT_TIME_ZONE
+        value: Europe/Istanbul
+      - key: ADMIN_EMAIL
+        sync: false
+      - key: ADMIN_PASSWORD
+        sync: false

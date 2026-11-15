@@ -8,6 +8,8 @@
 
 Sell by the piece or by the gram at live gold prices. Keep pieces and fine gold in one stock. Every sale is posted to a double-entry ledger in the same database transaction.
 
+**[▶ Live: jeweler-pro.vercel.app](https://jeweler-pro.vercel.app)**
+
 [![Open in GitHub Codespaces](https://github.com/codespaces/badge.svg)](https://codespaces.new/akifkeklik/jeweler-pro?quickstart=1)
 
 [![CI](https://github.com/akifkeklik/jeweler-pro/actions/workflows/ci.yml/badge.svg)](https://github.com/akifkeklik/jeweler-pro/actions/workflows/ci.yml)
@@ -19,7 +21,7 @@ Sell by the piece or by the gram at live gold prices. Keep pieces and fine gold 
 ![MongoDB](https://img.shields.io/badge/MongoDB-7%20replica%20set-47A248?logo=mongodb&logoColor=white)
 ![Docker](https://img.shields.io/badge/Docker-ready-2496ED?logo=docker&logoColor=white)
 
-[Live demo](#live-demo) · [Features](#features) · [Screenshots](#screenshots) · [Architecture](#architecture) · [Quick start](#quick-start) · [Engineering](#engineering-quality) · [Docs](#documentation) · [Roadmap](docs/ROADMAP.md)
+[Live demo](#live-demo) · [Deployment](#deployment) · [Features](#features) · [Screenshots](#screenshots) · [Architecture](#architecture) · [Quick start](#quick-start) · [Engineering](#engineering-quality) · [Docs](#documentation) · [Roadmap](docs/ROADMAP.md)
 
 <br />
 
@@ -116,7 +118,9 @@ flowchart LR
 
 ## Live demo
 
-**In the browser:** click **Open in GitHub Codespaces** above.
+**Hosted:** [jeweler-pro.vercel.app](https://jeweler-pro.vercel.app). The API runs on a free instance that sleeps after 15 minutes without traffic, so the first request after a pause can take about a minute.
+
+**In your own Codespace:** click **Open in GitHub Codespaces** above.
 - The codespace installs everything and starts the demo.
 - The app opens in a new tab after about 2–3 minutes on the first start.
 - It runs in your own GitHub account; the free Codespaces quota is enough.
@@ -184,6 +188,18 @@ npm run dev                             # http://localhost:8080
 2. Leave **KDV** off until your accountant has approved the rules. Switching it on requires the approver's name.
 3. Set the **MASAK identification threshold** with your compliance officer. No legal default is shipped.
 
+## Deployment
+
+The hosted instance is configured entirely from the repository:
+
+| Part | Platform | Config |
+|---|---|---|
+| Web app | Vercel | [`vercel.json`](vercel.json): Vite build, SPA fallback, security headers |
+| API | Render (Docker, Frankfurt) | [`render.yaml`](render.yaml) Blueprint: health check, generated `JWT_SECRET`, production settings |
+| Database | MongoDB Atlas (replica set) | `MONGO_URI` secret on Render |
+
+Vercel rewrites `/api` and `/health` to the Render API, so the browser talks to a single origin and the `SameSite=strict` refresh cookie and CSRF origin checks work unchanged. Every push to `main` redeploys both sides. Only `MONGO_URI`, `ADMIN_EMAIL` and `ADMIN_PASSWORD` are entered by hand, once, when the Blueprint is created.
+
 ## Engineering quality
 
 | Gate | What it checks |
@@ -225,7 +241,9 @@ CI runs all of the above on every push and pull request, plus the end-to-end and
 │   └── theme/             # palettes and design tokens
 ├── tests/                 # Vitest specs and Playwright e2e / visual QA
 ├── docs/                  # OpenAPI, ADRs, fiscal integration, roadmap, screenshots
-└── deploy/                # nginx config for the web image
+├── deploy/                # nginx config for the web image
+├── vercel.json            # hosted web app (rewrites /api to the API)
+└── render.yaml            # hosted API (Render Blueprint)
 ```
 
 ## Documentation

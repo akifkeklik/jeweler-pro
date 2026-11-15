@@ -121,6 +121,8 @@ flowchart LR
 
 **Hosted:** [jeweler-pro.vercel.app](https://jeweler-pro.vercel.app), signed in as **`demo@jewelerpro.test`** / **`Demo-Jeweler-Pro-2026`**. The demo account has the *branch manager* role: it can use sales, stock, cash, reports and the ledger, but cannot manage users. The data is shared sample data and may be reset at any time. The API runs on a free instance that sleeps after 15 minutes without traffic, so the first request after a pause can take about a minute.
 
+> **Note on market prices in the hosted demo.** Live gold prices come from Turkish market data feeds, which do not serve requests from foreign data-centre addresses. Because the hosted API runs in Frankfurt, the price panels stay empty there, and currency rates are not published at weekends. Prices are live when the app runs locally (`npm run demo`). For production use, a licensed price feed is configured through environment variables, with no code change. By design, the app never prices a sale from missing or stale market data: it stops the sale instead of using a wrong price.
+
 **In your own Codespace:** click **Open in GitHub Codespaces** above.
 - The codespace installs everything and starts the demo.
 - The app opens in a new tab after about 2–3 minutes on the first start.

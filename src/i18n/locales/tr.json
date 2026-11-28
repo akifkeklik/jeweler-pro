@@ -696,6 +696,7 @@
   "rememberMe": "Beni Hatırla",
   "rememberHint": "Bu cihazda 30 gün boyunca oturum açık kalır. Ortak kullanılan bilgisayarlarda işaretlemeyin.",
   "forgot": "Şifremi Unuttum?",
+  "serverWaking": "Sunucu uyandırılıyor. Ücretsiz sunucu boştayken uykuya geçer; ilk açılış bir dakika kadar sürebilir.",
   "submit": "Güvenli Oturum Aç",
   "persistentNote": "Bu cihazda 30 gün oturum açık kalır — ortak bilgisayarda işaretlemeyin",
   "browserNote": "Tarayıcı kapanınca oturum sona erer",

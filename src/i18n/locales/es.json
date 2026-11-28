@@ -696,6 +696,7 @@
   "rememberMe": "Recordarme",
   "rememberHint": "Mantiene la sesión 30 días en este dispositivo. No lo use en equipos compartidos.",
   "forgot": "¿Olvidó la contraseña?",
+  "serverWaking": "Despertando el servidor. El servidor gratuito se suspende sin uso; la primera carga puede tardar un minuto.",
   "submit": "Iniciar sesión",
   "persistentNote": "Sesión abierta 30 días — evítelo en equipos compartidos",
   "browserNote": "La sesión termina al cerrar el navegador",

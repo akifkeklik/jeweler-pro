@@ -696,6 +696,7 @@
   "rememberMe": "记住我",
   "rememberHint": "在此设备上保持登录 30 天。请勿在公用电脑上勾选。",
   "forgot": "忘记密码？",
+  "serverWaking": "正在唤醒服务器。免费服务器空闲时会休眠，首次加载可能需要约一分钟。",
   "submit": "安全登录",
   "persistentNote": "保持登录 30 天——请勿用于公用电脑",
   "browserNote": "关闭浏览器后会话结束",

@@ -696,6 +696,7 @@
   "rememberMe": "Remember me",
   "rememberHint": "Keeps you signed in on this device for 30 days. Do not use on shared computers.",
   "forgot": "Forgot password?",
+  "serverWaking": "Waking the server. The free server sleeps when idle; the first load can take about a minute.",
   "submit": "Sign in securely",
   "persistentNote": "You stay signed in on this device for 30 days — avoid on shared computers",
   "browserNote": "The session ends when the browser closes",

@@ -696,6 +696,7 @@
   "rememberMe": "Angemeldet bleiben",
   "rememberHint": "Hält Sie 30 Tage auf diesem Gerät angemeldet. Nicht auf gemeinsam genutzten Rechnern verwenden.",
   "forgot": "Passwort vergessen?",
+  "serverWaking": "Server wird geweckt. Der kostenlose Server schläft bei Inaktivität; der erste Aufruf kann etwa eine Minute dauern.",
   "submit": "Sicher anmelden",
   "persistentNote": "Sie bleiben 30 Tage angemeldet – nicht auf gemeinsam genutzten Rechnern",
   "browserNote": "Die Sitzung endet beim Schließen des Browsers",

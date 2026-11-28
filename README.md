@@ -261,7 +261,7 @@ CI runs all of the above on every push and pull request, plus the end-to-end and
 | [ADR 0001](docs/adr/0001-branch-identity.md) | Branch identity decision |
 | [ROADMAP.md](docs/ROADMAP.md) | What is next, and what is blocked on whom |
 | [CONTRIBUTING.md](CONTRIBUTING.md) | PR size, commits, rules for AI-assisted code |
-| [Article on Medium](https://medium.com/@akifkeklik/bir-kuyumcu-y%C3%B6netim-sistemi-geli%C5%9Ftirmek-finansal-do%C4%9Fruluk-veri-tutarl%C4%B1l%C4%B1%C4%9F%C4%B1-ve-ger%C3%A7ek-d%C3%BCnya-0aba9a233717) | Building a jeweller management system: financial accuracy, data consistency and real-world constraints (in Turkish) |
+| [Article on Medium](https://medium.com/@akifkeklik/bir-kuyumcu-y%C3%B6netim-sistemi-geli%C5%9Ftirmek-finansal-do%C4%9Fruluk-veri-tutarl%C4%B1l%C4%B1%C4%9F%C4%B1-ve-ger%C3%A7ek-d%C3%BCnya-0aba9a233717) | Write-up of the design: integer money math, one transaction per sale, idempotency, the ledger, fail-closed pricing and tenant isolation (in Turkish) |
 
 ## Status
 

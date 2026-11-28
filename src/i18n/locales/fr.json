@@ -696,6 +696,7 @@
   "rememberMe": "Se souvenir de moi",
   "rememberHint": "Reste connecté 30 jours sur cet appareil. À éviter sur un ordinateur partagé.",
   "forgot": "Mot de passe oublié ?",
+  "serverWaking": "Réveil du serveur. Le serveur gratuit se met en veille ; le premier chargement peut prendre environ une minute.",
   "submit": "Se connecter",
   "persistentNote": "Connexion conservée 30 jours — à éviter sur un poste partagé",
   "browserNote": "La session se termine à la fermeture du navigateur",

@@ -82,6 +82,19 @@
           </div>
 
           <v-alert
+            v-if="serverWaking"
+            density="compact"
+            type="info"
+            variant="tonal"
+            class="mt-3 py-1 text-caption"
+            role="status"
+            data-testid="server-waking"
+          >
+            <v-progress-circular indeterminate size="12" width="2" class="mr-2" />
+            {{ $t('auth.serverWaking') }}
+          </v-alert>
+
+          <v-alert
             v-if="error"
             density="compact"
             type="error"
@@ -221,6 +234,9 @@ import { login as authLogin, safeRedirectPath } from '@/services/authSession';
 import { t } from '@/i18n';
 import AuthPreferences from '@/components/AuthPreferences.vue';
 
+const WAKE_NOTICE_DELAY_MS = 2500;
+const WAKE_TIMEOUT_MS = 90000;
+
 export default {
   name: 'LoginPage',
   components: { AuthPreferences },
@@ -237,8 +253,10 @@ export default {
     forgotError: '',
     forgotSuccess: '',
     year: new Date().getFullYear(),
+    serverWaking: false,
   }),
   mounted() {
+    this.wakeServer();
     if (this.$route.query.reset === 'success') {
       this.successNotice = t('auth.resetSuccess');
     } else if (this.$route.query.expired === '1') {
@@ -248,7 +266,25 @@ export default {
       this.openForgotPassword();
     }
   },
+  beforeUnmount() {
+    clearTimeout(this.wakeTimer);
+  },
   methods: {
+    /**
+     * The hosted API sleeps when idle and needs about a minute to start. Ping it as soon as the
+     * page opens, and say so if it has not answered within a moment, instead of a silent spinner.
+     */
+    async wakeServer() {
+      this.wakeTimer = setTimeout(() => { this.serverWaking = true; }, WAKE_NOTICE_DELAY_MS);
+      try {
+        await apiService.get('/health', { timeout: WAKE_TIMEOUT_MS });
+      } catch {
+        // The sign-in request reports real errors; this ping only drives the notice.
+      } finally {
+        clearTimeout(this.wakeTimer);
+        this.serverWaking = false;
+      }
+    },
     async login() {
       this.loading = true;
       this.error = '';

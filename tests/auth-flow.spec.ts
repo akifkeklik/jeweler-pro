@@ -8,7 +8,7 @@ const authMock = vi.hoisted(() => ({
   authState: { user: null, accessToken: null, persistent: false, sessionExpiresAt: null },
   hasPermission: vi.fn(() => true),
 }));
-const apiMock = vi.hoisted(() => ({ post: vi.fn() }));
+const apiMock = vi.hoisted(() => ({ post: vi.fn(), get: vi.fn() }));
 
 vi.mock('@/services/authSession', () => authMock);
 vi.mock('@/services/api', () => ({ default: apiMock }));
@@ -40,6 +40,7 @@ describe('authentication UI flows', () => {
     authMock.login.mockReset();
     authMock.logout.mockReset();
     apiMock.post.mockReset();
+    apiMock.get.mockReset();
   });
 
   it('logs in through the session service, forwards Beni Hatırla and never persists tokens in web storage', async () => {
@@ -106,5 +107,32 @@ describe('authentication UI flows', () => {
     expect(authMock.logout).toHaveBeenCalledTimes(1);
     expect(replace).toHaveBeenCalledWith('/login');
     expect(order).toEqual(['server-logout', 'navigate']);
+  });
+
+  it('says the server is waking when the health ping is slow, and clears it once the API answers', async () => {
+    vi.useFakeTimers();
+    let answer!: () => void;
+    apiMock.get.mockReturnValue(new Promise<void>((resolve) => { answer = resolve; }));
+    const context = { serverWaking: false, wakeTimer: undefined };
+    const pending = LoginPage.methods!.wakeServer.call(context);
+    expect(apiMock.get).toHaveBeenCalledWith('/health', { timeout: 90000 });
+    vi.advanceTimersByTime(2000);
+    expect(context.serverWaking).toBe(false);
+    vi.advanceTimersByTime(600);
+    expect(context.serverWaking).toBe(true);
+    answer();
+    await pending;
+    expect(context.serverWaking).toBe(false);
+    vi.useRealTimers();
+  });
+
+  it('never shows the notice when the API answers quickly, even if the ping fails', async () => {
+    vi.useFakeTimers();
+    apiMock.get.mockRejectedValue(new Error('offline'));
+    const context = { serverWaking: false, wakeTimer: undefined };
+    await LoginPage.methods!.wakeServer.call(context);
+    vi.advanceTimersByTime(5000);
+    expect(context.serverWaking).toBe(false);
+    vi.useRealTimers();
   });
 });

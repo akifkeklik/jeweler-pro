@@ -22,7 +22,7 @@ Demo login: `demo@jewelerpro.test` / `Demo-Jeweler-Pro-2026` (branch manager rol
 ![MongoDB](https://img.shields.io/badge/MongoDB-7%20replica%20set-47A248?logo=mongodb&logoColor=white)
 ![Docker](https://img.shields.io/badge/Docker-ready-2496ED?logo=docker&logoColor=white)
 
-[Live demo](#live-demo) · [Deployment](#deployment) · [Features](#features) · [Screenshots](#screenshots) · [Architecture](#architecture) · [Quick start](#quick-start) · [Engineering](#engineering-quality) · [Docs](#documentation) · [Roadmap](docs/ROADMAP.md)
+[Live demo](#live-demo) · [Deployment](#deployment) · [Features](#features) · [Screenshots](#screenshots) · [Architecture](#architecture) · [Quick start](#quick-start) · [Engineering](#engineering-quality) · [Docs](#documentation) · [Roadmap](docs/ROADMAP.md) · [Article (Turkish)](https://medium.com/@akifkeklik/bir-kuyumcu-y%C3%B6netim-sistemi-geli%C5%9Ftirmek-finansal-do%C4%9Fruluk-veri-tutarl%C4%B1l%C4%B1%C4%9F%C4%B1-ve-ger%C3%A7ek-d%C3%BCnya-0aba9a233717)
 
 <br />
 
@@ -261,6 +261,7 @@ CI runs all of the above on every push and pull request, plus the end-to-end and
 | [ADR 0001](docs/adr/0001-branch-identity.md) | Branch identity decision |
 | [ROADMAP.md](docs/ROADMAP.md) | What is next, and what is blocked on whom |
 | [CONTRIBUTING.md](CONTRIBUTING.md) | PR size, commits, rules for AI-assisted code |
+| [Article on Medium](https://medium.com/@akifkeklik/bir-kuyumcu-y%C3%B6netim-sistemi-geli%C5%9Ftirmek-finansal-do%C4%9Fruluk-veri-tutarl%C4%B1l%C4%B1%C4%9F%C4%B1-ve-ger%C3%A7ek-d%C3%BCnya-0aba9a233717) | Write-up of the design: integer money math, one transaction per sale, idempotency, the ledger, fail-closed pricing and tenant isolation (in Turkish) |
 
 ## Status
 
